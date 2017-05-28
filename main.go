@@ -69,7 +69,9 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	keepAlive(conn)
+	var writeLock sync.Mutex
+
+	keepAlive(conn, &writeLock)
 
 	tw, err := conn.NextWriter(websocket.TextMessage)
 	if err != nil {
@@ -91,7 +93,9 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 				conn.Close()
 				break
 			}
+			writeLock.Lock()
 			err = conn.WriteMessage(websocket.BinaryMessage, packet[:n])
+			writeLock.Unlock()
 			if err != nil {
 				break
 			}
@@ -110,7 +114,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func keepAlive(c *websocket.Conn) {
+func keepAlive(c *websocket.Conn, l *sync.Mutex) {
 	timeout := time.Duration(30) * time.Second
 
 	lastResponse := time.Now()
@@ -121,7 +125,9 @@ func keepAlive(c *websocket.Conn) {
 
 	go func() {
 		for {
+			l.Lock()
 			err := c.WriteMessage(websocket.PingMessage, []byte("keepalive"))
+			l.Unlock()
 			if err != nil {
 				return
 			}

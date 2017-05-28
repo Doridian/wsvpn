@@ -59,9 +59,9 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		iface.Close()
 	}()
 
-	ipServer := net.IPv4(10, byte((slot << 16) & 0xFF), byte((slot << 8) & 0xFF), byte(slot & 0xFF)).String()
+	ipServer := net.IPv4(10, byte((slot >> 16) & 0xFF), byte((slot >> 8) & 0xFF), byte(slot & 0xFF)).String()
 	slotB := slot + 1
-	ipClient := net.IPv4(10, byte((slotB << 16) & 0xFF), byte((slotB << 8) & 0xFF), byte(slotB & 0xFF)).String()
+	ipClient := net.IPv4(10, byte((slotB >> 16) & 0xFF), byte((slotB >> 8) & 0xFF), byte(slotB & 0xFF)).String()
 
 	err = configIface(iface.Name(), ipClient, ipServer)
 	if err != nil {

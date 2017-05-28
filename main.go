@@ -133,7 +133,9 @@ func keepAlive(c *websocket.Conn, l *sync.Mutex) {
 			}
 			time.Sleep(timeout/2)
 			if(time.Now().Sub(lastResponse) > timeout) {
+				l.Lock()
 				c.Close()
+				l.Unlock()
 				return
 			}
 		}

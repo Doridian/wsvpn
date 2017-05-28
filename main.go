@@ -52,11 +52,16 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	usedSlots[slot] = true
 	slotMutex.Unlock()
 
+	var writeLock sync.Mutex
+
 	defer func() {
 		slotMutex.Lock()
 		delete(usedSlots, slot)
 		slotMutex.Unlock()
 		iface.Close()
+		writeLock.Lock()
+		conn.Close()
+		writeLock.Unlock()
 	}()
 
 	ipServer := net.IPv4(10, byte((slot >> 16) & 0xFF), byte((slot >> 8) & 0xFF), byte(slot & 0xFF)).String()
@@ -69,10 +74,9 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var writeLock sync.Mutex
-
 	keepAlive(conn, &writeLock)
 
+	writeLock.Lock()
 	tw, err := conn.NextWriter(websocket.TextMessage)
 	if err != nil {
 		return
@@ -81,6 +85,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	tw.Write([]byte{ '|' })
 	tw.Write([]byte(ipClient))
 	err = tw.Close()
+	writeLock.Unlock()
 	if err != nil {
 		return
 	}

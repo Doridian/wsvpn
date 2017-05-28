@@ -71,14 +71,14 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	keepAlive(conn)
 
-	w, err := conn.NextWriter(websocket.TextMessage)
+	tw, err := conn.NextWriter(websocket.TextMessage)
 	if err != nil {
 		return
 	}
-	w.Write([]byte(ipServer))
-	w.Write([]byte{ '|' })
-	w.Write([]byte(ipClient))
-	err = w.Close()
+	tw.Write([]byte(ipServer))
+	tw.Write([]byte{ '|' })
+	tw.Write([]byte(ipClient))
+	err = tw.Close()
 	if err != nil {
 		return
 	}
@@ -91,7 +91,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 				conn.Close()
 				break
 			}
-			err = w.WriteMessage(websocket.BinaryMessage, packet[:n])
+			err = conn.WriteMessage(websocket.BinaryMessage, packet[:n])
 			if err != nil {
 				break
 			}

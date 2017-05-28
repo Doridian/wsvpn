@@ -71,6 +71,18 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	keepAlive(conn)
 
+	w, err := conn.NextWriter(websocket.TextMessage)
+	if err != nil {
+		return
+	}
+	w.Write([]byte(ipServer))
+	w.Write([]byte{ '|' })
+	w.Write([]byte(ipClient))
+	err = w.Close()
+	if err != nil {
+		return
+	}
+
 	go func() {
 		for {
 			n, err := iface.Read(packet)
@@ -79,12 +91,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 				conn.Close()
 				break
 			}
-			w, err := conn.NextWriter(websocket.BinaryMessage)
-			if err != nil {
-				break
-			}
-			w.Write(packet[:n])
-			err = w.Close()
+			err = w.WriteMessage(websocket.BinaryMessage, packet[:n])
 			if err != nil {
 				break
 			}

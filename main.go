@@ -1,16 +1,16 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/songgao/water"
-	"encoding/base64"
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
-	"net/url"
 )
 
 type remoteNet struct {
@@ -56,7 +56,7 @@ func main() {
 	header := http.Header{}
 	if userInfo != nil {
 		log.Printf("Connecting to %s as user %s", dest.String(), userInfo.Username())
-		header.Add("Authorization",	"Basic " + base64.StdEncoding.EncodeToString([]byte(userInfo.String())))
+		header.Add("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(userInfo.String())))
 	} else {
 		log.Printf("Connecting to %s without authentication.", dest.String())
 		for n := 0; n <= 5; n++ {

@@ -15,6 +15,10 @@ func configIface(dev *water.Interface, rNet *remoteNet, mtu string, routeGateway
 	if err != nil {
 		return err
 	}
+	err = exec.Command("route", "add", "-net", rNet.ipNet.String(), "gw", rNet.getServerIP())
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

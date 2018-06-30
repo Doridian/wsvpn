@@ -11,7 +11,7 @@ func configIface(dev *water.Interface, rNet *remoteNet, mtu string, routeGateway
 	if err != nil {
 		return err
 	}
-	err = exec.Command("ip", "route", "add", rNet.str, "gw", rNet.getServerIP()).Run()
+	err = exec.Command("ip", "route", "add", rNet.ipNet.String(), "via", rNet.getServerIP()).Run()
 	if err != nil {
 		return err
 	}

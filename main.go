@@ -88,7 +88,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tw.Write([]byte(ipServer))
-	tw.Write([]byte{ '|' })
+	tw.Write([]byte{ '/', '2', '4', '|' })
 	tw.Write([]byte(ipClient))
 	tw.Write([]byte{ '|', '1', '2', '8', '0' })
 	err = tw.Close()

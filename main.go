@@ -45,7 +45,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	packet := make([]byte, 2000)
 
-	var slot uint64 = 0
+	var slot uint64 = 1
 	slotMutex.Lock()
 	for usedSlots[slot] {
 		slot = slot + 2

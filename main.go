@@ -45,10 +45,10 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	packet := make([]byte, 2000)
 
-	var slot uint64 = 1
+	var slot uint64 = 2
 	slotMutex.Lock()
 	for usedSlots[slot] {
-		slot = slot + 2
+		slot = slot + 1
 		if slot > 250 {
 			slotMutex.Unlock()
 			conn.Close()
@@ -70,9 +70,9 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		writeLock.Unlock()
 	}()
 
-	ipServer := net.IPv4(192, 168, 3, byte(slot & 0xFF)).String()
-	slotB := slot + 1
-	ipClient := net.IPv4(192, 168, 3, byte(slotB & 0xFF)).String()
+	ipServer := net.IPv4(192, 168, 3, 1).String()
+	//slotB := slot + 1
+	ipClient := net.IPv4(192, 168, 3, byte(slot & 0xFF)).String()
 
 	err = configIface(iface.Name(), ipClient, ipServer)
 	if err != nil {

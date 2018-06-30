@@ -70,7 +70,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		writeLock.Unlock()
 	}()
 
-	ipServer := net.IPv4(192, 168, 3, 1).String()
+	ipServer := net.IPv4(192, 168, 3, 0).String()
 	//slotB := slot + 1
 	ipClient := net.IPv4(192, 168, 3, byte(slot & 0xFF)).String()
 

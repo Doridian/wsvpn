@@ -7,7 +7,7 @@ import (
 )
 
 func configIface(dev *water.Interface, rNet *remoteNet, mtu string, routeGateway bool) error {
-	err := exec.Command("ifconfig", dev.Name(), rNet.getServerIP(), "pointopoint", rNet.getClientIP(), "mtu", mtu, "up").Run()
+	err := exec.Command("ifconfig", dev.Name(), rNet.getClientIP(), "pointopoint", rNet.getServerIP(), "mtu", mtu, "up").Run()
 	if err != nil {
 		return err
 	}

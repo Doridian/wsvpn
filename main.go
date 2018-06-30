@@ -39,6 +39,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Println(err)
+		conn.Close()
 		return
 	}
 
@@ -48,6 +49,11 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	slotMutex.Lock()
 	for usedSlots[slot] {
 		slot = slot + 2
+		if slot > 250 {
+			slotMutex.Unlock()
+			conn.Close()
+			return
+		}
 	}
 	usedSlots[slot] = true
 	slotMutex.Unlock()
@@ -64,9 +70,9 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		writeLock.Unlock()
 	}()
 
-	ipServer := net.IPv4(10, byte((slot >> 16) & 0xFF), byte((slot >> 8) & 0xFF), byte(slot & 0xFF)).String()
+	ipServer := net.IPv4(192, 168, 3, byte(slot & 0xFF)).String()
 	slotB := slot + 1
-	ipClient := net.IPv4(10, byte((slotB >> 16) & 0xFF), byte((slotB >> 8) & 0xFF), byte(slotB & 0xFF)).String()
+	ipClient := net.IPv4(192, 168, 3, byte(slotB & 0xFF)).String()
 
 	err = configIface(iface.Name(), ipClient, ipServer)
 	if err != nil {

@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/songgao/water"
+	"encoding/base64"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"strings"
+	"net/url"
 )
 
 type remoteNet struct {
@@ -42,10 +45,25 @@ func parseRemoteNet(rNetStr string) (*remoteNet, error) {
 }
 
 func main() {
-	dest := os.Args[1]
-	log.Printf("Connecting to %s", dest)
+	dest, err := url.Parse(os.Args[1])
+	if err != nil {
+		panic(err)
+	}
 
-	conn, _, err := websocket.DefaultDialer.Dial(dest, nil)
+	userInfo := dest.User
+	dest.User = nil
+
+	header := http.Header{}
+	if userInfo != nil {
+		log.Printf("Connecting to %s as user %s", dest.String(), userInfo.Username())
+		header.Add("Authorization",	"Basic " + base64.StdEncoding.EncodeToString([]byte(userInfo.String())))
+	} else {
+		log.Printf("Connecting to %s without authentication.", dest.String())
+		for n := 0; n <= 5; n++ {
+			log.Printf("DO NOT USE THIS IN PRODUCTION!")
+		}
+	}
+	conn, _, err := websocket.DefaultDialer.Dial(dest.String(), header)
 	if err != nil {
 		panic(err)
 	}

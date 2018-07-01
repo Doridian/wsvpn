@@ -22,8 +22,7 @@ var upgrader = websocket.Upgrader{
 var slotMutex sync.Mutex
 var usedSlots map[int]bool = make(map[int]bool)
 
-const mtu = "1280"
-
+var mtu = 1280
 var subnet *net.IPNet
 var ipServer net.IP
 var subnetSize string
@@ -116,7 +115,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	tw.Write([]byte{'/'})
 	tw.Write([]byte(subnetSize))
 	tw.Write([]byte{'|'})
-	tw.Write([]byte(mtu))
+	tw.Write([]byte(fmt.Sprintf("%d", mtu)))
 	err = tw.Close()
 	writeLock.Unlock()
 	if err != nil {

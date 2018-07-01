@@ -7,6 +7,6 @@ import (
 	"net"
 )
 
-func configIface(dev *water.Interface, mtu string, ipClient net.IP, ipServer net.IP) error {
+func configIface(dev *water.Interface, mtu int, ipClient net.IP, ipServer net.IP) error {
 	return errors.New("Windows is not supported atm")
 }

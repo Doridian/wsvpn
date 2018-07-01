@@ -1,19 +1,19 @@
 package main
 
 import (
-	"time"
-	"sync"
+	"github.com/gorilla/websocket"
+	"github.com/songgao/water"
+	"log"
 	"net"
 	"net/http"
-	"log"
-	"github.com/songgao/water"
-	"github.com/gorilla/websocket"
+	"sync"
+	"time"
 )
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  2048,
 	WriteBufferSize: 2048,
-	CheckOrigin: func(r *http.Request) bool { return true },
+	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
 var slotMutex sync.Mutex
@@ -59,6 +59,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	slotMutex.Unlock()
 
 	var writeLock sync.Mutex
+	var wg sync.WaitGroup
 
 	defer func() {
 		slotMutex.Lock()
@@ -72,7 +73,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	ipServer := net.IPv4(192, 168, 3, 0).String()
 	//slotB := slot + 1
-	ipClient := net.IPv4(192, 168, 3, byte(slot & 0xFF)).String()
+	ipClient := net.IPv4(192, 168, 3, byte(slot&0xFF)).String()
 
 	err = configIface(iface.Name(), ipClient, ipServer)
 	if err != nil {
@@ -80,7 +81,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	keepAlive(conn, &writeLock)
+	keepAlive(conn, &writeLock, &wg)
 
 	writeLock.Lock()
 	tw, err := conn.NextWriter(websocket.TextMessage)
@@ -89,7 +90,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tw.Write([]byte(ipClient))
-	tw.Write([]byte{ '/', '2', '4', '|', '1', '2', '8', '0' })
+	tw.Write([]byte{'/', '2', '4', '|', '1', '2', '8', '0'})
 	err = tw.Close()
 	writeLock.Unlock()
 	if err != nil {
@@ -97,11 +98,14 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go func() {
+		wg.Add(1)
+		defer wg.Done()
+		defer conn.Close()
+
 		for {
 			n, err := iface.Read(packet)
 			if err != nil {
 				log.Println(err)
-				conn.Close()
 				break
 			}
 			writeLock.Lock()
@@ -113,19 +117,27 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	for {
-		_, msg, err := conn.ReadMessage()
-		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				log.Println(err)
+	go func() {
+		wg.Add(1)
+		defer wg.Done()
+		defer conn.Close()
+
+		for {
+			_, msg, err := conn.ReadMessage()
+			if err != nil {
+				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
+					log.Println(err)
+				}
+				break
 			}
-			break
+			iface.Write(msg)
 		}
-		iface.Write(msg)
-	}
+	}()
+
+	wg.Wait()
 }
 
-func keepAlive(c *websocket.Conn, l *sync.Mutex) {
+func keepAlive(c *websocket.Conn, l *sync.Mutex, wg *sync.WaitGroup) {
 	timeout := time.Duration(30) * time.Second
 
 	lastResponse := time.Now()
@@ -135,6 +147,10 @@ func keepAlive(c *websocket.Conn, l *sync.Mutex) {
 	})
 
 	go func() {
+		wg.Add(1)
+		defer wg.Done()
+		defer c.Close()
+
 		for {
 			l.Lock()
 			err := c.WriteMessage(websocket.PingMessage, []byte("keepalive"))
@@ -142,11 +158,8 @@ func keepAlive(c *websocket.Conn, l *sync.Mutex) {
 			if err != nil {
 				return
 			}
-			time.Sleep(timeout/2)
-			if(time.Now().Sub(lastResponse) > timeout) {
-				l.Lock()
-				c.Close()
-				l.Unlock()
+			time.Sleep(timeout / 2)
+			if time.Now().Sub(lastResponse) > timeout {
 				return
 			}
 		}

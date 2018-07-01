@@ -5,7 +5,7 @@ import (
 	"os/exec"
 )
 
-func configIface(dev string, ipClient string, ipServer string)  error {
+func configIface(dev string, ipClient string, ipServer string) error {
 	err := exec.Command("ifconfig", dev, "mtu", "1280").Run()
 	if err != nil {
 		return err

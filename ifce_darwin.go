@@ -3,14 +3,16 @@ package main
 
 import (
 	"os/exec"
+	"net"
+	"github.com/songgao/water"
 )
 
-func configIface(dev string, ipClient string, ipServer string) error {
-	err := exec.Command("ifconfig", dev, "mtu", "1280").Run()
+func configIface(dev *water.Interface, mtu string, ipClient net.IP, ipServer net.IP) error {
+	err := exec.Command("ifconfig", dev.Name(), "mtu", mtu).Run()
 	if err != nil {
 		return err
 	}
-	err = exec.Command("ifconfig", dev, ipServer, ipClient, "up").Run()
+	err = exec.Command("ifconfig", dev.Name(), ipServer.String(), ipClient.String(), "up").Run()
 	if err != nil {
 		return err
 	}

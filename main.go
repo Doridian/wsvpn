@@ -3,10 +3,13 @@ package main
 import (
 	"github.com/gorilla/websocket"
 	"github.com/songgao/water"
+	"github.com/apparentlymart/go-cidr/cidr"
 	"log"
 	"net"
+	"os"
 	"net/http"
 	"sync"
+	"fmt"
 	"time"
 )
 
@@ -17,11 +20,28 @@ var upgrader = websocket.Upgrader{
 }
 
 var slotMutex sync.Mutex
-var usedSlots map[uint64]bool = make(map[uint64]bool)
+var usedSlots map[int]bool = make(map[int]bool)
+
+const mtu = "1280"
+var subnet *net.IPNet
+var ipServer net.IP
+var subnetSize string
 
 func main() {
+	var err error
+	_, subnet, err = net.ParseCIDR(os.Args[1])
+	if err != nil {
+		panic(err)
+	}
+	ipServer, err = cidr.Host(subnet, 0)
+	if err != nil {
+		panic(err)
+	}
+	subnetOnes, _ := subnet.Mask.Size()
+	subnetSize = fmt.Sprintf("%d", subnetOnes)
+
 	http.HandleFunc("/", serveWs)
-	err := http.ListenAndServe("127.0.0.1:9000", nil)
+	err = http.ListenAndServe("127.0.0.1:9000", nil)
 	if err != nil {
 		panic(err)
 	}
@@ -45,7 +65,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	packet := make([]byte, 2000)
 
-	var slot uint64 = 2
+	var slot int = 1
 	slotMutex.Lock()
 	for usedSlots[slot] {
 		slot = slot + 1
@@ -71,11 +91,13 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		writeLock.Unlock()
 	}()
 
-	ipServer := net.IPv4(192, 168, 3, 0).String()
-	//slotB := slot + 1
-	ipClient := net.IPv4(192, 168, 3, byte(slot&0xFF)).String()
+	ipClient, err := cidr.Host(subnet, slot)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 
-	err = configIface(iface.Name(), ipClient, ipServer)
+	err = configIface(iface, mtu, ipClient, ipServer)
 	if err != nil {
 		log.Println(err)
 		return
@@ -89,8 +111,11 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tw.Write([]byte(ipClient))
-	tw.Write([]byte{'/', '2', '4', '|', '1', '2', '8', '0'})
+	tw.Write([]byte(ipClient.String()))
+	tw.Write([]byte{'/'})
+	tw.Write([]byte(subnetSize))
+	tw.Write([]byte{'|'})
+	tw.Write([]byte(mtu))
 	err = tw.Close()
 	writeLock.Unlock()
 	if err != nil {

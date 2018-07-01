@@ -122,8 +122,8 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	wg.Add(1)
 	go func() {
-		wg.Add(1)
 		defer wg.Done()
 		defer conn.Close()
 
@@ -142,8 +142,8 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
+	wg.Add(1)
 	go func() {
-		wg.Add(1)
 		defer wg.Done()
 		defer conn.Close()
 
@@ -171,8 +171,8 @@ func keepAlive(c *websocket.Conn, l *sync.Mutex, wg *sync.WaitGroup) {
 		return nil
 	})
 
+	wg.Add(1)
 	go func() {
-		wg.Add(1)
 		defer wg.Done()
 		defer c.Close()
 

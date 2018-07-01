@@ -8,7 +8,7 @@ import (
 	"os/exec"
 )
 
-func configIface(dev *water.Interface, rNet *remoteNet, mtu string, routeGateway bool) error {
+func configIface(dev *water.Interface, rNet *remoteNet, mtu int, routeGateway bool) error {
 	gw := "gateway=none"
 	if routeGateway {
 		gw = fmt.Sprintf("gateway=%s", rNet.getServerIP())
@@ -24,7 +24,7 @@ func configIface(dev *water.Interface, rNet *remoteNet, mtu string, routeGateway
 	return nil
 }
 
-func getPlatformSpecifics(rNet *remoteNet, mtu string, config water.Config) water.Config {
+func getPlatformSpecifics(rNet *remoteNet, mtu int, config water.Config) water.Config {
 	config.ComponentID = "tap0901"
 	config.Network = rNet.str
 	return config

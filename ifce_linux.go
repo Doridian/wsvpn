@@ -2,12 +2,13 @@
 package main
 
 import (
+	"fmt"
 	"github.com/songgao/water"
 	"os/exec"
 )
 
-func configIface(dev *water.Interface, rNet *remoteNet, mtu string, routeGateway bool) error {
-	err := exec.Command("ifconfig", dev.Name(), rNet.getClientIP(), "pointopoint", rNet.getServerIP(), "mtu", mtu, "up").Run()
+func configIface(dev *water.Interface, rNet *remoteNet, mtu int, routeGateway bool) error {
+	err := exec.Command("ifconfig", dev.Name(), rNet.getClientIP(), "pointopoint", rNet.getServerIP(), "mtu", fmt.Sprintf("%d", mtu), "up").Run()
 	if err != nil {
 		return err
 	}
@@ -18,6 +19,6 @@ func configIface(dev *water.Interface, rNet *remoteNet, mtu string, routeGateway
 	return nil
 }
 
-func getPlatformSpecifics(rNet *remoteNet, mtu string, config water.Config) water.Config {
+func getPlatformSpecifics(rNet *remoteNet, mtu int, config water.Config) water.Config {
 	return config
 }

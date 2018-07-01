@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -75,14 +76,17 @@ func main() {
 	}
 	str := strings.Split(string(msg), "|")
 	rNetStr := str[0]
-	mtu := str[1]
+	mtu, err := strconv.Atoi(str[1])
+	if err != nil {
+		panic(err)
+	}
 
 	cRemoteNet, err := parseRemoteNet(rNetStr)
 	if err != nil {
 		panic(err)
 	}
 
-	log.Printf("Network %s, mtu %s", cRemoteNet.str, mtu)
+	log.Printf("Network %s, mtu %d", cRemoteNet.str, mtu)
 
 	ifconfig := getPlatformSpecifics(cRemoteNet, mtu, water.Config{
 		DeviceType: water.TUN,

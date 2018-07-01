@@ -2,17 +2,23 @@ package main
 
 import (
 	"encoding/base64"
+	"flag"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/songgao/water"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 )
+
+const DEFAULT_URL = "ws://user:password@example.com"
+
+var connectAddr = flag.String("connect", DEFAULT_URL, "Server address to connect to")
+var authFile = flag.String("auth-file", "", "File to read authentication from in the format user:password")
 
 type remoteNet struct {
 	ip    net.IP
@@ -45,25 +51,61 @@ func parseRemoteNet(rNetStr string) (*remoteNet, error) {
 	}, nil
 }
 
+func productionWarnings(str string) {
+	for n := 0; n <= 5; n++ {
+		log.Printf("DO NOT USE THIS IN PRODUCTION! %s!", str)
+	}
+}
+
 func main() {
-	dest, err := url.Parse(os.Args[1])
+	flag.Parse()
+
+	destUrlString := *connectAddr
+	if destUrlString == DEFAULT_URL {
+		flag.PrintDefaults()
+		return
+	}
+
+	dest, err := url.Parse(destUrlString)
 	if err != nil {
 		panic(err)
 	}
 
-	userInfo := dest.User
-	dest.User = nil
+	authFileString := *authFile
+	var userInfo *url.Userinfo
+
+	if authFileString != "" {
+		authData, err := ioutil.ReadFile(authFileString)
+		if err != nil {
+			panic(err)
+		}
+		authDataSplit := strings.SplitN(string(authData), ":", 2)
+		if len(authDataSplit) > 1 {
+			userInfo = url.UserPassword(authDataSplit[0], authDataSplit[1])
+		} else {
+			userInfo = url.User(authDataSplit[0])
+		}
+	} else {
+		userInfo = dest.User
+	}
+
+	if dest.User != nil {
+		dest.User = nil
+		productionWarnings("PASSWORD ON THE COMMAND LINE")
+	}
 
 	header := http.Header{}
 	if userInfo != nil {
-		log.Printf("Connecting to %s as user %s", dest.String(), userInfo.Username())
+		log.Printf("Connecting to %s as user %s.", dest.String(), userInfo.Username())
+		if _, pws := userInfo.Password(); !pws {
+			productionWarnings("NO PASSWORD SET")
+		}
 		header.Add("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(userInfo.String())))
 	} else {
 		log.Printf("Connecting to %s without authentication.", dest.String())
-		for n := 0; n <= 5; n++ {
-			log.Printf("DO NOT USE THIS IN PRODUCTION!")
-		}
+		productionWarnings("NO AUTHENTICATION SET")
 	}
+
 	conn, _, err := websocket.DefaultDialer.Dial(dest.String(), header)
 	if err != nil {
 		panic(err)

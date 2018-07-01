@@ -46,6 +46,7 @@ func main() {
 	subnetSize = fmt.Sprintf("%d", subnetOnes)
 
 	http.HandleFunc("/", serveWs)
+	log.Printf("VPN server online at %s, serving subnet %s with MTU %d", *listenAddr, *subnetStr, *mtu)
 	err = http.ListenAndServe(*listenAddr, nil)
 	if err != nil {
 		panic(err)

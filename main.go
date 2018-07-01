@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/gorilla/websocket"
@@ -10,7 +11,6 @@ import (
 	"net/http"
 	"sync"
 	"time"
-	"flag"
 )
 
 var upgrader = websocket.Upgrader{

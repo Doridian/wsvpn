@@ -1,15 +1,15 @@
 package main
 
 import (
+	"fmt"
+	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/gorilla/websocket"
 	"github.com/songgao/water"
-	"github.com/apparentlymart/go-cidr/cidr"
 	"log"
 	"net"
-	"os"
 	"net/http"
+	"os"
 	"sync"
-	"fmt"
 	"time"
 )
 
@@ -23,6 +23,7 @@ var slotMutex sync.Mutex
 var usedSlots map[int]bool = make(map[int]bool)
 
 const mtu = "1280"
+
 var subnet *net.IPNet
 var ipServer net.IP
 var subnetSize string

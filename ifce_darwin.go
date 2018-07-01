@@ -2,9 +2,9 @@
 package main
 
 import (
-	"os/exec"
-	"net"
 	"github.com/songgao/water"
+	"net"
+	"os/exec"
 )
 
 func configIface(dev *water.Interface, mtu string, ipClient net.IP, ipServer net.IP) error {

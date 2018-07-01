@@ -4,19 +4,18 @@ package main
 import (
 	"fmt"
 	"github.com/songgao/water"
-	"os/exec"
 )
 
 func configIface(dev *water.Interface, rNet *remoteNet, mtu int, routeGateway bool) error {
-	err := exec.Command("ifconfig", dev.Name(), "mtu", fmt.Sprintf("%d", mtu)).Run()
+	err := execCmd("ifconfig", dev.Name(), "mtu", fmt.Sprintf("%d", mtu))
 	if err != nil {
 		return err
 	}
-	err = exec.Command("ifconfig", dev.Name(), rNet.getClientIP(), rNet.getServerIP(), "up").Run()
+	err = execCmd("ifconfig", dev.Name(), rNet.getClientIP(), rNet.getServerIP(), "up")
 	if err != nil {
 		return err
 	}
-	err = exec.Command("route", "add", "-net", rNet.ipNet.String(), "gw", rNet.getServerIP())
+	err = execCmd("route", "add", "-net", rNet.ipNet.String(), "gw", rNet.getServerIP())
 	if err != nil {
 		return err
 	}

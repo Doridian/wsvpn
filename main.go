@@ -3,12 +3,10 @@ package main
 import (
 	"encoding/base64"
 	"flag"
-	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/songgao/water"
 	"io/ioutil"
 	"log"
-	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -19,37 +17,6 @@ const DEFAULT_URL = "ws://user:password@example.com"
 
 var connectAddr = flag.String("connect", DEFAULT_URL, "Server address to connect to")
 var authFile = flag.String("auth-file", "", "File to read authentication from in the format user:password")
-
-type remoteNet struct {
-	ip    net.IP
-	ipNet *net.IPNet
-	str   string
-}
-
-func (r *remoteNet) getClientIP() string {
-	return r.ip.String()
-}
-
-func (r *remoteNet) getServerIP() string {
-	return r.ipNet.IP.To4().String()
-}
-
-func (r *remoteNet) getNetmask() string {
-	mask := r.ipNet.Mask
-	return fmt.Sprintf("%d.%d.%d.%d", mask[0], mask[1], mask[2], mask[3])
-}
-
-func parseRemoteNet(rNetStr string) (*remoteNet, error) {
-	ip, ipNet, err := net.ParseCIDR(rNetStr)
-	if err != nil {
-		return nil, err
-	}
-	return &remoteNet{
-		ip:    ip,
-		ipNet: ipNet,
-		str:   rNetStr,
-	}, nil
-}
 
 func productionWarnings(str string) {
 	for n := 0; n <= 5; n++ {

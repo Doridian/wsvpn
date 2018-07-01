@@ -107,13 +107,11 @@ func main() {
 		for {
 			n, err := iface.Read(packet)
 			if err != nil {
-				log.Println(err)
-				conn.Close()
-				break
+				panic(err)
 			}
 			err = conn.WriteMessage(websocket.BinaryMessage, packet[:n])
 			if err != nil {
-				break
+				panic(err)
 			}
 		}
 	}()
@@ -121,10 +119,7 @@ func main() {
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				log.Println(err)
-			}
-			break
+			panic(err)
 		}
 		iface.Write(msg)
 	}

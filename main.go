@@ -8,9 +8,9 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"os"
 	"sync"
 	"time"
+	"flag"
 )
 
 var upgrader = websocket.Upgrader{
@@ -22,14 +22,19 @@ var upgrader = websocket.Upgrader{
 var slotMutex sync.Mutex
 var usedSlots map[int]bool = make(map[int]bool)
 
-var mtu = 1280
+var mtu = flag.Int("mtu", 1280, "MTU for the tunnel")
+var subnetStr = flag.String("subnet", "192.168.3.0/24", "Subnet for the tunnel clients")
+var listenAddr = flag.String("listen", "127.0.0.1:9000", "Listen address for the WebSocket interface")
+
 var subnet *net.IPNet
 var ipServer net.IP
 var subnetSize string
 
 func main() {
+	flag.Parse()
+
 	var err error
-	_, subnet, err = net.ParseCIDR(os.Args[1])
+	_, subnet, err = net.ParseCIDR(*subnetStr)
 	if err != nil {
 		panic(err)
 	}
@@ -41,7 +46,7 @@ func main() {
 	subnetSize = fmt.Sprintf("%d", subnetOnes)
 
 	http.HandleFunc("/", serveWs)
-	err = http.ListenAndServe("127.0.0.1:9000", nil)
+	err = http.ListenAndServe(*listenAddr, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -97,7 +102,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = configIface(iface, mtu, ipClient, ipServer)
+	err = configIface(iface, *mtu, ipClient, ipServer)
 	if err != nil {
 		log.Println(err)
 		return
@@ -115,7 +120,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	tw.Write([]byte{'/'})
 	tw.Write([]byte(subnetSize))
 	tw.Write([]byte{'|'})
-	tw.Write([]byte(fmt.Sprintf("%d", mtu)))
+	tw.Write([]byte(fmt.Sprintf("%d", *mtu)))
 	err = tw.Close()
 	writeLock.Unlock()
 	if err != nil {

@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-const DEFAULT_URL = "ws://user:password@example.com"
+const DEFAULT_URL = "ws://example.com"
 
 var connectAddr = flag.String("connect", DEFAULT_URL, "Server address to connect to")
 var authFile = flag.String("auth-file", "", "File to read authentication from in the format user:password")

@@ -2,11 +2,13 @@ package main
 
 import (
 	"encoding/base64"
+	"errors"
 	"flag"
 	"github.com/gorilla/websocket"
 	"github.com/songgao/water"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -79,9 +81,12 @@ func main() {
 	}
 	defer conn.Close()
 
-	_, msg, err := conn.ReadMessage()
+	msgType, msg, err := conn.ReadMessage()
 	if err != nil {
 		panic(err)
+	}
+	if msgType != websocket.TextMessage {
+		panic(errors.New("Invalid HELLO message type"))
 	}
 	str := strings.Split(string(msg), "|")
 	rNetStr := str[0]
@@ -114,9 +119,9 @@ func main() {
 
 	log.Printf("Configured interface. Starting operations.")
 
-	packet := make([]byte, 2000)
-
 	go func() {
+		packet := make([]byte, 2000)
+
 		for {
 			n, err := iface.Read(packet)
 			if err != nil {
@@ -130,10 +135,26 @@ func main() {
 	}()
 
 	for {
-		_, msg, err := conn.ReadMessage()
+		msgType, msg, err := conn.ReadMessage()
 		if err != nil {
 			panic(err)
 		}
-		iface.Write(msg)
+		if msgType == websocket.BinaryMessage {
+			iface.Write(msg)
+			continue
+		}
+
+		str := strings.Split(string(msg), "|")
+		switch str[0] {
+		case "addroute":
+			_, routeNet, err := net.ParseCIDR(str[1])
+			if err == nil {
+				addRoute(iface, cRemoteNet, routeNet)
+			} else {
+				log.Printf("Invalid subnet to route to: %v", err)
+			}
+		default:
+			log.Printf("Invalid operation %s", str[0])
+		}
 	}
 }

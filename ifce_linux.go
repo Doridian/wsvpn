@@ -4,6 +4,7 @@ package main
 import (
 	"fmt"
 	"github.com/songgao/water"
+	"net"
 )
 
 func configIface(dev *water.Interface, rNet *remoteNet, mtu int, routeGateway bool) error {
@@ -26,4 +27,8 @@ func configIface(dev *water.Interface, rNet *remoteNet, mtu int, routeGateway bo
 
 func getPlatformSpecifics(rNet *remoteNet, mtu int, config water.Config) water.Config {
 	return config
+}
+
+func addRoute(dev *water.Interface, rNet *remoteNet, routeNet *net.IPNet) error {
+	return execCmd("ip", "route", "add", routeNet.String(), "via", rNet.getServerIP())
 }

@@ -127,6 +127,7 @@ func keepAlive(c *websocket.Conn, l *sync.Mutex, wg *sync.WaitGroup) {
 			}
 			time.Sleep(timeout / 2)
 			if time.Now().Sub(lastResponse) > timeout {
+				log.Printf("Ping timeout")
 				return
 			}
 		}

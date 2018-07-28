@@ -103,16 +103,10 @@ func HandleSocket(iface *water.Interface, conn *websocket.Conn, writeLock *sync.
 		}
 	}()
 
-	keepAlive(conn, writeLock, wg)
-
-	wg.Wait()
-}
-
-func keepAlive(c *websocket.Conn, l *sync.Mutex, wg *sync.WaitGroup) {
 	timeout := time.Duration(30) * time.Second
 
 	lastResponse := time.Now()
-	c.SetPongHandler(func(msg string) error {
+	conn.SetPongHandler(func(msg string) error {
 		lastResponse = time.Now()
 		return nil
 	})
@@ -120,20 +114,21 @@ func keepAlive(c *websocket.Conn, l *sync.Mutex, wg *sync.WaitGroup) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		defer c.Close()
+		defer conn.Close()
+		defer iface.Close()
 
 		for {
-			l.Lock()
-			err := c.WriteMessage(websocket.PingMessage, []byte("keepalive"))
-			l.Unlock()
+			writeLock.Lock()
+			err := conn.WriteMessage(websocket.PingMessage, []byte("keepalive"))
+			writeLock.Unlock()
 			if err != nil {
 				log.Printf("Error writing ping frame: %v", err)
-				return
+				break
 			}
 			time.Sleep(timeout / 2)
 			if time.Now().Sub(lastResponse) > timeout {
 				log.Printf("Ping timeout")
-				return
+				break
 			}
 		}
 	}()

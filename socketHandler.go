@@ -30,6 +30,7 @@ func HandleSocket(iface *water.Interface, conn *websocket.Conn, writeLock *sync.
 	go func() {
 		defer wg.Done()
 		defer conn.Close()
+		defer iface.Close()
 
 		packet := make([]byte, 2000)
 
@@ -53,6 +54,7 @@ func HandleSocket(iface *water.Interface, conn *websocket.Conn, writeLock *sync.
 	go func() {
 		defer wg.Done()
 		defer conn.Close()
+		defer iface.Close()
 
 		for {
 			msgType, msg, err := conn.ReadMessage()

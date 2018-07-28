@@ -36,13 +36,14 @@ func HandleSocket(iface *water.Interface, conn *websocket.Conn, writeLock *sync.
 		for {
 			n, err := iface.Read(packet)
 			if err != nil {
-				log.Println(err)
+				log.Printf("Error reading packet from tun: %v", err)
 				break
 			}
 			writeLock.Lock()
 			err = conn.WriteMessage(websocket.BinaryMessage, packet[:n])
 			writeLock.Unlock()
 			if err != nil {
+				log.Printf("Error writing packet to WS: %v", err)
 				break
 			}
 		}
@@ -57,7 +58,7 @@ func HandleSocket(iface *water.Interface, conn *websocket.Conn, writeLock *sync.
 			msgType, msg, err := conn.ReadMessage()
 			if err != nil {
 				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-					log.Println(err)
+					log.Printf("Error reading packet from WS: %v", err)
 				}
 				break
 			}
@@ -123,6 +124,7 @@ func keepAlive(c *websocket.Conn, l *sync.Mutex, wg *sync.WaitGroup) {
 			err := c.WriteMessage(websocket.PingMessage, []byte("keepalive"))
 			l.Unlock()
 			if err != nil {
+				log.Printf("Error writing ping frame: %v", err)
 				return
 			}
 			time.Sleep(timeout / 2)

@@ -1,6 +1,7 @@
 package wstun_shared
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/songgao/water"
@@ -86,10 +87,10 @@ func HandleSocket(iface *water.Interface, conn *websocket.Conn, writeLock *sync.
 
 				handler := handlers[commandName]
 				if handler == nil {
-					log.Printf("Unknown in-band command %s", commandName)
-					continue
+					err = errors.New("Unknown command")
+				} else {
+					err = handler(str[2:])
 				}
-				err = handler(str[2:])
 				if err != nil {
 					log.Printf("Error in in-band command %s: %v", commandName, err)
 				}

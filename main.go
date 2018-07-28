@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/Doridian/wstun_shared"
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/gorilla/websocket"
 	"github.com/songgao/water"
@@ -69,8 +70,6 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	packet := make([]byte, 2000)
-
 	var slot int = 1
 	slotMutex.Lock()
 	for usedSlots[slot] {
@@ -111,59 +110,12 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	keepAlive(conn, &writeLock, &wg)
 
-	writeLock.Lock()
-	tw, err := conn.NextWriter(websocket.TextMessage)
-	if err != nil {
-		return
-	}
+	wstun_shared.SendCommand(conn, &writeLock, "init",
+		fmt.Sprintf("%s/%s", ipClient.String(), subnetSize), fmt.Sprintf("%d", *mtu))
 
-	tw.Write([]byte(ipClient.String()))
-	tw.Write([]byte{'/'})
-	tw.Write([]byte(subnetSize))
-	tw.Write([]byte{'|'})
-	tw.Write([]byte(fmt.Sprintf("%d", *mtu)))
-	err = tw.Close()
-	writeLock.Unlock()
-	if err != nil {
-		return
-	}
+	commandMap := make(map[string]wstun_shared.CommandHandler)
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		defer conn.Close()
-
-		for {
-			n, err := iface.Read(packet)
-			if err != nil {
-				log.Println(err)
-				break
-			}
-			writeLock.Lock()
-			err = conn.WriteMessage(websocket.BinaryMessage, packet[:n])
-			writeLock.Unlock()
-			if err != nil {
-				break
-			}
-		}
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		defer conn.Close()
-
-		for {
-			_, msg, err := conn.ReadMessage()
-			if err != nil {
-				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-					log.Println(err)
-				}
-				break
-			}
-			iface.Write(msg)
-		}
-	}()
+	wstun_shared.HandleSocket(iface, conn, &writeLock, &wg, commandMap)
 
 	wg.Wait()
 }

@@ -11,7 +11,6 @@ import (
 	"net"
 	"net/http"
 	"sync"
-	"time"
 )
 
 var upgrader = websocket.Upgrader{

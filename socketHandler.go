@@ -7,15 +7,18 @@ import (
 	"log"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
+
+var lastCommandId uint64 = 0
 
 type CommandHandler func(args []string) error
 
 func SendCommand(conn *websocket.Conn, writeLock *sync.Mutex, command string, args ...string) error {
-	data := fmt.Sprintf("0|%s|%s", command, strings.Join(args, "|"))
+	data := []byte(fmt.Sprintf("%d|%s|%s", atomic.AddUint64(&lastCommandId, 1), command, strings.Join(args, "|")))
 	writeLock.Lock()
-	err := conn.WriteMessage(websocket.TextMessage, []byte(data))
+	err := conn.WriteMessage(websocket.TextMessage, data)
 	writeLock.Unlock()
 	return err
 }
@@ -66,15 +69,32 @@ func HandleSocket(iface *water.Interface, conn *websocket.Conn, writeLock *sync.
 					log.Printf("Invalid in-band command structure")
 					continue
 				}
-				handler := handlers[str[1]]
+
+				commandId := str[0]
+				commandName := str[1]
+				if commandName == "reply" {
+					commandResult := "N/A"
+					if len(str) > 2 {
+						commandResult = str[2]
+					}
+					log.Printf("Got command reply ID %s: %s", commandId, commandResult)
+					continue
+				}
+
+				handler := handlers[commandName]
 				if handler == nil {
-					log.Printf("Unknown in-band command %s", str[1])
+					log.Printf("Unknown in-band command %s", commandName)
 					continue
 				}
 				err = handler(str[2:])
 				if err != nil {
-					log.Printf("Error in in-band command %s: %v", str[1], err)
+					log.Printf("Error in in-band command %s: %v", commandName, err)
 				}
+
+				data := []byte(fmt.Sprintf("%s|reply|%v", commandId, err == nil))
+				writeLock.Lock()
+				conn.WriteMessage(websocket.TextMessage, data)
+				writeLock.Unlock()
 			}
 		}
 	}()

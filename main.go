@@ -4,6 +4,8 @@ import (
 	"encoding/base64"
 	"errors"
 	"flag"
+	"fmt"
+	"github.com/Doridian/wstun_shared"
 	"github.com/gorilla/websocket"
 	"github.com/songgao/water"
 	"io/ioutil"
@@ -13,6 +15,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 const DEFAULT_URL = "ws://example.com"
@@ -89,8 +92,11 @@ func main() {
 		panic(errors.New("Invalid HELLO message type"))
 	}
 	str := strings.Split(string(msg), "|")
-	rNetStr := str[0]
-	mtu, err := strconv.Atoi(str[1])
+	if str[1] != "init" {
+		panic(errors.New("Invalid HELLO message command"))
+	}
+	rNetStr := str[2]
+	mtu, err := strconv.Atoi(str[3])
 	if err != nil {
 		panic(err)
 	}
@@ -119,42 +125,28 @@ func main() {
 
 	log.Printf("Configured interface. Starting operations.")
 
-	go func() {
-		packet := make([]byte, 2000)
+	var wg sync.WaitGroup
+	var writeLock sync.Mutex
 
-		for {
-			n, err := iface.Read(packet)
-			if err != nil {
-				panic(err)
-			}
-			err = conn.WriteMessage(websocket.BinaryMessage, packet[:n])
-			if err != nil {
-				panic(err)
-			}
+	data := []byte(fmt.Sprintf("%s|reply|%v", str[0], true))
+	writeLock.Lock()
+	conn.WriteMessage(websocket.TextMessage, data)
+	writeLock.Unlock()
+
+	commandMap := make(map[string]wstun_shared.CommandHandler)
+
+	commandMap["addroute"] = func(args []string) error {
+		if len(args) < 1 {
+			return errors.New("addroute needs 1 argument")
 		}
-	}()
-
-	for {
-		msgType, msg, err := conn.ReadMessage()
+		_, routeNet, err := net.ParseCIDR(args[0])
 		if err != nil {
-			panic(err)
+			return err
 		}
-		if msgType == websocket.BinaryMessage {
-			iface.Write(msg)
-			continue
-		}
-
-		str := strings.Split(string(msg), "|")
-		switch str[0] {
-		case "addroute":
-			_, routeNet, err := net.ParseCIDR(str[1])
-			if err == nil {
-				addRoute(iface, cRemoteNet, routeNet)
-			} else {
-				log.Printf("Invalid subnet to route to: %v", err)
-			}
-		default:
-			log.Printf("Invalid operation %s", str[0])
-		}
+		return addRoute(iface, cRemoteNet, routeNet)
 	}
+
+	wstun_shared.HandleSocket(iface, conn, &writeLock, &wg, commandMap)
+
+	wg.Wait()
 }

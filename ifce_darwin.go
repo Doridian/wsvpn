@@ -8,20 +8,20 @@ import (
 )
 
 func configIface(dev *water.Interface, rNet *remoteNet, mtu int, routeGateway bool) error {
-	err := execCmd("ifconfig", dev.Name(), "mtu", fmt.Sprintf("%d", mtu))
+	err := wstun_shared.ExecCmd("ifconfig", dev.Name(), "mtu", fmt.Sprintf("%d", mtu))
 	if err != nil {
 		return err
 	}
-	err = execCmd("ifconfig", dev.Name(), rNet.getClientIP(), rNet.getServerIP(), "up")
+	err = wstun_shared.ExecCmd("ifconfig", dev.Name(), rNet.getClientIP(), rNet.getServerIP(), "up")
 	if err != nil {
 		return err
 	}
-	err = execCmd("route", "add", "-net", rNet.ipNet.String(), "gw", rNet.getServerIP())
+	err = wstun_shared.ExecCmd("route", "add", "-net", rNet.ipNet.String(), "gw", rNet.getServerIP())
 	if err != nil {
 		return err
 	}
 	if routeGateway {
-		err = execCmd("route", "add", "default", "gw", rNet.getServerIP())
+		err = wstun_shared.ExecCmd("route", "add", "default", "gw", rNet.getServerIP())
 		if err != nil {
 			return err
 		}
@@ -34,5 +34,5 @@ func getPlatformSpecifics(rNet *remoteNet, mtu int, config water.Config) water.C
 }
 
 func addRoute(dev *water.Interface, rNet *remoteNet, routeNet *net.IPNet) error {
-	return execCmd("route", "add", "-net", routeNet.String(), "gw", rNet.getServerIP())
+	return wstun_shared.ExecCmd("route", "add", "-net", routeNet.String(), "gw", rNet.getServerIP())
 }

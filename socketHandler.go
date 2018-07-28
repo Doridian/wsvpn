@@ -10,12 +10,10 @@ import (
 	"time"
 )
 
-type CommandHandler interface {
-	HandleCommand(args []string) error
-}
+type CommandHandler func(args []string) error
 
 func SendCommand(conn *websocket.Conn, writeLock *sync.Mutex, command string, args ...string) error {
-	data := fmt.Sprintf("%s|%s", command, strings.Join(args, "|"))
+	data := fmt.Sprintf("0|%s|%s", command, strings.Join(args, "|"))
 	writeLock.Lock()
 	err := conn.WriteMessage(websocket.TextMessage, []byte(data))
 	writeLock.Unlock()
@@ -64,14 +62,18 @@ func HandleSocket(iface *water.Interface, conn *websocket.Conn, writeLock *sync.
 				iface.Write(msg)
 			} else if msgType == websocket.TextMessage {
 				str := strings.Split(string(msg), "|")
-				handler := handlers[str[0]]
-				if handler == nil {
-					log.Printf("Unknown in-band command %s", str[0])
+				if len(str) < 2 {
+					log.Printf("Invalid in-band command structure")
 					continue
 				}
-				err = handler.HandleCommand(str[1:])
+				handler := handlers[str[1]]
+				if handler == nil {
+					log.Printf("Unknown in-band command %s", str[1])
+					continue
+				}
+				err = handler(str[2:])
 				if err != nil {
-					log.Printf("Error in in-band command %s: %v", str[0], err)
+					log.Printf("Error in in-band command %s: %v", str[1], err)
 				}
 			}
 		}

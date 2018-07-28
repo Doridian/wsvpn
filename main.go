@@ -108,8 +108,6 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	keepAlive(conn, &writeLock, &wg)
-
 	wstun_shared.SendCommand(conn, &writeLock, "init",
 		fmt.Sprintf("%s/%s", ipClient.String(), subnetSize), fmt.Sprintf("%d", *mtu))
 

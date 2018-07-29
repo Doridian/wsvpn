@@ -20,7 +20,7 @@ var upgrader = websocket.Upgrader{
 }
 
 var slotMutex sync.Mutex
-var usedSlots map[int]bool = make(map[int]bool)
+var usedSlots map[uint64]bool = make(map[uint64]bool)
 
 var mtu = flag.Int("mtu", 1280, "MTU for the tunnel")
 var subnetStr = flag.String("subnet", "192.168.3.0/24", "Subnet for the tunnel clients")
@@ -29,6 +29,7 @@ var listenAddr = flag.String("listen", "127.0.0.1:9000", "Listen address for the
 var subnet *net.IPNet
 var ipServer net.IP
 var subnetSize string
+var maxSlot uint64
 
 func main() {
 	flag.Parse()
@@ -45,8 +46,12 @@ func main() {
 	subnetOnes, _ := subnet.Mask.Size()
 	subnetSize = fmt.Sprintf("%d", subnetOnes)
 
+	maxSlot = cidr.AddressCount(subnet)
+
+	log.Printf("VPN server online at %s, serving subnet %s (%d max clients) with MTU %d",
+		*listenAddr, *subnetStr, maxSlot-1, *mtu)
+
 	http.HandleFunc("/", serveWs)
-	log.Printf("VPN server online at %s, serving subnet %s with MTU %d", *listenAddr, *subnetStr, *mtu)
 	err = http.ListenAndServe(*listenAddr, nil)
 	if err != nil {
 		panic(err)
@@ -69,13 +74,14 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var slot int = 1
+	var slot uint64 = 1
 	slotMutex.Lock()
 	for usedSlots[slot] {
 		slot = slot + 1
-		if slot > 250 {
+		if slot > maxSlot {
 			slotMutex.Unlock()
 			conn.Close()
+			log.Println("Cannot connect new client. IP slots exhausted.")
 			return
 		}
 	}
@@ -101,7 +107,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[%s] Client EXIT", connId)
 	}()
 
-	ipClient, err := cidr.Host(subnet, slot)
+	ipClient, err := cidr.Host(subnet, int(slot))
 	if err != nil {
 		log.Printf("[%s] Error transforming client IP: %v", connId, err)
 		return

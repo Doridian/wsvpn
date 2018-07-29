@@ -142,7 +142,7 @@ func main() {
 		return addRoute(iface, cRemoteNet, routeNet)
 	}
 
-	wstun_shared.HandleSocket(iface, conn, &writeLock, &wg, commandMap)
+	wstun_shared.HandleSocket("0", iface, conn, &writeLock, &wg, commandMap)
 
 	wg.Wait()
 }

@@ -16,12 +16,16 @@ var lastCommandId uint64 = 0
 
 type CommandHandler func(args []string) error
 
-func SendCommand(conn *websocket.Conn, writeLock *sync.Mutex, command string, args ...string) error {
-	data := []byte(fmt.Sprintf("%d|%s|%s", atomic.AddUint64(&lastCommandId, 1), command, strings.Join(args, "|")))
+func RawSendCommand(conn *websocket.Conn, writeLock *sync.Mutex, commandId string, command string, args ...string) error {
+	data := []byte(fmt.Sprintf("%s|%s|%s", commandId, command, strings.Join(args, "|")))
 	writeLock.Lock()
 	err := conn.WriteMessage(websocket.TextMessage, data)
 	writeLock.Unlock()
 	return err
+}
+
+func SendCommand(conn *websocket.Conn, writeLock *sync.Mutex, command string, args ...string) error {
+	return RawSendCommand(conn, writeLock, fmt.Sprintf("%s", atomic.AddUint64(&lastCommandId, 1)), command, args...)
 }
 
 func HandleSocket(iface *water.Interface, conn *websocket.Conn, writeLock *sync.Mutex,
@@ -95,10 +99,7 @@ func HandleSocket(iface *water.Interface, conn *websocket.Conn, writeLock *sync.
 					log.Printf("Error in in-band command %s: %v", commandName, err)
 				}
 
-				data := []byte(fmt.Sprintf("%s|reply|%v", commandId, err == nil))
-				writeLock.Lock()
-				conn.WriteMessage(websocket.TextMessage, data)
-				writeLock.Unlock()
+				RawSendCommand(conn, writeLock, commandId, "reply", fmt.Sprintf("%v", err == nil))
 			}
 		}
 	}()

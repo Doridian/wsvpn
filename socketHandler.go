@@ -56,8 +56,12 @@ func (s *Socket) SendCommand(command string, args ...string) error {
 	return s.RawSendCommand(fmt.Sprintf("%d", atomic.AddUint64(&lastCommandId, 1)), command, args...)
 }
 
-func (s *Socket) closeSocket() {
+func (s *Socket) closeDone() {
 	s.wg.Done()
+	s.Close()
+}
+
+func (s *Socket) Close() {
 	s.writeLock.Lock()
 	s.conn.Close()
 	s.writeLock.Unlock()
@@ -68,7 +72,7 @@ func (s *Socket) Serve() {
 	s.wg.Add(3)
 
 	go func() {
-		defer s.closeSocket()
+		defer s.closeDone()
 
 		packet := make([]byte, 2000)
 
@@ -89,7 +93,7 @@ func (s *Socket) Serve() {
 	}()
 
 	go func() {
-		defer s.closeSocket()
+		defer s.closeDone()
 
 		for {
 			msgType, msg, err := s.conn.ReadMessage()
@@ -143,7 +147,7 @@ func (s *Socket) Serve() {
 	})
 
 	go func() {
-		defer s.closeSocket()
+		defer s.closeDone()
 
 		for {
 			s.writeLock.Lock()

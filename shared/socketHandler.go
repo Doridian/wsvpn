@@ -44,13 +44,13 @@ func (s *Socket) Wait() {
 	s.wg.Wait()
 }
 
-func (s *Socket) RawSendCommand(commandId string, command string, args ...string) error {
+func (s *Socket) rawSendCommand(commandId string, command string, args ...string) error {
 	return s.writeMessage(websocket.TextMessage,
 		[]byte(fmt.Sprintf("%s|%s|%s", commandId, command, strings.Join(args, "|"))))
 }
 
 func (s *Socket) SendCommand(command string, args ...string) error {
-	return s.RawSendCommand(fmt.Sprintf("%d", atomic.AddUint64(&lastCommandId, 1)), command, args...)
+	return s.rawSendCommand(fmt.Sprintf("%d", atomic.AddUint64(&lastCommandId, 1)), command, args...)
 }
 
 func (s *Socket) writeMessage(msgType int, data []byte) error {
@@ -160,7 +160,7 @@ func (s *Socket) Serve() {
 					log.Printf("[%s] Error in in-band command %s: %v", s.connId, commandName, err)
 				}
 
-				s.RawSendCommand(commandId, "reply", fmt.Sprintf("%v", err == nil))
+				s.rawSendCommand(commandId, "reply", fmt.Sprintf("%v", err == nil))
 			}
 		}
 	}()

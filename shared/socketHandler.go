@@ -23,6 +23,7 @@ type Socket struct {
 	writeLock *sync.Mutex
 	wg        *sync.WaitGroup
 	handlers  map[string]CommandHandler
+	closechan chan bool
 }
 
 func MakeSocket(connId string, conn *websocket.Conn, iface *water.Interface) *Socket {
@@ -33,6 +34,7 @@ func MakeSocket(connId string, conn *websocket.Conn, iface *water.Interface) *So
 		writeLock: &sync.Mutex{},
 		wg:        &sync.WaitGroup{},
 		handlers:  make(map[string]CommandHandler),
+		closechan: make(chan bool),
 	}
 }
 
@@ -81,6 +83,7 @@ func (s *Socket) Close() {
 	defer s.writeLock.Unlock()
 	s.conn.Close()
 	s.iface.Close()
+	close(s.closechan)
 }
 
 func (s *Socket) tryServeIfaceRead() {
@@ -98,12 +101,12 @@ func (s *Socket) tryServeIfaceRead() {
 			n, err := s.iface.Read(packet)
 			if err != nil {
 				log.Printf("[%s] Error reading packet from tun: %v", s.connId, err)
-				break
+				return
 			}
 			err = s.writeMessage(websocket.BinaryMessage, packet[:n])
 			if err != nil {
 				log.Printf("[%s] Error writing packet to WS: %v", s.connId, err)
-				break
+				return
 			}
 		}
 	}()
@@ -124,7 +127,7 @@ func (s *Socket) Serve() {
 				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
 					log.Printf("[%s] Error reading packet from WS: %v", s.connId, err)
 				}
-				break
+				return
 			}
 
 			if msgType == websocket.BinaryMessage {
@@ -178,15 +181,20 @@ func (s *Socket) Serve() {
 		defer s.closeDone()
 
 		for {
-			err := s.writeMessage(websocket.PingMessage, []byte{})
-			if err != nil {
-				log.Printf("[%s] Error writing ping frame: %v", s.connId, err)
-				break
-			}
-			time.Sleep(timeout / 2)
-			if time.Now().Sub(lastResponse) > timeout {
-				log.Printf("[%s] Ping timeout", s.connId)
-				break
+			select {
+			case <-time.After(timeout / 2):
+				err := s.writeMessage(websocket.PingMessage, []byte{})
+				if err != nil {
+					log.Printf("[%s] Error writing ping frame: %v", s.connId, err)
+					return
+				}
+				time.Sleep(timeout / 2)
+				if time.Now().Sub(lastResponse) > timeout {
+					log.Printf("[%s] Ping timeout", s.connId)
+					return
+				}
+			case <-s.closechan:
+				return
 			}
 		}
 	}()

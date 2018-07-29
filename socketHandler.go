@@ -25,7 +25,7 @@ func RawSendCommand(conn *websocket.Conn, writeLock *sync.Mutex, commandId strin
 }
 
 func SendCommand(conn *websocket.Conn, writeLock *sync.Mutex, command string, args ...string) error {
-	return RawSendCommand(conn, writeLock, fmt.Sprintf("%s", atomic.AddUint64(&lastCommandId, 1)), command, args...)
+	return RawSendCommand(conn, writeLock, fmt.Sprintf("%d", atomic.AddUint64(&lastCommandId, 1)), command, args...)
 }
 
 func HandleSocket(connId string, iface *water.Interface, conn *websocket.Conn, writeLock *sync.Mutex,

@@ -28,14 +28,21 @@ func SendCommand(conn *websocket.Conn, writeLock *sync.Mutex, command string, ar
 	return RawSendCommand(conn, writeLock, fmt.Sprintf("%d", atomic.AddUint64(&lastCommandId, 1)), command, args...)
 }
 
+func closeSocket(iface *water.Interface, conn *websocket.Conn, writeLock *sync.Mutex, wg *sync.WaitGroup) {
+	wg.Done()
+	writeLock.Lock()
+	conn.Close()
+	writeLock.Unlock()
+	iface.Close()
+}
+
 func HandleSocket(connId string, iface *water.Interface, conn *websocket.Conn, writeLock *sync.Mutex,
 	wg *sync.WaitGroup, handlers map[string]CommandHandler) {
 
-	wg.Add(1)
+	wg.Add(3)
+
 	go func() {
-		defer wg.Done()
-		defer conn.Close()
-		defer iface.Close()
+		defer closeSocket(iface, conn, writeLock, wg)
 
 		packet := make([]byte, 2000)
 
@@ -55,11 +62,8 @@ func HandleSocket(connId string, iface *water.Interface, conn *websocket.Conn, w
 		}
 	}()
 
-	wg.Add(1)
 	go func() {
-		defer wg.Done()
-		defer conn.Close()
-		defer iface.Close()
+		defer closeSocket(iface, conn, writeLock, wg)
 
 		for {
 			msgType, msg, err := conn.ReadMessage()
@@ -112,11 +116,8 @@ func HandleSocket(connId string, iface *water.Interface, conn *websocket.Conn, w
 		return nil
 	})
 
-	wg.Add(1)
 	go func() {
-		defer wg.Done()
-		defer conn.Close()
-		defer iface.Close()
+		defer closeSocket(iface, conn, writeLock, wg)
 
 		for {
 			writeLock.Lock()

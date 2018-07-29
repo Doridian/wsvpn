@@ -120,7 +120,7 @@ func HandleSocket(connId string, iface *water.Interface, conn *websocket.Conn, w
 
 		for {
 			writeLock.Lock()
-			err := conn.WriteMessage(websocket.PingMessage, []byte("keepalive"))
+			err := conn.WriteMessage(websocket.PingMessage, []byte{})
 			writeLock.Unlock()
 			if err != nil {
 				log.Printf("[%s] Error writing ping frame: %v", connId, err)

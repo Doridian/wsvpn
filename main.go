@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"flag"
-	"fmt"
 	"github.com/Doridian/wstun_shared"
 	"github.com/gorilla/websocket"
 	"github.com/songgao/water"
@@ -128,10 +127,7 @@ func main() {
 	var wg sync.WaitGroup
 	var writeLock sync.Mutex
 
-	data := []byte(fmt.Sprintf("%s|reply|%v", str[0], true))
-	writeLock.Lock()
-	conn.WriteMessage(websocket.TextMessage, data)
-	writeLock.Unlock()
+	wstun_shared.RawSendCommand(conn, &writeLock, str[0], "reply", "true")
 
 	commandMap := make(map[string]wstun_shared.CommandHandler)
 

@@ -17,24 +17,26 @@ var lastCommandId uint64 = 0
 type CommandHandler func(args []string) error
 
 type Socket struct {
-	connId    string
-	conn      *websocket.Conn
-	iface     *water.Interface
-	writeLock *sync.Mutex
-	wg        *sync.WaitGroup
-	handlers  map[string]CommandHandler
-	closechan chan bool
+	connId        string
+	conn          *websocket.Conn
+	iface         *water.Interface
+	writeLock     *sync.Mutex
+	wg            *sync.WaitGroup
+	handlers      map[string]CommandHandler
+	closechan     chan bool
+	closechanopen bool
 }
 
 func MakeSocket(connId string, conn *websocket.Conn, iface *water.Interface) *Socket {
 	return &Socket{
-		connId:    connId,
-		conn:      conn,
-		iface:     iface,
-		writeLock: &sync.Mutex{},
-		wg:        &sync.WaitGroup{},
-		handlers:  make(map[string]CommandHandler),
-		closechan: make(chan bool),
+		connId:        connId,
+		conn:          conn,
+		iface:         iface,
+		writeLock:     &sync.Mutex{},
+		wg:            &sync.WaitGroup{},
+		handlers:      make(map[string]CommandHandler),
+		closechan:     make(chan bool),
+		closechanopen: true,
 	}
 }
 
@@ -83,7 +85,10 @@ func (s *Socket) Close() {
 	defer s.writeLock.Unlock()
 	s.conn.Close()
 	s.iface.Close()
-	close(s.closechan)
+	if s.closechanopen {
+		s.closechanopen = false
+		close(s.closechan)
+	}
 }
 
 func (s *Socket) tryServeIfaceRead() {

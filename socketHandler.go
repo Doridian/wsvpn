@@ -28,7 +28,7 @@ func SendCommand(conn *websocket.Conn, writeLock *sync.Mutex, command string, ar
 	return RawSendCommand(conn, writeLock, fmt.Sprintf("%s", atomic.AddUint64(&lastCommandId, 1)), command, args...)
 }
 
-func HandleSocket(iface *water.Interface, conn *websocket.Conn, writeLock *sync.Mutex,
+func HandleSocket(connId string, iface *water.Interface, conn *websocket.Conn, writeLock *sync.Mutex,
 	wg *sync.WaitGroup, handlers map[string]CommandHandler) {
 
 	wg.Add(1)
@@ -42,14 +42,14 @@ func HandleSocket(iface *water.Interface, conn *websocket.Conn, writeLock *sync.
 		for {
 			n, err := iface.Read(packet)
 			if err != nil {
-				log.Printf("Error reading packet from tun: %v", err)
+				log.Printf("[%s] Error reading packet from tun: %v", connId, err)
 				break
 			}
 			writeLock.Lock()
 			err = conn.WriteMessage(websocket.BinaryMessage, packet[:n])
 			writeLock.Unlock()
 			if err != nil {
-				log.Printf("Error writing packet to WS: %v", err)
+				log.Printf("[%s] Error writing packet to WS: %v", connId, err)
 				break
 			}
 		}
@@ -65,7 +65,7 @@ func HandleSocket(iface *water.Interface, conn *websocket.Conn, writeLock *sync.
 			msgType, msg, err := conn.ReadMessage()
 			if err != nil {
 				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-					log.Printf("Error reading packet from WS: %v", err)
+					log.Printf("[%s] Error reading packet from WS: %v", connId, err)
 				}
 				break
 			}
@@ -74,7 +74,7 @@ func HandleSocket(iface *water.Interface, conn *websocket.Conn, writeLock *sync.
 			} else if msgType == websocket.TextMessage {
 				str := strings.Split(string(msg), "|")
 				if len(str) < 2 {
-					log.Printf("Invalid in-band command structure")
+					log.Printf("[%s] Invalid in-band command structure", connId)
 					continue
 				}
 
@@ -85,7 +85,7 @@ func HandleSocket(iface *water.Interface, conn *websocket.Conn, writeLock *sync.
 					if len(str) > 2 {
 						commandResult = str[2]
 					}
-					log.Printf("Got command reply ID %s: %s", commandId, commandResult)
+					log.Printf("[%s] Got command reply ID %s: %s", connId, commandId, commandResult)
 					continue
 				}
 
@@ -96,7 +96,7 @@ func HandleSocket(iface *water.Interface, conn *websocket.Conn, writeLock *sync.
 					err = handler(str[2:])
 				}
 				if err != nil {
-					log.Printf("Error in in-band command %s: %v", commandName, err)
+					log.Printf("[%s] Error in in-band command %s: %v", connId, commandName, err)
 				}
 
 				RawSendCommand(conn, writeLock, commandId, "reply", fmt.Sprintf("%v", err == nil))
@@ -123,12 +123,12 @@ func HandleSocket(iface *water.Interface, conn *websocket.Conn, writeLock *sync.
 			err := conn.WriteMessage(websocket.PingMessage, []byte("keepalive"))
 			writeLock.Unlock()
 			if err != nil {
-				log.Printf("Error writing ping frame: %v", err)
+				log.Printf("[%s] Error writing ping frame: %v", connId, err)
 				break
 			}
 			time.Sleep(timeout / 2)
 			if time.Now().Sub(lastResponse) > timeout {
-				log.Printf("Ping timeout")
+				log.Printf("[%s] Ping timeout", connId)
 				break
 			}
 		}

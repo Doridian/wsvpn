@@ -82,50 +82,15 @@ func main() {
 	}
 	defer conn.Close()
 
-	msgType, msg, err := conn.ReadMessage()
-	if err != nil {
-		panic(err)
-	}
-	if msgType != websocket.TextMessage {
-		panic(errors.New("Invalid HELLO message type"))
-	}
-	str := strings.Split(string(msg), "|")
-	if str[1] != "init" {
-		panic(errors.New("Invalid HELLO message command"))
-	}
-	rNetStr := str[2]
-	mtu, err := strconv.Atoi(str[3])
-	if err != nil {
-		panic(err)
-	}
+	var iface *water.Interface
+	var cRemoteNet *remoteNet
 
-	cRemoteNet, err := parseRemoteNet(rNetStr)
-	if err != nil {
-		panic(err)
-	}
-
-	log.Printf("Network %s, mtu %d", cRemoteNet.str, mtu)
-
-	ifconfig := getPlatformSpecifics(cRemoteNet, mtu, water.Config{
-		DeviceType: water.TUN,
-	})
-	iface, err := water.New(ifconfig)
-	if err != nil {
-		panic(err)
-	}
-
-	log.Printf("Opened %s", iface.Name())
-
-	err = configIface(iface, cRemoteNet, mtu, false)
-	if err != nil {
-		panic(err)
-	}
-
-	log.Printf("Configured interface. Starting operations.")
-
-	socket := shared.MakeSocket("0", conn, iface)
-	socket.RawSendCommand(str[0], "reply", "true")
+	socket := shared.MakeSocket("0", conn, nil)
 	socket.AddCommandHandler("addroute", func(args []string) error {
+		if iface == nil || cRemoteNet == nil {
+			return errors.New("Cannot addroute before init")
+		}
+
 		if len(args) < 1 {
 			return errors.New("addroute needs 1 argument")
 		}
@@ -134,6 +99,45 @@ func main() {
 			return err
 		}
 		return addRoute(iface, cRemoteNet, routeNet)
+	})
+	socket.AddCommandHandler("init", func(args []string) error {
+		var err error
+
+		rNetStr := args[0]
+		mtu, err := strconv.Atoi(args[1])
+		if err != nil {
+			panic(err)
+		}
+
+		cRemoteNet, err = parseRemoteNet(rNetStr)
+		if err != nil {
+			panic(err)
+		}
+
+		log.Printf("Network %s, mtu %d", cRemoteNet.str, mtu)
+
+		ifconfig := getPlatformSpecifics(cRemoteNet, mtu, water.Config{
+			DeviceType: water.TUN,
+		})
+		iface, err = water.New(ifconfig)
+		if err != nil {
+			panic(err)
+		}
+
+		log.Printf("Opened %s", iface.Name())
+
+		err = configIface(iface, cRemoteNet, mtu, false)
+		if err != nil {
+			panic(err)
+		}
+
+		log.Printf("Configured interface. Starting operations.")
+		err = socket.SetInterface(iface)
+		if err != nil {
+			panic(err)
+		}
+
+		return nil
 	})
 	socket.Serve()
 	socket.Wait()

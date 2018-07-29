@@ -45,15 +45,18 @@ func (s *Socket) Wait() {
 }
 
 func (s *Socket) RawSendCommand(commandId string, command string, args ...string) error {
-	data := []byte(fmt.Sprintf("%s|%s|%s", commandId, command, strings.Join(args, "|")))
-	s.writeLock.Lock()
-	err := s.conn.WriteMessage(websocket.TextMessage, data)
-	s.writeLock.Unlock()
-	return err
+	return s.writeMessage(websocket.TextMessage,
+		[]byte(fmt.Sprintf("%s|%s|%s", commandId, command, strings.Join(args, "|"))))
 }
 
 func (s *Socket) SendCommand(command string, args ...string) error {
 	return s.RawSendCommand(fmt.Sprintf("%d", atomic.AddUint64(&lastCommandId, 1)), command, args...)
+}
+
+func (s *Socket) writeMessage(msgType int, data []byte) error {
+	s.writeLock.Lock()
+	defer s.writeLock.Unlock()
+	return s.conn.WriteMessage(msgType, data)
 }
 
 func (s *Socket) closeDone() {
@@ -61,16 +64,31 @@ func (s *Socket) closeDone() {
 	s.Close()
 }
 
+func (s *Socket) SetInterface(iface *water.Interface) error {
+	s.writeLock.Lock()
+	defer s.writeLock.Unlock()
+
+	if s.iface != nil {
+		return errors.New("Cannot re-define interface. Already set.")
+	}
+	s.iface = iface
+	s.tryServeIfaceRead()
+	return nil
+}
+
 func (s *Socket) Close() {
 	s.writeLock.Lock()
+	defer s.writeLock.Unlock()
 	s.conn.Close()
-	s.writeLock.Unlock()
 	s.iface.Close()
 }
 
-func (s *Socket) Serve() {
-	s.wg.Add(3)
+func (s *Socket) tryServeIfaceRead() {
+	if s.iface == nil {
+		return
+	}
 
+	s.wg.Add(1)
 	go func() {
 		defer s.closeDone()
 
@@ -82,16 +100,21 @@ func (s *Socket) Serve() {
 				log.Printf("[%s] Error reading packet from tun: %v", s.connId, err)
 				break
 			}
-			s.writeLock.Lock()
-			err = s.conn.WriteMessage(websocket.BinaryMessage, packet[:n])
-			s.writeLock.Unlock()
+			err = s.writeMessage(websocket.BinaryMessage, packet[:n])
 			if err != nil {
 				log.Printf("[%s] Error writing packet to WS: %v", s.connId, err)
 				break
 			}
 		}
 	}()
+}
 
+func (s *Socket) Serve() {
+	s.writeLock.Lock()
+	defer s.writeLock.Unlock()
+	s.tryServeIfaceRead()
+
+	s.wg.Add(1)
 	go func() {
 		defer s.closeDone()
 
@@ -103,7 +126,11 @@ func (s *Socket) Serve() {
 				}
 				break
 			}
+
 			if msgType == websocket.BinaryMessage {
+				if s.iface == nil {
+					continue
+				}
 				s.iface.Write(msg)
 			} else if msgType == websocket.TextMessage {
 				str := strings.Split(string(msg), "|")
@@ -146,13 +173,12 @@ func (s *Socket) Serve() {
 		return nil
 	})
 
+	s.wg.Add(1)
 	go func() {
 		defer s.closeDone()
 
 		for {
-			s.writeLock.Lock()
-			err := s.conn.WriteMessage(websocket.PingMessage, []byte{})
-			s.writeLock.Unlock()
+			err := s.writeMessage(websocket.PingMessage, []byte{})
 			if err != nil {
 				log.Printf("[%s] Error writing ping frame: %v", s.connId, err)
 				break

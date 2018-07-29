@@ -56,7 +56,7 @@ func main() {
 func serveWs(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
+		log.Printf("Error upgrading to WS: %v", err)
 		return
 	}
 
@@ -64,7 +64,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		DeviceType: water.TUN,
 	})
 	if err != nil {
-		log.Println(err)
+		log.Printf("Error creating new TUN: %v", err)
 		conn.Close()
 		return
 	}
@@ -82,6 +82,10 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	usedSlots[slot] = true
 	slotMutex.Unlock()
 
+	connId := fmt.Sprintf("%d", slot)
+
+	log.Printf("[%s] Client ENTER", connId)
+
 	var writeLock sync.Mutex
 	var wg sync.WaitGroup
 
@@ -93,17 +97,19 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		writeLock.Lock()
 		conn.Close()
 		writeLock.Unlock()
+
+		log.Printf("[%s] Client EXIT", connId)
 	}()
 
 	ipClient, err := cidr.Host(subnet, slot)
 	if err != nil {
-		log.Println(err)
+		log.Printf("[%s] Error transforming client IP: %v", connId, err)
 		return
 	}
 
 	err = configIface(iface, *mtu, ipClient, ipServer)
 	if err != nil {
-		log.Println(err)
+		log.Printf("[%s] Error configuring interface: %v", connId, err)
 		return
 	}
 
@@ -112,7 +118,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	commandMap := make(map[string]wstun_shared.CommandHandler)
 
-	wstun_shared.HandleSocket(iface, conn, &writeLock, &wg, commandMap)
+	wstun_shared.HandleSocket(connId, iface, conn, &writeLock, &wg, commandMap)
 
 	wg.Wait()
 }

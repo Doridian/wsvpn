@@ -92,18 +92,13 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[%s] Client ENTER", connId)
 
-	var writeLock sync.Mutex
-	var wg sync.WaitGroup
+	socket := wstun_shared.MakeSocket(connId, conn, iface)
 
 	defer func() {
 		slotMutex.Lock()
 		delete(usedSlots, slot)
 		slotMutex.Unlock()
-		iface.Close()
-		writeLock.Lock()
-		conn.Close()
-		writeLock.Unlock()
-
+		socket.Close()
 		log.Printf("[%s] Client EXIT", connId)
 	}()
 
@@ -119,12 +114,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wstun_shared.SendCommand(conn, &writeLock, "init",
-		fmt.Sprintf("%s/%s", ipClient.String(), subnetSize), fmt.Sprintf("%d", *mtu))
-
-	commandMap := make(map[string]wstun_shared.CommandHandler)
-
-	wstun_shared.HandleSocket(connId, iface, conn, &writeLock, &wg, commandMap)
-
-	wg.Wait()
+	socket.SendCommand("init", fmt.Sprintf("%s/%s", ipClient.String(), subnetSize), fmt.Sprintf("%d", *mtu))
+	socket.Serve()
+	socket.Wait()
 }

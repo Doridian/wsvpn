@@ -10,6 +10,7 @@ install:
 - go get -d -v ./...
 script:
 - go install -v ./...
+- ls -Rla $GOPATH/bin/
 deploy:
   provider: releases
   api_key:

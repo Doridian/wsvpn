@@ -1,2 +1,4 @@
+/server/server
+/client/client
 *.exe
 *.exe~

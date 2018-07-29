@@ -1,4 +1,4 @@
-package wstun_shared
+package shared
 
 import (
 	"errors"

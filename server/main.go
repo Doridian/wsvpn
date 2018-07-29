@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/Doridian/wstun_shared"
+	"github.com/Doridian/wsvpn/shared"
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/gorilla/websocket"
 	"github.com/songgao/water"
@@ -92,7 +92,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[%s] Client ENTER", connId)
 
-	socket := wstun_shared.MakeSocket(connId, conn, iface)
+	socket := shared.MakeSocket(connId, conn, iface)
 
 	defer func() {
 		slotMutex.Lock()

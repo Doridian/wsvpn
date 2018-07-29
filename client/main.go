@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"flag"
-	"github.com/Doridian/wstun_shared"
+	"github.com/Doridian/wsvpn/shared"
 	"github.com/gorilla/websocket"
 	"github.com/songgao/water"
 	"io/ioutil"
@@ -123,7 +123,7 @@ func main() {
 
 	log.Printf("Configured interface. Starting operations.")
 
-	socket := wstun_shared.MakeSocket("0", conn, iface)
+	socket := shared.MakeSocket("0", conn, iface)
 	socket.RawSendCommand(str[0], "reply", "true")
 	socket.AddCommandHandler("addroute", func(args []string) error {
 		if len(args) < 1 {

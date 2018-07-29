@@ -183,14 +183,13 @@ func (s *Socket) Serve() {
 		for {
 			select {
 			case <-time.After(timeout / 2):
+				if time.Now().Sub(lastResponse) > timeout {
+					log.Printf("[%s] Ping timeout", s.connId)
+					return
+				}
 				err := s.writeMessage(websocket.PingMessage, []byte{})
 				if err != nil {
 					log.Printf("[%s] Error writing ping frame: %v", s.connId, err)
-					return
-				}
-				time.Sleep(timeout / 2)
-				if time.Now().Sub(lastResponse) > timeout {
-					log.Printf("[%s] Ping timeout", s.connId)
 					return
 				}
 			case <-s.closechan:

@@ -14,7 +14,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 const DEFAULT_URL = "ws://example.com"
@@ -124,14 +123,9 @@ func main() {
 
 	log.Printf("Configured interface. Starting operations.")
 
-	var wg sync.WaitGroup
-	var writeLock sync.Mutex
-
-	wstun_shared.RawSendCommand(conn, &writeLock, str[0], "reply", "true")
-
-	commandMap := make(map[string]wstun_shared.CommandHandler)
-
-	commandMap["addroute"] = func(args []string) error {
+	socket := wstun_shared.MakeSocket("0", conn, iface)
+	socket.RawSendCommand(str[0], "reply", "true")
+	socket.AddCommandHandler("addroute", func(args []string) error {
 		if len(args) < 1 {
 			return errors.New("addroute needs 1 argument")
 		}
@@ -140,9 +134,7 @@ func main() {
 			return err
 		}
 		return addRoute(iface, cRemoteNet, routeNet)
-	}
-
-	wstun_shared.HandleSocket("0", iface, conn, &writeLock, &wg, commandMap)
-
-	wg.Wait()
+	})
+	socket.Serve()
+	socket.Wait()
 }

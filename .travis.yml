@@ -1,21 +1,28 @@
 language: go
 go:
 - 1.x
-env:
-- GIMME_OS=linux GIMME_ARCH=amd64
-- GIMME_OS=darwin GIMME_ARCH=amd64
-- GIMME_OS=windows GIMME_ARCH=amd64
-- GIMME_OS=linux GIMME_ARCH=arm64
+before_install:
+  source ./travis.sh
 install:
 - go get -d -v ./...
+- mkdir -p $HOME/binaries
 script:
-- go install -v ./...
-- ls -Rla $GOPATH/bin/
+- buildfor windows amd64
+- buildfor windows 386
+- buildfor linux amd64
+- buildfor linux 386
+- buildfor linux arm64
+- buildfor darwin amd64
+notifications:
+  email:
+    on_success: change
+    on_failure: change
 deploy:
   provider: releases
   api_key:
     secure: oDkBD+OFxiZ7MafnFptjzeYg3sTf90p5yqQX0Eq3e2HE5E+Zf6ucxoitG8tlm2LCscx4roGfCHFunL9zZAItWpH48F73OB/icj6lo4TWY8yeXTwdICG+wm4wDabaMUF/LnpU1RTKJUcCCK+viat0nOeeRjsiSC0HaLa5zmniwll4Gnkdyj7FYfG20eP1QE1yP2oj2Wdp/gjurnM5nWem9Sf96E7NZ5mYOTpdXEggI2OUE6g+rGAkw7WGF9eYPazTW+opgLGxjBKav9lTv+J4zTMiW2A9oI8apns8ZqxGIbJUbhxb1NTAmZ1mVfvEVW1zZ389W7DBZlQjH/yOU1pklNuHz9Gs63GsDvZgcnAsu7zSXrfKD8uKWBSI+ZRpjlJdu7HaXydtzAwjXdvkUdJEwczEokrZfF+XuJKsON/SHWVnN7NQOxYKVl4yacfFQvFN4T76kc9x5mKWJ45pSGtG5DwMiNiiNOjERFDiRVWD1FK02+n/eaGy330vpewksfW5fLYlIvvtRy6EQu/ZUcvj1dP2ktgCjn7hW+sKBIb9wFt/Q3hLzgyG+A7nEM0MbVxwpun98aOtUBGk/TST8MMq6JGqv+e3GRrqOMwT2J4o1EyORfz72hGzXnGU6U1sqYVrpC9eoI2eg33MTYHTxJH8GnHL5OOVtk8aUS0LSrC6FZE=
   file:
-    $GOPATH/bin/
+    $HOME/binaries/*
   on:
     repo: Doridian/wsvpn
+    tags: true

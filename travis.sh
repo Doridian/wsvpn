@@ -9,8 +9,8 @@ buildfor() {
 		EXESUFFIX=".exe"
 	fi
 
-	go get -d ./...
+	go get -d -v ./...
 
-	go build -o "$HOME/binaries/client-$GOOS-$GOARCH$EXESUFFIX" -v github.com/Doridian/wsvpn/client
-	go build -o "$HOME/binaries/server-$GOOS-$GOARCH$EXESUFFIX" -v github.com/Doridian/wsvpn/server
+	go build -o "$HOME/binaries/client-$GOOS-$GOARCH$EXESUFFIX" github.com/Doridian/wsvpn/client
+	go build -o "$HOME/binaries/server-$GOOS-$GOARCH$EXESUFFIX" github.com/Doridian/wsvpn/server
 }

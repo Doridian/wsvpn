@@ -1,6 +1,8 @@
 buildfor() {
-	GOOS="$1"
-	GOARCH="$2"
+	export GOOS="$1"
+	export GOARCH="$2"
+	export GIMME_OS="$GOOS"
+	export GIMME_ARCH="$GOARCH"
 	EXESUFFIX=""
 	if [ "$GOOS" == "windows" ]
 	then

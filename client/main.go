@@ -20,11 +20,25 @@ const DEFAULT_URL = "ws://example.com"
 
 var connectAddr = flag.String("connect", DEFAULT_URL, "Server address to connect to")
 var authFile = flag.String("auth-file", "", "File to read authentication from in the format user:password")
+var upScript = flag.String("up-script", "", "Script to run once the VPN is online")
+var downScript = flag.String("down-script", "", "Script to run when the VPN goes offline")
 
 func productionWarnings(str string) {
 	for n := 0; n <= 5; n++ {
 		log.Printf("DO NOT USE THIS IN PRODUCTION! %s!", str)
 	}
+}
+
+func runEventScript(script *string, op string, cRemoteNet *remoteNet, iface *water.Interface) error {
+	if script == nil {
+		return nil
+	}
+	scriptStr := *script
+	if scriptStr == "" {
+		return nil
+	}
+
+	return shared.ExecCmd(scriptStr, op, cRemoteNet.str, iface.Name())
 }
 
 func main() {
@@ -85,6 +99,13 @@ func main() {
 	var iface *water.Interface
 	var cRemoteNet *remoteNet
 
+	defer func() {
+		if iface != nil {
+			runEventScript(downScript, "down", cRemoteNet, iface)
+			iface.Close()
+		}
+	}()
+
 	socket := shared.MakeSocket("0", conn, nil)
 	socket.AddCommandHandler("addroute", func(args []string) error {
 		if iface == nil || cRemoteNet == nil {
@@ -136,6 +157,8 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+
+		runEventScript(upScript, "up", cRemoteNet, iface)
 
 		return nil
 	})

@@ -2,11 +2,14 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/songgao/water"
 	"net"
 )
+
+var ifaceName = flag.String("ifname", "tap0901", "Name of the interface to use")
 
 func configIface(dev *water.Interface, rNet *remoteNet, mtu int, routeGateway bool) error {
 	gw := "gateway=none"
@@ -21,7 +24,7 @@ func configIface(dev *water.Interface, rNet *remoteNet, mtu int, routeGateway bo
 }
 
 func getPlatformSpecifics(rNet *remoteNet, mtu int, config water.Config) water.Config {
-	config.ComponentID = "tap0901"
+	config.ComponentID = *ifaceName
 	config.Network = rNet.str
 	return config
 }

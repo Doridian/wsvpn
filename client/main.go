@@ -158,7 +158,7 @@ func main() {
 			panic(err)
 		}
 
-		runEventScript(upScript, "up", cRemoteNet, iface)
+		go runEventScript(upScript, "up", cRemoteNet, iface)
 
 		return nil
 	})

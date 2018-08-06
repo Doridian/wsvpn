@@ -12,15 +12,20 @@ import (
 var ifaceName = flag.String("ifname", "tap0901", "Name of the interface to use")
 
 func configIface(dev *water.Interface, ipConfig bool, rNet *remoteNet, mtu int, routeGateway bool) error {
+	err := shared.ExecCmd("netsh", "interface", "ipv4", "set", "subinterface", dev.Name(), fmt.Sprintf("mtu=%d", mtu))
+	if err != nil {
+		return err
+	}
+
 	if !ipConfig {
-		return shared.ExecCmd("netsh", "interface", "ip", "set", "address", "source=dhcp", fmt.Sprintf("mtu=%d", mtu), fmt.Sprintf("name=%s", dev.Name()))
+		return shared.ExecCmd("netsh", "interface", "ip", "set", "address", "source=dhcp", fmt.Sprintf("name=%s", dev.Name()))
 	}
 
 	gw := "gateway=none"
 	if routeGateway {
 		gw = fmt.Sprintf("gateway=%s", rNet.getServerIP())
 	}
-	return shared.ExecCmd("netsh", "interface", "ip", "set", "address", "source=static", fmt.Sprintf("mtu=%d", mtu), fmt.Sprintf("addr=%s", rNet.getClientIP()), fmt.Sprintf("name=%s", dev.Name()), fmt.Sprintf("mask=%s", rNet.getNetmask()), gw)
+	return shared.ExecCmd("netsh", "interface", "ip", "set", "address", "source=static", fmt.Sprintf("addr=%s", rNet.getClientIP()), fmt.Sprintf("name=%s", dev.Name()), fmt.Sprintf("mask=%s", rNet.getNetmask()), gw)
 }
 
 func getPlatformSpecifics(rNet *remoteNet, mtu int, config water.Config) water.Config {

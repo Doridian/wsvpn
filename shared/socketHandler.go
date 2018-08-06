@@ -14,29 +14,66 @@ import (
 
 var lastCommandId uint64 = 0
 
+var defaultMac = [6]byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+
+var learnMac bool = false
+var macTable map[MacAddr]*Socket = make(map[MacAddr]*Socket)
+var macLock sync.RWMutex
+
+func FindSocketByMAC(mac MacAddr) *Socket {
+	macLock.RLock()
+	defer macLock.RUnlock()
+
+	return macTable[mac]
+}
+
+func BroadcastMessage(msgType int, data []byte, skip *Socket) {
+	macLock.RLock()
+	targetList := make([]*Socket, 0)
+	for _, v := range macTable {
+		if v == skip {
+			continue
+		}
+		targetList = append(targetList, v)
+	}
+	macLock.RUnlock()
+
+	for _, v := range targetList {
+		v.WriteMessage(msgType, data)
+	}
+}
+
 type CommandHandler func(args []string) error
 
 type Socket struct {
 	connId        string
 	conn          *websocket.Conn
 	iface         *water.Interface
+	noIfaceReader bool
 	writeLock     *sync.Mutex
 	wg            *sync.WaitGroup
 	handlers      map[string]CommandHandler
 	closechan     chan bool
 	closechanopen bool
+	mac           MacAddr
 }
 
-func MakeSocket(connId string, conn *websocket.Conn, iface *water.Interface) *Socket {
+func SetMACLearning(enable bool) {
+	learnMac = enable
+}
+
+func MakeSocket(connId string, conn *websocket.Conn, iface *water.Interface, noIfaceReader bool) *Socket {
 	return &Socket{
 		connId:        connId,
 		conn:          conn,
 		iface:         iface,
+		noIfaceReader: noIfaceReader,
 		writeLock:     &sync.Mutex{},
 		wg:            &sync.WaitGroup{},
 		handlers:      make(map[string]CommandHandler),
 		closechan:     make(chan bool),
 		closechanopen: true,
+		mac:           defaultMac,
 	}
 }
 
@@ -49,7 +86,7 @@ func (s *Socket) Wait() {
 }
 
 func (s *Socket) rawSendCommand(commandId string, command string, args ...string) error {
-	return s.writeMessage(websocket.TextMessage,
+	return s.WriteMessage(websocket.TextMessage,
 		[]byte(fmt.Sprintf("%s|%s|%s", commandId, command, strings.Join(args, "|"))))
 }
 
@@ -57,10 +94,15 @@ func (s *Socket) SendCommand(command string, args ...string) error {
 	return s.rawSendCommand(fmt.Sprintf("%d", atomic.AddUint64(&lastCommandId, 1)), command, args...)
 }
 
-func (s *Socket) writeMessage(msgType int, data []byte) error {
+func (s *Socket) WriteMessage(msgType int, data []byte) error {
 	s.writeLock.Lock()
-	defer s.writeLock.Unlock()
-	return s.conn.WriteMessage(msgType, data)
+	err := s.conn.WriteMessage(msgType, data)
+	s.writeLock.Unlock()
+	if err != nil {
+		log.Printf("[%s] Error writing packet to WS: %v", s.connId, err)
+		s.Close()
+	}
+	return err
 }
 
 func (s *Socket) closeDone() {
@@ -80,6 +122,27 @@ func (s *Socket) SetInterface(iface *water.Interface) error {
 	return nil
 }
 
+func (s *Socket) setMACFrom(msg []byte) {
+	srcMac := GetSrcMAC(msg)
+	if !MACIsUnicast(srcMac) || srcMac == s.mac {
+		return
+	}
+
+	macLock.Lock()
+	defer macLock.Unlock()
+	if s.mac != defaultMac {
+		delete(macTable, s.mac)
+	}
+	if macTable[srcMac] != nil {
+		s.mac = defaultMac
+		log.Printf("[%d] MAC collision. Killing.", s.connId)
+		s.Close()
+		return
+	}
+	s.mac = srcMac
+	macTable[srcMac] = s
+}
+
 func (s *Socket) Close() {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
@@ -89,10 +152,16 @@ func (s *Socket) Close() {
 		s.closechanopen = false
 		close(s.closechan)
 	}
+	if s.mac != defaultMac {
+		macLock.Lock()
+		delete(macTable, s.mac)
+		s.mac = defaultMac
+		macLock.Unlock()
+	}
 }
 
 func (s *Socket) tryServeIfaceRead() {
-	if s.iface == nil {
+	if s.iface == nil || s.noIfaceReader {
 		return
 	}
 
@@ -108,9 +177,9 @@ func (s *Socket) tryServeIfaceRead() {
 				log.Printf("[%s] Error reading packet from tun: %v", s.connId, err)
 				return
 			}
-			err = s.writeMessage(websocket.BinaryMessage, packet[:n])
+
+			err = s.WriteMessage(websocket.BinaryMessage, packet[:n])
 			if err != nil {
-				log.Printf("[%s] Error writing packet to WS: %v", s.connId, err)
 				return
 			}
 		}
@@ -136,6 +205,24 @@ func (s *Socket) Serve() {
 			}
 
 			if msgType == websocket.BinaryMessage {
+				if learnMac && len(msg) >= 14 {
+					s.setMACFrom(msg)
+
+					dest := GetDestMAC(msg)
+					isUnicast := MACIsUnicast(dest)
+
+					var sd *Socket
+					if isUnicast {
+						sd = FindSocketByMAC(dest)
+						if sd != nil {
+							sd.WriteMessage(websocket.BinaryMessage, msg)
+							continue
+						}
+					} else {
+						BroadcastMessage(websocket.BinaryMessage, msg, s)
+					}
+				}
+
 				if s.iface == nil {
 					continue
 				}
@@ -192,9 +279,8 @@ func (s *Socket) Serve() {
 					log.Printf("[%s] Ping timeout", s.connId)
 					return
 				}
-				err := s.writeMessage(websocket.PingMessage, []byte{})
+				err := s.WriteMessage(websocket.PingMessage, []byte{})
 				if err != nil {
-					log.Printf("[%s] Error writing ping frame: %v", s.connId, err)
 					return
 				}
 			case <-s.closechan:

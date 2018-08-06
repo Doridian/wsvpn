@@ -8,11 +8,15 @@ import (
 	"net"
 )
 
-func configIface(dev *water.Interface, rNet *remoteNet, mtu int, routeGateway bool) error {
+func configIface(dev *water.Interface, ipConfig bool, rNet *remoteNet, mtu int, routeGateway bool) error {
 	err := shared.ExecCmd("ifconfig", dev.Name(), "mtu", fmt.Sprintf("%d", mtu))
 	if err != nil {
 		return err
 	}
+	if !ipConfig {
+		return shared.ExecCmd("ifconfig", dev.Name(), "up")
+	}
+
 	err = shared.ExecCmd("ifconfig", dev.Name(), rNet.getClientIP(), rNet.getServerIP(), "up")
 	if err != nil {
 		return err

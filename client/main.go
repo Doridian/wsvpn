@@ -106,7 +106,7 @@ func main() {
 		}
 	}()
 
-	socket := shared.MakeSocket("0", conn, nil)
+	socket := shared.MakeSocket("0", conn, nil, false)
 	socket.AddCommandHandler("addroute", func(args []string) error {
 		if iface == nil || cRemoteNet == nil {
 			return errors.New("Cannot addroute before init")
@@ -124,8 +124,10 @@ func main() {
 	socket.AddCommandHandler("init", func(args []string) error {
 		var err error
 
-		rNetStr := args[0]
-		mtu, err := strconv.Atoi(args[1])
+		mode := args[0]
+
+		rNetStr := args[1]
+		mtu, err := strconv.Atoi(args[2])
 		if err != nil {
 			panic(err)
 		}
@@ -135,10 +137,17 @@ func main() {
 			panic(err)
 		}
 
-		log.Printf("Network %s, mtu %d", cRemoteNet.str, mtu)
+		log.Printf("Network mode %s, subnet %s, mtu %d", mode, cRemoteNet.str, mtu)
+
+		var waterMode water.DeviceType
+		if mode == "TUN" {
+			waterMode = water.TUN
+		} else {
+			waterMode = water.TAP
+		}
 
 		ifconfig := getPlatformSpecifics(cRemoteNet, mtu, water.Config{
-			DeviceType: water.TUN,
+			DeviceType: waterMode,
 		})
 		iface, err = water.New(ifconfig)
 		if err != nil {
@@ -147,7 +156,7 @@ func main() {
 
 		log.Printf("Opened %s", iface.Name())
 
-		err = configIface(iface, cRemoteNet, mtu, false)
+		err = configIface(iface, mode != "TAP_NOCONF", cRemoteNet, mtu, false)
 		if err != nil {
 			panic(err)
 		}

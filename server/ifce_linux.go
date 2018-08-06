@@ -8,10 +8,13 @@ import (
 	"net"
 )
 
-func configIface(dev *water.Interface, mtu int, ipClient net.IP, ipServer net.IP) error {
-	err := shared.ExecCmd("ifconfig", dev.Name(), ipServer.String(), "pointopoint", ipClient.String(), "mtu", fmt.Sprintf("%d", mtu), "up")
-	if err != nil {
-		return err
+func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, ipServer net.IP) error {
+	if !ipConfig {
+		return shared.ExecCmd("ifconfig", dev.Name(), "mtu", fmt.Sprintf("%d", mtu), "up")
 	}
-	return nil
+
+	if dev.IsTAP() {
+		return shared.ExecCmd("ifconfig", dev.Name(), ipServer.String(), "mtu", fmt.Sprintf("%d", mtu), "up")
+	}
+	return shared.ExecCmd("ifconfig", dev.Name(), ipServer.String(), "pointopoint", ipClient.String(), "mtu", fmt.Sprintf("%d", mtu), "up")
 }

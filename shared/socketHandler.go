@@ -143,8 +143,6 @@ func (s *Socket) setMACFrom(msg []byte) {
 	}
 	s.mac = srcMac
 	macTable[srcMac] = s
-
-	log.Printf("LEARNT MAC %v", srcMac)
 }
 
 func (s *Socket) Close() {

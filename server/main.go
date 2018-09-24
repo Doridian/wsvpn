@@ -115,6 +115,7 @@ func serveTap() {
 		if isUnicast {
 			s = shared.FindSocketByMAC(dest)
 			if s != nil {
+				log.Printf("FOUND MAC %v", dest)
 				s.WriteMessage(websocket.BinaryMessage, packet[:n])
 				continue
 			}

@@ -116,10 +116,10 @@ func serveTap() {
 			s = shared.FindSocketByMAC(dest)
 			if s != nil {
 				s.WriteMessage(websocket.BinaryMessage, packet[:n])
+				continue
 			}
-		} else {
-			shared.BroadcastMessage(websocket.BinaryMessage, packet[:n], nil)
 		}
+		shared.BroadcastMessage(websocket.BinaryMessage, packet[:n], nil)
 	}
 }
 

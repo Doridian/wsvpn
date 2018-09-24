@@ -147,7 +147,7 @@ func (s *Socket) Close() {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
 	s.conn.Close()
-	if s.iface != nil {
+	if s.iface != nil && !learnMac {
 		s.iface.Close()
 	}
 	if s.closechanopen {

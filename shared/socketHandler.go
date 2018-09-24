@@ -19,6 +19,8 @@ var defaultMac = [6]byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
 var learnMac bool = false
 var macTable map[MacAddr]*Socket = make(map[MacAddr]*Socket)
 var macLock sync.RWMutex
+var allSockets = make(map[*Socket]*Socket)
+var allSocketsLock sync.RWMutex
 
 func FindSocketByMAC(mac MacAddr) *Socket {
 	macLock.RLock()
@@ -28,15 +30,15 @@ func FindSocketByMAC(mac MacAddr) *Socket {
 }
 
 func BroadcastMessage(msgType int, data []byte, skip *Socket) {
-	macLock.RLock()
+	allSocketsLock.RLock()
 	targetList := make([]*Socket, 0)
-	for _, v := range macTable {
+	for _, v := range allSockets {
 		if v == skip {
 			continue
 		}
 		targetList = append(targetList, v)
 	}
-	macLock.RUnlock()
+	allSocketsLock.RUnlock()
 
 	for _, v := range targetList {
 		v.WriteMessage(msgType, data)
@@ -160,6 +162,10 @@ func (s *Socket) Close() {
 		s.mac = defaultMac
 		macLock.Unlock()
 	}
+
+	allSocketsLock.Lock()
+	delete(allSockets, s)
+	allSocketsLock.Unlock()
 }
 
 func (s *Socket) tryServeIfaceRead() {
@@ -192,6 +198,10 @@ func (s *Socket) Serve() {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
 	s.tryServeIfaceRead()
+
+	allSocketsLock.Lock()
+	allSockets[s] = s
+	allSocketsLock.Unlock()
 
 	s.wg.Add(1)
 	go func() {

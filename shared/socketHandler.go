@@ -217,11 +217,11 @@ func (s *Socket) Serve() {
 					if isUnicast {
 						sd = FindSocketByMAC(dest)
 						if sd != nil {
-							sd.WriteMessage(websocket.BinaryMessage, msg)
+							go sd.WriteMessage(websocket.BinaryMessage, msg)
 							continue
 						}
 					} else {
-						BroadcastMessage(websocket.BinaryMessage, msg, s)
+						go BroadcastMessage(websocket.BinaryMessage, msg, s)
 					}
 				}
 

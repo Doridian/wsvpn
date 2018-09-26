@@ -6,6 +6,7 @@ import (
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/songgao/water"
 	"net"
+	"syscall"
 )
 
 func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, ipServer net.IP) error {

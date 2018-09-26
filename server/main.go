@@ -43,12 +43,6 @@ var modeString string
 func main() {
 	flag.Parse()
 
-	uid := *useUid
-	gid := *useGid
-	if uid > 0 || gid > 0 {
-		setProcessUidGid(uid, gid)
-	}
-
 	var err error
 	_, subnet, err = net.ParseCIDR(*subnetStr)
 	if err != nil {
@@ -89,6 +83,12 @@ func main() {
 	} else {
 		shared.SetMACLearning(false)
 		modeString = "TUN"
+	}
+
+	uid := *useUid
+	gid := *useGid
+	if uid > 0 || gid > 0 {
+		setProcessUidGid(uid, gid)
 	}
 
 	log.Printf("[S] VPN server online at %s, mode %s, serving subnet %s (%d max clients) with MTU %d",

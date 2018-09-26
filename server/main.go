@@ -27,7 +27,8 @@ var mtu = flag.Int("mtu", 1280, "MTU for the tunnel")
 var subnetStr = flag.String("subnet", "192.168.3.0/24", "Subnet for the tunnel clients")
 var listenAddr = flag.String("listen", "127.0.0.1:9000", "Listen address for the WebSocket interface")
 var useTap = flag.Bool("tap", false, "Use a TAP and not a TUN")
-var useTapNoConf = flag.Bool("tap-noconf", false, "Do not send IP config with TAP (and do not configure tap interface; ignore -subnet)")
+var useTapNoConf = flag.Bool("tap-noconf", false, "Do not send IP config with TAP ignore -subnet)")
+var useTapIfaceNoConf = flag.Bool("tap-iface-noconf", false, "Do not configure TAP interface at all except MTU")
 var useUid = flag.Int("uid", 0, "setuid() after opening TAP")
 var useGid = flag.Int("gid", 0, "setgid() after opening TAP")
 
@@ -72,7 +73,7 @@ func main() {
 			modeString = "TAP"
 		}
 
-		err = configIface(tapDev, !*useTapNoConf, *mtu, ipServer, ipServer)
+		err = configIface(tapDev, !*useTapIfaceNoConf, *mtu, ipServer, ipServer)
 		if err != nil {
 			panic(err)
 		}

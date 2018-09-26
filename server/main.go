@@ -79,8 +79,6 @@ func main() {
 		}
 
 		shared.SetMACLearning(true)
-
-		go serveTap()
 	} else {
 		shared.SetMACLearning(false)
 		modeString = "TUN"
@@ -90,6 +88,10 @@ func main() {
 	gid := *useGid
 	if uid > 0 || gid > 0 {
 		setProcessUidGid(uid, gid)
+	}
+
+	if tapMode {
+		go serveTap()
 	}
 
 	log.Printf("[S] VPN server online at %s, mode %s, serving subnet %s (%d max clients) with MTU %d",

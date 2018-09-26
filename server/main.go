@@ -49,14 +49,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	ipServer, err = cidr.Host(subnet, 0)
+	ipServer, err = cidr.Host(subnet, 1)
 	if err != nil {
 		panic(err)
 	}
 	subnetOnes, _ := subnet.Mask.Size()
 	subnetSize = fmt.Sprintf("%d", subnetOnes)
 
-	maxSlot = cidr.AddressCount(subnet)
+	maxSlot = cidr.AddressCount(subnet) - 2
 
 	tapMode = *useTap
 	if tapMode {
@@ -183,7 +183,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[%s] Client EXIT", connId)
 	}()
 
-	ipClient, err := cidr.Host(subnet, int(slot))
+	ipClient, err := cidr.Host(subnet, int(slot)+1)
 	if err != nil {
 		log.Printf("[%s] Error transforming client IP: %v", connId, err)
 		return

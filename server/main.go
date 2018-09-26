@@ -28,6 +28,8 @@ var subnetStr = flag.String("subnet", "192.168.3.0/24", "Subnet for the tunnel c
 var listenAddr = flag.String("listen", "127.0.0.1:9000", "Listen address for the WebSocket interface")
 var useTap = flag.Bool("tap", false, "Use a TAP and not a TUN")
 var useTapNoConf = flag.Bool("tap-noconf", false, "Do not send IP config with TAP (and do not configure tap interface; ignore -subnet)")
+var useUid = flag.Int("uid", 0, "setuid() after opening TAP")
+var useGid = flag.Int("gid", 0, "setgid() after opening TAP")
 
 var subnet *net.IPNet
 var ipServer net.IP
@@ -40,6 +42,12 @@ var modeString string
 
 func main() {
 	flag.Parse()
+
+	uid := *useUid
+	gid := *useGid
+	if uid > 0 || gid > 0 {
+		setProcessUidGid(uid, gid)
+	}
 
 	var err error
 	_, subnet, err = net.ParseCIDR(*subnetStr)

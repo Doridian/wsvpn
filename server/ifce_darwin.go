@@ -23,3 +23,14 @@ func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, 
 	}
 	return shared.ExecCmd("ifconfig", dev.Name(), ipServer.String(), ipClient.String(), "up")
 }
+
+func setProcessUidGid(uid int, gid int) {
+	err := syscall.Setregid(gid, gid)
+	if err != nil {
+		panic(err)
+	}
+	err = syscall.Setreuid(uid, uid)
+	if err != nil {
+		panic(err)
+	}
+}

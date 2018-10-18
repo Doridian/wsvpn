@@ -18,6 +18,7 @@ import (
 
 const DEFAULT_URL = "ws://example.com"
 
+var defaultGateway = flag.Bool("default-gateway", false, "Route all traffic through VPN")
 var connectAddr = flag.String("connect", DEFAULT_URL, "Server address to connect to")
 var authFile = flag.String("auth-file", "", "File to read authentication from in the format user:password")
 var upScript = flag.String("up-script", "", "Script to run once the VPN is online")
@@ -156,7 +157,7 @@ func main() {
 
 		log.Printf("Opened %s", iface.Name())
 
-		err = configIface(iface, mode != "TAP_NOCONF", cRemoteNet, mtu, false)
+		err = configIface(iface, mode != "TAP_NOCONF", cRemoteNet, mtu, *defaultGateway)
 		if err != nil {
 			panic(err)
 		}

@@ -13,6 +13,10 @@ var useTapName = flag.String("tap-name", "", "Use specific TAP name")
 var useTapPersist = flag.Bool("tap-persist", false, "Set persist on TAP")
 
 func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, ipServer net.IP) error {
+	if *useTapPersist {
+		return
+	}
+
 	if !ipConfig {
 		return shared.ExecCmd("ifconfig", dev.Name(), "mtu", fmt.Sprintf("%d", mtu), "up")
 	}

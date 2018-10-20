@@ -2,12 +2,15 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/songgao/water"
 	"net"
-	"syscall"
 )
+
+var useTapName = flag.String("tap-name", "", "Use specific TAP name")
+var useTapPersist = flag.Bool("tap-persist", false, "Set persist on TAP")
 
 func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, ipServer net.IP) error {
 	if !ipConfig {
@@ -20,13 +23,10 @@ func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, 
 	return shared.ExecCmd("ifconfig", dev.Name(), ipServer.String(), "pointopoint", ipClient.String(), "mtu", fmt.Sprintf("%d", mtu), "up")
 }
 
-func setProcessUidGid(uid int, gid int) {
-	err := syscall.Setresgid(gid, gid, gid)
-	if err != nil {
-		panic(err)
+func extendTAPConfig(config *water.Config) {
+	tapName := *useTapName
+	if tapName != "" {
+		tapConfig.Name = tapName
 	}
-	err = syscall.Setresuid(uid, uid, uid)
-	if err != nil {
-		panic(err)
-	}
+	tapConfig.Persist = *useTapPersist
 }

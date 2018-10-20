@@ -26,11 +26,10 @@ var usedSlots map[uint64]bool = make(map[uint64]bool)
 var mtu = flag.Int("mtu", 1280, "MTU for the tunnel")
 var subnetStr = flag.String("subnet", "192.168.3.0/24", "Subnet for the tunnel clients")
 var listenAddr = flag.String("listen", "127.0.0.1:9000", "Listen address for the WebSocket interface")
+
 var useTap = flag.Bool("tap", false, "Use a TAP and not a TUN")
 var useTapNoConf = flag.Bool("tap-noconf", false, "Do not send IP config with TAP ignore -subnet)")
 var useTapIfaceNoConf = flag.Bool("tap-iface-noconf", false, "Do not configure TAP interface at all except MTU")
-var useUid = flag.Int("uid", 0, "setuid() after opening TAP")
-var useGid = flag.Int("gid", 0, "setgid() after opening TAP")
 
 var subnet *net.IPNet
 var ipServer net.IP
@@ -60,9 +59,13 @@ func main() {
 
 	tapMode = *useTap
 	if tapMode {
-		tapDev, err = water.New(water.Config{
+		tapConfig := water.Config{
 			DeviceType: water.TAP,
-		})
+		}
+
+		extendTAPConfig(&tapConfig)
+
+		tapDev, err = water.New(tapConfig)
 		if err != nil {
 			panic(err)
 		}
@@ -82,12 +85,6 @@ func main() {
 	} else {
 		shared.SetMACLearning(false)
 		modeString = "TUN"
-	}
-
-	uid := *useUid
-	gid := *useGid
-	if uid > 0 || gid > 0 {
-		setProcessUidGid(uid, gid)
 	}
 
 	if tapMode {

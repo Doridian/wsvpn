@@ -6,7 +6,6 @@ import (
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/songgao/water"
 	"net"
-	"syscall"
 )
 
 func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, ipServer net.IP) error {
@@ -25,13 +24,6 @@ func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, 
 	return shared.ExecCmd("ifconfig", dev.Name(), ipServer.String(), ipClient.String(), "up")
 }
 
-func setProcessUidGid(uid int, gid int) {
-	err := syscall.Setregid(gid, gid)
-	if err != nil {
-		panic(err)
-	}
-	err = syscall.Setreuid(uid, uid)
-	if err != nil {
-		panic(err)
-	}
+func extendTAPConfig(config *water.Config) {
+
 }

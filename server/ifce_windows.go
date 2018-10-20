@@ -4,7 +4,6 @@ package main
 import (
 	"errors"
 	"github.com/songgao/water"
-	"log"
 	"net"
 )
 
@@ -12,6 +11,6 @@ func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, 
 	return errors.New("Windows is not supported atm")
 }
 
-func setProcessUidGid(uid int, gid int) {
-	log.Printf("setuid/setgid not supported on windows")
+func extendTAPConfig(config *water.Config) {
+
 }

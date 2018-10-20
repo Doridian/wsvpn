@@ -76,7 +76,7 @@ func main() {
 			modeString = "TAP"
 		}
 
-		err = configIface(tapDev, !*useTapIfaceNoConf, *mtu, ipServer, ipServer)
+		err = configIface(tapDev, !*useTapIfaceNoConf, *mtu, ipServer, ipServer, subnet)
 		if err != nil {
 			panic(err)
 		}
@@ -189,7 +189,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !tapMode {
-		err = configIface(iface, true, *mtu, ipClient, ipServer)
+		err = configIface(iface, true, *mtu, ipClient, ipServer, subnet)
 		if err != nil {
 			log.Printf("[%s] Error configuring interface: %v", connId, err)
 			return

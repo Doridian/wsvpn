@@ -8,7 +8,7 @@ import (
 	"net"
 )
 
-func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, ipServer net.IP) error {
+func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, ipServer net.IP, subnet *net.IPNet) error {
 	err := shared.ExecCmd("ifconfig", dev.Name(), "mtu", fmt.Sprintf("%d", mtu))
 	if err != nil {
 		return err
@@ -19,7 +19,8 @@ func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, 
 	}
 
 	if dev.IsTAP() {
-		return shared.ExecCmd("ifconfig", dev.Name(), ipServer.String(), "up")
+		subnetOnes, _ := subnet.Mask.Size()
+		return shared.ExecCmd("ifconfig", dev.Name(), fmt.Sprintf("%s/%d", ipServer.String(), subnetOnes), "up")
 	}
 	return shared.ExecCmd("ifconfig", dev.Name(), ipServer.String(), ipClient.String(), "up")
 }

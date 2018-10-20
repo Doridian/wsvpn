@@ -23,7 +23,7 @@ func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, 
 	return shared.ExecCmd("ifconfig", dev.Name(), ipServer.String(), "pointopoint", ipClient.String(), "mtu", fmt.Sprintf("%d", mtu), "up")
 }
 
-func extendTAPConfig(config *water.Config) {
+func extendTAPConfig(tapConfig *water.Config) {
 	tapName := *useTapName
 	if tapName != "" {
 		tapConfig.Name = tapName

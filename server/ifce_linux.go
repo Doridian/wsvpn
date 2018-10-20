@@ -14,7 +14,7 @@ var useTapPersist = flag.Bool("tap-persist", false, "Set persist on TAP")
 
 func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, ipServer net.IP) error {
 	if *useTapPersist {
-		return
+		return nil
 	}
 
 	if !ipConfig {

@@ -30,6 +30,7 @@ var listenAddr = flag.String("listen", "127.0.0.1:9000", "Listen address for the
 var useTap = flag.Bool("tap", false, "Use a TAP and not a TUN")
 var useTapNoConf = flag.Bool("tap-noconf", false, "Do not send IP config with TAP ignore -subnet)")
 var useTapIfaceNoConf = flag.Bool("tap-iface-noconf", false, "Do not configure TAP interface at all except MTU")
+var useClientToClient = flag.Bool("client-to-client", false, "Allow client-to-client communication (in TAP)")
 
 var subnet *net.IPNet
 var ipServer net.IP
@@ -86,6 +87,8 @@ func main() {
 		shared.SetMACLearning(false)
 		modeString = "TUN"
 	}
+
+	shared.SetClientToClient(*useClientToClient)
 
 	if tapMode {
 		go serveTap()

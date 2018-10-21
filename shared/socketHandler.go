@@ -17,6 +17,7 @@ var lastCommandId uint64 = 0
 var defaultMac = [6]byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
 
 var learnMac bool = false
+var allowClientToClient bool = false
 var macTable map[MacAddr]*Socket = make(map[MacAddr]*Socket)
 var macLock sync.RWMutex
 var allSockets = make(map[*Socket]*Socket)
@@ -62,6 +63,10 @@ type Socket struct {
 
 func SetMACLearning(enable bool) {
 	learnMac = enable
+}
+
+func SetClientToClient(enable bool) {
+	allowClientToClient = enable
 }
 
 func MakeSocket(connId string, conn *websocket.Conn, iface *water.Interface, noIfaceReader bool) *Socket {
@@ -220,18 +225,20 @@ func (s *Socket) Serve() {
 				if learnMac && len(msg) >= 14 {
 					s.setMACFrom(msg)
 
-					dest := GetDestMAC(msg)
-					isUnicast := MACIsUnicast(dest)
+					if allowClientToClient {
+						dest := GetDestMAC(msg)
+						isUnicast := MACIsUnicast(dest)
 
-					var sd *Socket
-					if isUnicast {
-						sd = FindSocketByMAC(dest)
-						if sd != nil {
-							sd.WriteMessage(websocket.BinaryMessage, msg)
-							continue
+						var sd *Socket
+						if isUnicast {
+							sd = FindSocketByMAC(dest)
+							if sd != nil {
+								sd.WriteMessage(websocket.BinaryMessage, msg)
+								continue
+							}
+						} else {
+							BroadcastMessage(websocket.BinaryMessage, msg, s)
 						}
-					} else {
-						BroadcastMessage(websocket.BinaryMessage, msg, s)
 					}
 				}
 

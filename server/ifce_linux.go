@@ -10,10 +10,11 @@ import (
 )
 
 var useTapName = flag.String("tap-name", "", "Use specific TAP name")
+var useTapNoIfconfig = flag.Bool("tap-no-ifconfig", false, "Do not ifconfig the TAP")
 var useTapPersist = flag.Bool("tap-persist", false, "Set persist on TAP")
 
 func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, ipServer net.IP, subnet *net.IPNet) error {
-	if *useTapPersist {
+	if *useTapNoIfconfig {
 		return nil
 	}
 

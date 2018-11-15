@@ -26,6 +26,8 @@ var usedSlots map[uint64]bool = make(map[uint64]bool)
 var mtu = flag.Int("mtu", 1280, "MTU for the tunnel")
 var subnetStr = flag.String("subnet", "192.168.3.0/24", "Subnet for the tunnel clients")
 var listenAddr = flag.String("listen", "127.0.0.1:9000", "Listen address for the WebSocket interface")
+var tlsCert = flag.String("tls-cert", "", "TLS certificate file for listener")
+var tlsKey = flag.String("tls-key", "", "TLS key file for listener")
 
 var useTap = flag.Bool("tap", false, "Use a TAP and not a TUN")
 var useTapNoConf = flag.Bool("tap-noconf", false, "Do not send IP config with TAP ignore -subnet)")
@@ -98,7 +100,17 @@ func main() {
 		*listenAddr, modeString, *subnetStr, maxSlot-1, *mtu)
 
 	http.HandleFunc("/", serveWs)
-	err = http.ListenAndServe(*listenAddr, nil)
+
+	tlsCertStr := *tlsCert
+	tlsKeyStr := *tlsKey
+	if tlsCertStr != "" || tlsKeyStr != "" {
+		if tlsCertStr == "" || tlsKeyStr == "" {
+			panic(errors.New("Provide either both tls-key and tls-cert or neither"))
+		}
+		err = http.ListenAndServeTLS(*listenAddr, tlsCertStr, tlsKeyStr, nil)
+	} else {
+		err = http.ListenAndServe(*listenAddr, nil)
+	}
 	if err != nil {
 		panic(err)
 	}

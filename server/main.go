@@ -43,6 +43,8 @@ var tapMode bool
 var tapDev *water.Interface
 var modeString string
 
+var authenticator Authenticator
+
 func main() {
 	flag.Parse()
 
@@ -147,6 +149,10 @@ func serveTap() {
 }
 
 func serveWs(w http.ResponseWriter, r *http.Request) {
+	if authenticator != nil && !authenticator.Authenticate(r, w) {
+		http.Error(w, "Unauthorized", 401)
+	}
+
 	var err error
 
 	conn, err := upgrader.Upgrade(w, r, nil)

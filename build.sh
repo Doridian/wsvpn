@@ -7,11 +7,11 @@ buildfor() {
 		EXESUFFIX=".exe"
 	fi
 
-	go get -d -v ./...
-
 	go build -o "dist/client-$GOOS-$GOARCH$EXESUFFIX" ./client
 	go build -o "dist/server-$GOOS-$GOARCH$EXESUFFIX" ./server
 }
+
+go mod download
 
 mkdir -p dist
 

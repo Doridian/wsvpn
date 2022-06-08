@@ -122,7 +122,7 @@ func (s *Socket) SetInterface(iface *water.Interface) error {
 	defer s.writeLock.Unlock()
 
 	if s.iface != nil {
-		return errors.New("Cannot re-define interface. Already set.")
+		return errors.New("Cannot re-define interface: Already set")
 	}
 	s.iface = iface
 	s.tryServeIfaceRead()
@@ -142,7 +142,7 @@ func (s *Socket) setMACFrom(msg []byte) {
 	}
 	if macTable[srcMac] != nil {
 		s.mac = defaultMac
-		log.Printf("[%d] MAC collision. Killing.", s.connId)
+		log.Printf("[%d] MAC collision: Killing", s.connId)
 		s.Close()
 		return
 	}

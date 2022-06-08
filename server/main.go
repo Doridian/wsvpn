@@ -182,7 +182,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		if slot > maxSlot {
 			slotMutex.Unlock()
 			conn.Close()
-			log.Println("[S] Cannot connect new client. IP slots exhausted.")
+			log.Println("[S] Cannot connect new client: IP slots exhausted")
 			return
 		}
 	}

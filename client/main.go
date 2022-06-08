@@ -23,6 +23,7 @@ var connectAddr = flag.String("connect", DEFAULT_URL, "Server address to connect
 var authFile = flag.String("auth-file", "", "File to read authentication from in the format user:password")
 var upScript = flag.String("up-script", "", "Script to run once the VPN is online")
 var downScript = flag.String("down-script", "", "Script to run when the VPN goes offline")
+var proxyAddr = flag.String("proxy", "", "HTTP proxy to use for connection (ex. http://10.10.10.10:8080)")
 
 func productionWarnings(str string) {
 	for n := 0; n <= 5; n++ {
@@ -81,17 +82,29 @@ func main() {
 
 	header := http.Header{}
 	if userInfo != nil {
-		log.Printf("Connecting to %s as user %s.", dest.String(), userInfo.Username())
+		log.Printf("Connecting to %s as user %s", dest.Redacted(), userInfo.Username())
 		if _, pws := userInfo.Password(); !pws {
 			productionWarnings("NO PASSWORD SET")
 		}
 		header.Add("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(userInfo.String())))
 	} else {
-		log.Printf("Connecting to %s without authentication.", dest.String())
+		log.Printf("Connecting to %s without authentication", dest.String())
 		productionWarnings("NO AUTHENTICATION SET")
 	}
 
-	conn, _, err := websocket.DefaultDialer.Dial(dest.String(), header)
+	dialer := websocket.Dialer{}
+	proxyUrlString := *proxyAddr
+	if proxyUrlString != "" {
+		proxyUrl, err := url.Parse(proxyUrlString)
+		if err != nil {
+			panic(err)
+		}
+		log.Printf("Using HTTP proxy %s", proxyUrl.Redacted())
+		dialer.Proxy = func(_ *http.Request) (*url.URL, error) {
+			return proxyUrl, nil
+		}
+	}
+	conn, _, err := dialer.Dial(dest.String(), header)
 	if err != nil {
 		panic(err)
 	}
@@ -162,7 +175,7 @@ func main() {
 			panic(err)
 		}
 
-		log.Printf("Configured interface. Starting operations.")
+		log.Printf("Configured interface, starting operations")
 		err = socket.SetInterface(iface)
 		if err != nil {
 			panic(err)

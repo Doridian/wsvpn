@@ -65,7 +65,8 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		authDataSplit := strings.SplitN(string(authData), ":", 2)
+		authDataStr := strings.Trim(string(authData), "\r\n\t ")
+		authDataSplit := strings.SplitN(authDataStr, ":", 2)
 		if len(authDataSplit) > 1 {
 			userInfo = url.UserPassword(authDataSplit[0], authDataSplit[1])
 		} else {

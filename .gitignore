@@ -3,3 +3,4 @@
 *.exe
 *.exe~
 /dist
+/htpasswd

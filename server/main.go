@@ -28,6 +28,7 @@ var subnetStr = flag.String("subnet", "192.168.3.0/24", "Subnet for the tunnel c
 var listenAddr = flag.String("listen", "127.0.0.1:9000", "Listen address for the WebSocket interface")
 var tlsCert = flag.String("tls-cert", "", "TLS certificate file for listener")
 var tlsKey = flag.String("tls-key", "", "TLS key file for listener")
+var authenticatorStrPtr = flag.String("authenticator", "allow-all", "Which authenticator to use (allow-all, htpasswd)")
 
 var useTap = flag.Bool("tap", false, "Use a TAP and not a TUN")
 var useTapNoConf = flag.Bool("tap-noconf", false, "Do not send IP config with TAP ignore -subnet)")
@@ -94,6 +95,20 @@ func main() {
 
 	shared.SetClientToClient(*useClientToClient)
 
+	authenticatorStr := *authenticatorStrPtr
+	if authenticatorStr == "allow-all" {
+		authenticator = &AllowAllAuthenticator{}
+	} else if authenticatorStr == "htpasswd"  {
+		authenticator = &HtpasswdAuthenticator{}
+	} else {
+		panic(errors.New("Invalid authenticator selected"))
+	}
+
+	err = authenticator.Load()
+	if err != nil {
+		panic(err)
+	}
+
 	if tapMode {
 		go serveTap()
 	}
@@ -149,8 +164,12 @@ func serveTap() {
 }
 
 func serveWs(w http.ResponseWriter, r *http.Request) {
-	if authenticator != nil && !authenticator.Authenticate(r, w) {
-		http.Error(w, "Unauthorized", 401)
+	authResult := authenticator.Authenticate(r, w)
+	if authResult != AUTH_OK {
+		if authResult == AUTH_FAILED_DEFAULT {
+			http.Error(w, "Unauthorized", 401)
+		}
+		return
 	}
 
 	var err error

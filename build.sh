@@ -7,6 +7,8 @@ buildfor() {
 		EXESUFFIX=".exe"
 	fi
 
+	echo "Building for: $GOOS / $GOARCH"
+
 	go build -o "dist/client-$GOOS-$GOARCH$EXESUFFIX" ./client
 	go build -o "dist/server-$GOOS-$GOARCH$EXESUFFIX" ./server
 }

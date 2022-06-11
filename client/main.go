@@ -1,12 +1,11 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
 	"errors"
 	"flag"
-	"github.com/Doridian/wsvpn/shared"
-	"github.com/gorilla/websocket"
-	"github.com/songgao/water"
 	"io/ioutil"
 	"log"
 	"net"
@@ -14,6 +13,10 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/Doridian/wsvpn/shared"
+	"github.com/gorilla/websocket"
+	"github.com/songgao/water"
 )
 
 const DEFAULT_URL = "ws://example.com"
@@ -24,6 +27,8 @@ var authFile = flag.String("auth-file", "", "File to read authentication from in
 var upScript = flag.String("up-script", "", "Script to run once the VPN is online")
 var downScript = flag.String("down-script", "", "Script to run when the VPN goes offline")
 var proxyAddr = flag.String("proxy", "", "HTTP proxy to use for connection (ex. http://10.10.10.10:8080)")
+var caCertFile = flag.String("ca-certificates", "", "If specified, use all PEM certs in this file as valid root certs only")
+var insecure = flag.Bool("insecure", false, "Disable all TLS verification")
 
 func productionWarnings(str string) {
 	for n := 0; n <= 5; n++ {
@@ -94,6 +99,7 @@ func main() {
 	}
 
 	dialer := websocket.Dialer{}
+
 	proxyUrlString := *proxyAddr
 	if proxyUrlString != "" {
 		proxyUrl, err := url.Parse(proxyUrlString)
@@ -105,6 +111,28 @@ func main() {
 			return proxyUrl, nil
 		}
 	}
+
+	tlsConfig := tls.Config{}
+	dialer.TLSClientConfig = &tlsConfig
+	tlsConfig.InsecureSkipVerify = *insecure
+	if tlsConfig.InsecureSkipVerify {
+		productionWarnings("TLS VERIFICATION DISABLED")
+	}
+
+	caCertFileString := *caCertFile
+	if caCertFileString != "" {
+		data, err := ioutil.ReadFile(caCertFileString)
+		if err != nil {
+			panic(err)
+		}
+		certPool := x509.NewCertPool()
+		ok := certPool.AppendCertsFromPEM(data)
+		if !ok {
+			panic(errors.New("Error loading root CA file"))
+		}
+		tlsConfig.RootCAs = certPool
+	}
+
 	conn, _, err := dialer.Dial(dest.String(), header)
 	if err != nil {
 		panic(err)

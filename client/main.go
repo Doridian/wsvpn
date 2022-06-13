@@ -144,7 +144,9 @@ func main() {
 
 	defer func() {
 		if iface != nil {
-			runEventScript(downScript, "down", cRemoteNet, iface)
+			if cRemoteNet != nil {
+				runEventScript(downScript, "down", cRemoteNet, iface)
+			}
 			iface.Close()
 		}
 	}()
@@ -152,7 +154,7 @@ func main() {
 	socket := shared.MakeSocket("0", conn, nil, false)
 	socket.AddCommandHandler("addroute", func(args []string) error {
 		if iface == nil || cRemoteNet == nil {
-			return errors.New("Cannot addroute before init")
+			return errors.New("cannot addroute before init")
 		}
 
 		if len(args) < 1 {

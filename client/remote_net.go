@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"net"
+
+	"github.com/apparentlymart/go-cidr/cidr"
 )
 
 type remoteNet struct {
@@ -16,7 +18,8 @@ func (r *remoteNet) getClientIP() string {
 }
 
 func (r *remoteNet) getServerIP() string {
-	return r.ipNet.IP.To4().String()
+	ip, _ := cidr.Host(r.ipNet, 1)
+	return ip.String()
 }
 
 func (r *remoteNet) getNetmask() string {

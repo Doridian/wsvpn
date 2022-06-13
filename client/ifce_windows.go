@@ -5,9 +5,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net"
+
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/songgao/water"
-	"net"
 )
 
 var ifaceName = flag.String("ifname", "tap0901", "Name of the interface to use")

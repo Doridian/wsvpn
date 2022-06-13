@@ -4,8 +4,9 @@ package main
 
 import (
 	"errors"
-	"github.com/songgao/water"
 	"net"
+
+	"github.com/songgao/water"
 )
 
 func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, ipServer net.IP, subnet *net.IPNet) error {

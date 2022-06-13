@@ -2,6 +2,7 @@ package shared
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"log"
 	"strings"
@@ -12,6 +13,9 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/songgao/water"
 )
+
+var pingIntervalPtr = flag.Duration("ping-interval", time.Second*time.Duration(30), "Send ping frames in this interval")
+var pingTimeoutPtr = flag.Duration("ping-timeout", time.Second*time.Duration(5), "Disconnect if no ping response is received after timeout")
 
 var lastCommandId uint64 = 0
 
@@ -280,32 +284,49 @@ func (s *Socket) Serve() {
 		}
 	}()
 
-	timeout := time.Duration(30) * time.Second
+	s.installPingHandlers()
+}
 
-	lastResponse := time.Now()
+func (s *Socket) installPingHandlers() {
+	pingInterval := *pingIntervalPtr
+	pingTimeout := *pingTimeoutPtr
+
+	if pingInterval <= 0 || pingTimeout <= 0 {
+		log.Printf("[%s] Ping disabled", s.connId)
+		return
+	}
+
+	// Create a dummy timer that won't ever run so we can wait for it
+	pingTimeoutTimer := time.NewTimer(time.Hour)
+	pingTimeoutTimer.Stop()
+
 	s.conn.SetPongHandler(func(msg string) error {
-		lastResponse = time.Now()
+		pingTimeoutTimer.Stop()
 		return nil
 	})
 
 	s.wg.Add(1)
 	go func() {
 		defer s.closeDone()
+		defer pingTimeoutTimer.Stop()
 
 		for {
 			select {
-			case <-time.After(timeout / 2):
-				if time.Since(lastResponse) > timeout {
-					log.Printf("[%s] Ping timeout", s.connId)
-					return
-				}
+			case <-time.After(pingInterval):
+				pingTimeoutTimer.Stop()
 				err := s.WriteMessage(websocket.PingMessage, []byte{})
 				if err != nil {
 					return
 				}
+				pingTimeoutTimer.Reset(pingTimeout)
+			case <-pingTimeoutTimer.C:
+				log.Printf("[%s] Ping timeout", s.connId)
+				return
 			case <-s.closechan:
 				return
 			}
 		}
 	}()
+
+	log.Printf("[%s] Ping enabled with interval %v and timeout %v", s.connId, pingInterval, pingTimeout)
 }

@@ -10,20 +10,28 @@ import (
 )
 
 func configIface(dev *water.Interface, ipConfig bool, rNet *remoteNet, mtu int, routeGateway bool) error {
-	err := shared.ExecCmd("ifconfig", dev.Name(), rNet.getClientIP(), "pointopoint", rNet.getServerIP(), "mtu", fmt.Sprintf("%d", mtu), "up")
+	err := shared.ExecCmd("ip", "link", "set", "dev", dev.Name(), "mtu", fmt.Sprintf("%d", mtu), "up")
 	if err != nil {
 		return err
 	}
+
+	err = shared.ExecCmd("ip", "addr", "add", "dev", dev.Name(), rNet.getClientIP(), "peer", rNet.getServerIP())
+	if err != nil {
+		return err
+	}
+
 	err = shared.ExecCmd("ip", "route", "add", rNet.ipNet.String(), "via", rNet.getServerIP())
 	if err != nil {
 		return err
 	}
+
 	if routeGateway {
 		err = shared.ExecCmd("ip", "route", "add", "default", "via", rNet.getServerIP())
 		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 

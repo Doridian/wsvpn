@@ -19,15 +19,21 @@ func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, 
 		return nil
 	}
 
+	err := shared.ExecCmd("ip", "link", "set", "dev", dev.Name(), "mtu", fmt.Sprintf("%d", mtu), "up")
+	if err != nil {
+		return err
+	}
+
 	if !ipConfig {
-		return shared.ExecCmd("ifconfig", dev.Name(), "mtu", fmt.Sprintf("%d", mtu), "up")
+		return nil
 	}
 
 	if dev.IsTAP() {
 		subnetOnes, _ := subnet.Mask.Size()
-		return shared.ExecCmd("ifconfig", dev.Name(), fmt.Sprintf("%s/%d", ipServer.String(), subnetOnes), "mtu", fmt.Sprintf("%d", mtu), "up")
+		return shared.ExecCmd("ip", "addr", "add", "dev", dev.Name(), fmt.Sprintf("%s/%d", ipServer.String(), subnetOnes))
 	}
-	return shared.ExecCmd("ifconfig", dev.Name(), ipServer.String(), "pointopoint", ipClient.String(), "mtu", fmt.Sprintf("%d", mtu), "up")
+
+	return shared.ExecCmd("ip", "addr", "add", "dev", dev.Name(), ipServer.String(), "peer", ipClient.String())
 }
 
 func extendTAPConfig(tapConfig *water.Config) {

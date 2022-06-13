@@ -10,7 +10,7 @@ import (
 )
 
 func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, ipServer net.IP, subnet *net.IPNet) error {
-	return errors.New("Running the server on Windows is not supported at the moment")
+	return errors.New("running the server on Windows is not supported at the moment")
 }
 
 func extendTAPConfig(config *water.Config) {

@@ -5,9 +5,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net"
+
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/songgao/water"
-	"net"
 )
 
 var useTapName = flag.String("tap-name", "", "Use specific TAP name")

@@ -3,13 +3,14 @@ package shared
 import (
 	"errors"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"github.com/songgao/water"
 	"log"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/gorilla/websocket"
+	"github.com/songgao/water"
 )
 
 var lastCommandId uint64 = 0
@@ -122,7 +123,7 @@ func (s *Socket) SetInterface(iface *water.Interface) error {
 	defer s.writeLock.Unlock()
 
 	if s.iface != nil {
-		return errors.New("Cannot re-define interface: Already set")
+		return errors.New("cannot re-define interface: Already set")
 	}
 	s.iface = iface
 	s.tryServeIfaceRead()
@@ -142,7 +143,7 @@ func (s *Socket) setMACFrom(msg []byte) {
 	}
 	if macTable[srcMac] != nil {
 		s.mac = defaultMac
-		log.Printf("[%d] MAC collision: Killing", s.connId)
+		log.Printf("[%s] MAC collision: Killing", s.connId)
 		s.Close()
 		return
 	}
@@ -266,7 +267,7 @@ func (s *Socket) Serve() {
 
 				handler := s.handlers[commandName]
 				if handler == nil {
-					err = errors.New("Unknown command")
+					err = errors.New("unknown command")
 				} else {
 					err = handler(str[2:])
 				}
@@ -294,7 +295,7 @@ func (s *Socket) Serve() {
 		for {
 			select {
 			case <-time.After(timeout / 2):
-				if time.Now().Sub(lastResponse) > timeout {
+				if time.Since(lastResponse) > timeout {
 					log.Printf("[%s] Ping timeout", s.connId)
 					return
 				}

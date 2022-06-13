@@ -27,6 +27,7 @@ var authFile = flag.String("auth-file", "", "File to read authentication from in
 var upScript = flag.String("up-script", "", "Script to run once the VPN is online")
 var downScript = flag.String("down-script", "", "Script to run when the VPN goes offline")
 var proxyAddr = flag.String("proxy", "", "HTTP proxy to use for connection (ex. http://10.10.10.10:8080)")
+
 var caCertFile = flag.String("ca-certificates", "", "If specified, use all PEM certs in this file as valid root certs only")
 var insecure = flag.Bool("insecure", false, "Disable all TLS verification")
 
@@ -112,9 +113,12 @@ func main() {
 		}
 	}
 
-	tlsConfig := tls.Config{}
-	dialer.TLSClientConfig = &tlsConfig
+	tlsConfig := &tls.Config{}
+
+	dialer.TLSClientConfig = tlsConfig
 	tlsConfig.InsecureSkipVerify = *insecure
+	shared.TlsUseFlags(tlsConfig)
+
 	if tlsConfig.InsecureSkipVerify {
 		productionWarnings("TLS VERIFICATION DISABLED")
 	}
@@ -128,7 +132,7 @@ func main() {
 		certPool := x509.NewCertPool()
 		ok := certPool.AppendCertsFromPEM(data)
 		if !ok {
-			panic(errors.New("Error loading root CA file"))
+			panic(errors.New("error loading root CA file"))
 		}
 		tlsConfig.RootCAs = certPool
 	}
@@ -138,6 +142,14 @@ func main() {
 		panic(err)
 	}
 	defer conn.Close()
+
+	websocketTlsConn, ok := conn.UnderlyingConn().(*tls.Conn)
+	if ok {
+		connState := websocketTlsConn.ConnectionState()
+		log.Printf("TLS %s connection established with cipher=%s", shared.TlsVersionString(connState.Version), tls.CipherSuiteName(connState.CipherSuite))
+	} else {
+		log.Printf("Unencrypted connection established")
+	}
 
 	var iface *water.Interface
 	var cRemoteNet *remoteNet

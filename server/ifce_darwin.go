@@ -1,13 +1,13 @@
 //go:build darwin
-// +build darwin
 
 package main
 
 import (
 	"fmt"
+	"net"
+
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/songgao/water"
-	"net"
 )
 
 func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, ipServer net.IP, subnet *net.IPNet) error {

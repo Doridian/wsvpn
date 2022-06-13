@@ -1,17 +1,19 @@
 package main
 
 import (
+	"crypto/tls"
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/Doridian/wsvpn/shared"
-	"github.com/apparentlymart/go-cidr/cidr"
-	"github.com/gorilla/websocket"
-	"github.com/songgao/water"
 	"log"
 	"net"
 	"net/http"
 	"sync"
+
+	"github.com/Doridian/wsvpn/shared"
+	"github.com/apparentlymart/go-cidr/cidr"
+	"github.com/gorilla/websocket"
+	"github.com/songgao/water"
 )
 
 var upgrader = websocket.Upgrader{
@@ -26,14 +28,16 @@ var usedSlots map[uint64]bool = make(map[uint64]bool)
 var mtu = flag.Int("mtu", 1280, "MTU for the tunnel")
 var subnetStr = flag.String("subnet", "192.168.3.0/24", "Subnet for the tunnel clients")
 var listenAddr = flag.String("listen", "127.0.0.1:9000", "Listen address for the WebSocket interface")
-var tlsCert = flag.String("tls-cert", "", "TLS certificate file for listener")
-var tlsKey = flag.String("tls-key", "", "TLS key file for listener")
+
 var authenticatorStrPtr = flag.String("authenticator", "allow-all", "Which authenticator to use (allow-all, htpasswd)")
 
 var useTap = flag.Bool("tap", false, "Use a TAP and not a TUN")
 var useTapNoConf = flag.Bool("tap-noconf", false, "Do not send IP config with TAP ignore -subnet)")
 var useTapIfaceNoConf = flag.Bool("tap-iface-noconf", false, "Do not configure TAP interface at all except MTU")
 var useClientToClient = flag.Bool("client-to-client", false, "Allow client-to-client communication (in TAP)")
+
+var tlsCert = flag.String("tls-cert", "", "TLS certificate file for listener")
+var tlsKey = flag.String("tls-key", "", "TLS key file for listener")
 
 var subnet *net.IPNet
 var ipServer net.IP
@@ -98,10 +102,10 @@ func main() {
 	authenticatorStr := *authenticatorStrPtr
 	if authenticatorStr == "allow-all" {
 		authenticator = &AllowAllAuthenticator{}
-	} else if authenticatorStr == "htpasswd"  {
+	} else if authenticatorStr == "htpasswd" {
 		authenticator = &HtpasswdAuthenticator{}
 	} else {
-		panic(errors.New("Invalid authenticator selected"))
+		panic(errors.New("invalid authenticator selected"))
 	}
 
 	err = authenticator.Load()
@@ -122,9 +126,18 @@ func main() {
 	tlsKeyStr := *tlsKey
 	if tlsCertStr != "" || tlsKeyStr != "" {
 		if tlsCertStr == "" || tlsKeyStr == "" {
-			panic(errors.New("Provide either both tls-key and tls-cert or neither"))
+			panic(errors.New("provide either both tls-key and tls-cert or neither"))
 		}
-		err = http.ListenAndServeTLS(*listenAddr, tlsCertStr, tlsKeyStr, nil)
+
+		tlsConfig := &tls.Config{}
+		shared.TlsUseFlags(tlsConfig)
+
+		server := http.Server{
+			Addr:      *listenAddr,
+			TLSConfig: tlsConfig,
+		}
+
+		err = server.ListenAndServeTLS(tlsCertStr, tlsKeyStr)
 	} else {
 		err = http.ListenAndServe(*listenAddr, nil)
 	}
@@ -167,7 +180,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	authResult := authenticator.Authenticate(r, w)
 	if authResult != AUTH_OK {
 		if authResult == AUTH_FAILED_DEFAULT {
-			http.Error(w, "Unauthorized", 401)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		}
 		return
 	}

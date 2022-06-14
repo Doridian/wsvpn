@@ -1,3 +1,12 @@
+VERSION="$(git describe --tags 2> /dev/null)"
+COMMIT_HASH="$(git rev-parse --short HEAD)"
+
+PACKAGE="github.com/doridian/wsvpn/shared"
+LDFLAGS=(
+  "-X '${PACKAGE}/version.Version=${VERSION}'"
+  "-X '${PACKAGE}/version.CommitHash=${COMMIT_HASH}'"
+)
+
 buildfor() {
 	export GOOS="$1"
 	export GOARCH="$2"

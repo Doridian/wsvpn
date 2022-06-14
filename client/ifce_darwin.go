@@ -23,12 +23,12 @@ func configIface(dev *water.Interface, ipConfig bool, rNet *remoteNet, mtu int, 
 	if err != nil {
 		return err
 	}
-	err = shared.ExecCmd("route", "add", "-net", rNet.ipNet.String(), "gw", rNet.getServerIP())
+	err = shared.ExecCmd("route", "add", "-net", rNet.ipNet.String(), rNet.getServerIP())
 	if err != nil {
 		return err
 	}
 	if routeGateway {
-		err = shared.ExecCmd("route", "add", "default", "gw", rNet.getServerIP())
+		err = shared.ExecCmd("route", "add", "default", rNet.getServerIP())
 		if err != nil {
 			return err
 		}
@@ -41,5 +41,5 @@ func getPlatformSpecifics(rNet *remoteNet, mtu int, config water.Config) water.C
 }
 
 func addRoute(dev *water.Interface, rNet *remoteNet, routeNet *net.IPNet) error {
-	return shared.ExecCmd("route", "add", "-net", routeNet.String(), "gw", rNet.getServerIP())
+	return shared.ExecCmd("route", "add", "-net", routeNet.String(), rNet.getServerIP())
 }

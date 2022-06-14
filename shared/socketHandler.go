@@ -279,7 +279,11 @@ func (s *Socket) Serve() {
 					log.Printf("[%s] Error in in-band command %s: %v", s.connId, commandName, err)
 				}
 
-				s.rawSendCommand(commandId, "reply", fmt.Sprintf("%v", err == nil))
+				replyStr := "OK"
+				if err != nil {
+					replyStr = err.Error()
+				}
+				s.rawSendCommand(commandId, "reply", replyStr)
 			}
 		}
 	}()

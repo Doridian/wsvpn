@@ -52,7 +52,7 @@ func BroadcastMessage(msgType int, data []byte, skip *Socket) {
 type CommandHandler func(args []string) error
 
 type Socket struct {
-	lastCommandId uint64
+	lastCommandId uint64 // This MUST be the first element of the struct, see https://github.com/golang/go/issues/23345
 	connId        string
 	conn          *websocket.Conn
 	iface         *water.Interface

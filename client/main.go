@@ -19,14 +19,12 @@ import (
 	"github.com/songgao/water"
 )
 
-const DEFAULT_URL = "ws://example.com"
-
 var defaultGateway = flag.Bool("default-gateway", false, "Route all traffic through VPN")
-var connectAddr = flag.String("connect", DEFAULT_URL, "Server address to connect to")
+var connectAddr = flag.String("connect", "", "Server address to connect to (ex. ws://example.com:9000)")
 var authFile = flag.String("auth-file", "", "File to read authentication from in the format user:password")
 var upScript = flag.String("up-script", "", "Script to run once the VPN is online")
 var downScript = flag.String("down-script", "", "Script to run when the VPN goes offline")
-var proxyAddr = flag.String("proxy", "", "HTTP proxy to use for connection (ex. http://10.10.10.10:8080)")
+var proxyAddr = flag.String("proxy", "", "HTTP proxy to use for connection (ex. http://example.com:8080)")
 
 var caCertFile = flag.String("ca-certificates", "", "If specified, use all PEM certs in this file as valid root certs only")
 var insecure = flag.Bool("insecure", false, "Disable all TLS verification")
@@ -50,13 +48,16 @@ func runEventScript(script *string, op string, cRemoteNet *remoteNet, iface *wat
 }
 
 func main() {
+	flag.Usage = shared.UsageWithVersion
 	flag.Parse()
 
 	destUrlString := *connectAddr
-	if destUrlString == DEFAULT_URL {
-		flag.PrintDefaults()
+	if destUrlString == "" {
+		flag.Usage()
 		return
 	}
+
+	shared.PrintVersion()
 
 	dest, err := url.Parse(destUrlString)
 	if err != nil {

@@ -1,11 +1,5 @@
 VERSION="$(git describe --tags 2> /dev/null)"
-COMMIT_HASH="$(git rev-parse --short HEAD)"
-
-PACKAGE="github.com/doridian/wsvpn/shared"
-LDFLAGS=(
-  "-X '${PACKAGE}/version.Version=${VERSION}'"
-  "-X '${PACKAGE}/version.CommitHash=${COMMIT_HASH}'"
-)
+LDFLAGS="-X 'github.com/doridian/wsvpn/shared/version.Version=${VERSION}'"
 
 buildfor() {
 	export GOOS="$1"
@@ -18,8 +12,8 @@ buildfor() {
 
 	echo "Building for: $GOOS / $GOARCH"
 
-	go build -o "dist/client-$GOOS-$GOARCH$EXESUFFIX" ./client
-	go build -o "dist/server-$GOOS-$GOARCH$EXESUFFIX" ./server
+	go build -ldflags="$LDFLAGS" -o "dist/client-$GOOS-$GOARCH$EXESUFFIX" ./client
+	go build -ldflags="$LDFLAGS" -o "dist/server-$GOOS-$GOARCH$EXESUFFIX" ./server
 }
 
 go mod download

@@ -51,7 +51,10 @@ var modeString string
 var authenticator Authenticator
 
 func main() {
+	flag.Usage = shared.UsageWithVersion
 	flag.Parse()
+
+	shared.PrintVersion()
 
 	var err error
 	_, subnet, err = net.ParseCIDR(*subnetStr)

@@ -93,6 +93,21 @@ func (s *Socket) AddCommandHandler(command string, handler CommandHandler) {
 	s.handlers[command] = handler
 }
 
+func (s *Socket) registerDefaultCommandHandlers() {
+	s.AddCommandHandler("version", func(args []string) error {
+		if len(args) != 1 {
+			return errors.New("version command needs 1 argument")
+		}
+		version := args[0]
+		log.Printf("[%s] Remote version is: %s", s.connId, version)
+		return nil
+	})
+}
+
+func (s *Socket) sendDefaultWelcome() {
+	s.SendCommand("version", Version)
+}
+
 func (s *Socket) Wait() {
 	s.wg.Wait()
 }
@@ -205,6 +220,8 @@ func (s *Socket) tryServeIfaceRead() {
 }
 
 func (s *Socket) Serve() {
+	s.registerDefaultCommandHandlers()
+
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
 	s.tryServeIfaceRead()
@@ -290,6 +307,8 @@ func (s *Socket) Serve() {
 	}()
 
 	s.installPingHandlers()
+
+	s.sendDefaultWelcome()
 }
 
 func (s *Socket) installPingHandlers() {

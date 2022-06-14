@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -52,17 +53,18 @@ func BroadcastMessage(msgType int, data []byte, skip *Socket) {
 type CommandHandler func(args []string) error
 
 type Socket struct {
-	lastCommandId uint64 // This MUST be the first element of the struct, see https://github.com/golang/go/issues/23345
-	connId        string
-	conn          *websocket.Conn
-	iface         *water.Interface
-	noIfaceReader bool
-	writeLock     *sync.Mutex
-	wg            *sync.WaitGroup
-	handlers      map[string]CommandHandler
-	closechan     chan bool
-	closechanopen bool
-	mac           MacAddr
+	lastCommandId         uint64 // This MUST be the first element of the struct, see https://github.com/golang/go/issues/23345
+	connId                string
+	conn                  *websocket.Conn
+	iface                 *water.Interface
+	noIfaceReader         bool
+	writeLock             *sync.Mutex
+	wg                    *sync.WaitGroup
+	handlers              map[string]CommandHandler
+	closechan             chan bool
+	closechanopen         bool
+	mac                   MacAddr
+	remoteProtocolVersion int
 }
 
 func SetMultiClientIfaceMode(enable bool) {
@@ -75,17 +77,18 @@ func SetClientToClient(enable bool) {
 
 func MakeSocket(connId string, conn *websocket.Conn, iface *water.Interface, noIfaceReader bool) *Socket {
 	return &Socket{
-		connId:        connId,
-		conn:          conn,
-		iface:         iface,
-		noIfaceReader: noIfaceReader,
-		writeLock:     &sync.Mutex{},
-		wg:            &sync.WaitGroup{},
-		handlers:      make(map[string]CommandHandler),
-		closechan:     make(chan bool),
-		closechanopen: true,
-		mac:           defaultMac,
-		lastCommandId: 0,
+		connId:                connId,
+		conn:                  conn,
+		iface:                 iface,
+		noIfaceReader:         noIfaceReader,
+		writeLock:             &sync.Mutex{},
+		wg:                    &sync.WaitGroup{},
+		handlers:              make(map[string]CommandHandler),
+		closechan:             make(chan bool),
+		closechanopen:         true,
+		mac:                   defaultMac,
+		lastCommandId:         0,
+		remoteProtocolVersion: 0,
 	}
 }
 
@@ -95,17 +98,22 @@ func (s *Socket) AddCommandHandler(command string, handler CommandHandler) {
 
 func (s *Socket) registerDefaultCommandHandlers() {
 	s.AddCommandHandler("version", func(args []string) error {
-		if len(args) != 1 {
-			return errors.New("version command needs 1 argument")
+		if len(args) != 2 {
+			return errors.New("version command needs 2 arguments")
 		}
-		version := args[0]
-		log.Printf("[%s] Remote version is: %s", s.connId, version)
+		protocolVersion, err := strconv.Atoi(args[0])
+		if err != nil {
+			return err
+		}
+		s.remoteProtocolVersion = protocolVersion
+		version := args[1]
+		log.Printf("[%s] Remote version is: %s (protocol %d)", s.connId, version, protocolVersion)
 		return nil
 	})
 }
 
 func (s *Socket) sendDefaultWelcome() {
-	s.SendCommand("version", Version)
+	s.SendCommand("version", fmt.Sprintf("%d", ProtocolVersion), Version)
 }
 
 func (s *Socket) Wait() {

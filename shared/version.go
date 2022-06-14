@@ -8,11 +8,12 @@ import (
 )
 
 var (
-	Version = "dev"
+	Version         = "dev"
+	ProtocolVersion = 1
 )
 
 func PrintVersion() {
-	log.Printf("Local version is: %s", Version)
+	log.Printf("Local version is: %s (protocol %d)", Version, ProtocolVersion)
 }
 
 func UsageWithVersion() {

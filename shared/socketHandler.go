@@ -17,8 +17,6 @@ import (
 var pingIntervalPtr = flag.Duration("ping-interval", time.Second*time.Duration(30), "Send ping frames in this interval")
 var pingTimeoutPtr = flag.Duration("ping-timeout", time.Second*time.Duration(5), "Disconnect if no ping response is received after timeout")
 
-var lastCommandId uint64 = 0
-
 var defaultMac = [6]byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
 
 var multiClientIface bool = false
@@ -64,6 +62,7 @@ type Socket struct {
 	closechan     chan bool
 	closechanopen bool
 	mac           MacAddr
+	lastCommandId uint64
 }
 
 func SetMultiClientIfaceMode(enable bool) {
@@ -86,6 +85,7 @@ func MakeSocket(connId string, conn *websocket.Conn, iface *water.Interface, noI
 		closechan:     make(chan bool),
 		closechanopen: true,
 		mac:           defaultMac,
+		lastCommandId: 0,
 	}
 }
 
@@ -103,7 +103,7 @@ func (s *Socket) rawSendCommand(commandId string, command string, args ...string
 }
 
 func (s *Socket) SendCommand(command string, args ...string) error {
-	return s.rawSendCommand(fmt.Sprintf("%d", atomic.AddUint64(&lastCommandId, 1)), command, args...)
+	return s.rawSendCommand(fmt.Sprintf("%d", atomic.AddUint64(&s.lastCommandId, 1)), command, args...)
 }
 
 func (s *Socket) WriteMessage(msgType int, data []byte) error {
@@ -275,15 +275,16 @@ func (s *Socket) Serve() {
 				} else {
 					err = handler(str[2:])
 				}
-				if err != nil {
-					log.Printf("[%s] Error in in-band command %s: %v", s.connId, commandName, err)
-				}
 
 				replyStr := "OK"
 				if err != nil {
 					replyStr = err.Error()
+					log.Printf("[%s] Error in in-band command %s: %v", s.connId, commandName, err)
 				}
 				s.rawSendCommand(commandId, "reply", replyStr)
+				if err != nil {
+					return
+				}
 			}
 		}
 	}()

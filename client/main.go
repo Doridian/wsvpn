@@ -186,12 +186,12 @@ func main() {
 		rNetStr := args[1]
 		mtu, err := strconv.Atoi(args[2])
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		cRemoteNet, err = parseRemoteNet(rNetStr)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		log.Printf("Network mode %s, subnet %s, mtu %d", mode, cRemoteNet.str, mtu)
@@ -208,20 +208,20 @@ func main() {
 		})
 		iface, err = water.New(ifconfig)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		log.Printf("Opened %s", iface.Name())
 
 		err = configIface(iface, mode != "TAP_NOCONF", cRemoteNet, mtu, *defaultGateway)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		log.Printf("Configured interface, starting operations")
 		err = socket.SetInterface(iface)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		go runEventScript(upScript, "up", cRemoteNet, iface)

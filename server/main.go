@@ -91,9 +91,9 @@ func main() {
 			panic(err)
 		}
 
-		shared.SetMACLearning(true)
+		shared.SetMultiClientIfaceMode(true)
 	} else {
-		shared.SetMACLearning(false)
+		shared.SetMultiClientIfaceMode(false)
 		modeString = "TUN"
 	}
 

@@ -21,7 +21,7 @@ var lastCommandId uint64 = 0
 
 var defaultMac = [6]byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
 
-var learnMac bool = false
+var multiClientIface bool = false
 var allowClientToClient bool = false
 var macTable map[MacAddr]*Socket = make(map[MacAddr]*Socket)
 var macLock sync.RWMutex
@@ -66,8 +66,8 @@ type Socket struct {
 	mac           MacAddr
 }
 
-func SetMACLearning(enable bool) {
-	learnMac = enable
+func SetMultiClientIfaceMode(enable bool) {
+	multiClientIface = enable
 }
 
 func SetClientToClient(enable bool) {
@@ -159,7 +159,7 @@ func (s *Socket) Close() {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
 	s.conn.Close()
-	if s.iface != nil && !learnMac {
+	if s.iface != nil && !multiClientIface {
 		s.iface.Close()
 	}
 	if s.closechanopen {
@@ -227,7 +227,7 @@ func (s *Socket) Serve() {
 			}
 
 			if msgType == websocket.BinaryMessage {
-				if learnMac && len(msg) >= 14 {
+				if multiClientIface && len(msg) >= 14 {
 					s.setMACFrom(msg)
 
 					if allowClientToClient {

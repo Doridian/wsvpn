@@ -52,6 +52,7 @@ func BroadcastMessage(msgType int, data []byte, skip *Socket) {
 type CommandHandler func(args []string) error
 
 type Socket struct {
+	lastCommandId uint64
 	connId        string
 	conn          *websocket.Conn
 	iface         *water.Interface
@@ -62,7 +63,6 @@ type Socket struct {
 	closechan     chan bool
 	closechanopen bool
 	mac           MacAddr
-	lastCommandId uint64
 }
 
 func SetMultiClientIfaceMode(enable bool) {

@@ -169,7 +169,7 @@ func main() {
 			return errors.New("cannot addroute before init")
 		}
 
-		if len(args) < 1 {
+		if len(args) != 1 {
 			return errors.New("addroute needs 1 argument")
 		}
 		_, routeNet, err := net.ParseCIDR(args[0])
@@ -180,6 +180,10 @@ func main() {
 	})
 	socket.AddCommandHandler("init", func(args []string) error {
 		var err error
+
+		if len(args) != 3 {
+			return errors.New("init needs 3 arguments")
+		}
 
 		mode := args[0]
 

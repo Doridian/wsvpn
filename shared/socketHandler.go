@@ -316,7 +316,7 @@ func (s *Socket) Serve() {
 
 	s.installPingHandlers()
 
-	defer s.sendDefaultWelcome()
+	go s.sendDefaultWelcome()
 }
 
 func (s *Socket) installPingHandlers() {

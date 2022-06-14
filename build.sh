@@ -1,5 +1,5 @@
 VERSION="$(git describe --tags 2> /dev/null)"
-LDFLAGS="-X 'github.com/doridian/wsvpn/shared/version.Version=${VERSION}'"
+LDFLAGS="-X 'github.com/Doridian/wsvpn/shared.Version=${VERSION}'"
 
 buildfor() {
 	export GOOS="$1"

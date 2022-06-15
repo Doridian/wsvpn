@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/Doridian/wsvpn/server/authenticators"
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/gorilla/websocket"
@@ -30,6 +31,7 @@ var subnetStr = flag.String("subnet", "192.168.3.0/24", "Subnet for the tunnel c
 var listenAddr = flag.String("listen", "127.0.0.1:9000", "Listen address for the WebSocket interface")
 
 var authenticatorStrPtr = flag.String("authenticator", "allow-all", "Which authenticator to use (allow-all, htpasswd)")
+var authenticatorConfigStrPtr = flag.String("authenticator-config", "", "Authebnticator config file (ex. htpasswd file for htpasswd authenticator, empty for default)")
 
 var useTap = flag.Bool("tap", false, "Use a TAP and not a TUN")
 var useTapNoConf = flag.Bool("tap-noconf", false, "Do not send IP config with TAP ignore -subnet)")
@@ -48,7 +50,7 @@ var tapMode bool
 var tapDev *water.Interface
 var modeString string
 
-var authenticator Authenticator
+var authenticator authenticators.Authenticator
 
 func main() {
 	flag.Usage = shared.UsageWithVersion
@@ -104,14 +106,14 @@ func main() {
 
 	authenticatorStr := *authenticatorStrPtr
 	if authenticatorStr == "allow-all" {
-		authenticator = &AllowAllAuthenticator{}
+		authenticator = &authenticators.AllowAllAuthenticator{}
 	} else if authenticatorStr == "htpasswd" {
-		authenticator = &HtpasswdAuthenticator{}
+		authenticator = &authenticators.HtpasswdAuthenticator{}
 	} else {
 		panic(errors.New("invalid authenticator selected"))
 	}
 
-	err = authenticator.Load()
+	err = authenticator.Load(*authenticatorConfigStrPtr)
 	if err != nil {
 		panic(err)
 	}
@@ -181,8 +183,8 @@ func serveTap() {
 
 func serveWs(w http.ResponseWriter, r *http.Request) {
 	authResult := authenticator.Authenticate(r, w)
-	if authResult != AUTH_OK {
-		if authResult == AUTH_FAILED_DEFAULT {
+	if authResult != authenticators.AUTH_OK {
+		if authResult == authenticators.AUTH_FAILED_DEFAULT {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		}
 		return

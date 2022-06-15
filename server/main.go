@@ -31,7 +31,7 @@ var subnetStr = flag.String("subnet", "192.168.3.0/24", "Subnet for the tunnel c
 var listenAddr = flag.String("listen", "127.0.0.1:9000", "Listen address for the WebSocket interface")
 
 var authenticatorStrPtr = flag.String("authenticator", "allow-all", "Which authenticator to use (allow-all, htpasswd)")
-var authenticatorConfigStrPtr = flag.String("authenticator-config", "", "Authebnticator config file (ex. htpasswd file for htpasswd authenticator, empty for default)")
+var authenticatorConfigStrPtr = flag.String("authenticator-config", "", "Authenticator config file (ex. htpasswd file for htpasswd authenticator, empty for default)")
 
 var useTap = flag.Bool("tap", false, "Use a TAP and not a TUN")
 var useTapNoConf = flag.Bool("tap-noconf", false, "Do not send IP config with TAP ignore -subnet)")

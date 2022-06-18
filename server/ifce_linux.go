@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"net"
-	"strings"
 
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/songgao/water"
@@ -51,7 +50,7 @@ func extendTAPConfig(tapConfig *water.Config) error {
 func extendTUNConfig(tunConfig *water.Config) error {
 	tunNamePrefix := *useTunNamePrefix
 	if tunNamePrefix != "" {
-		tunConfig.Name = FindLowestNetworkInterfaceByPrefix(tunNamePrefix)
+		tunConfig.Name = shared.FindLowestNetworkInterfaceByPrefix(tunNamePrefix)
 	}
 
 	return nil

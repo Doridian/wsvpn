@@ -246,7 +246,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	connId := fmt.Sprintf("%d", slot)
 
-	log.Printf("[%s] Client ENTER", connId)
+	log.Printf("[%s] Client ENTER (interface %s)", connId, iface.Name())
 
 	socket := shared.MakeSocket(connId, conn, iface, tapMode)
 
@@ -255,7 +255,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		delete(usedSlots, slot)
 		slotMutex.Unlock()
 		socket.Close()
-		log.Printf("[%s] Client EXIT", connId)
+		log.Printf("[%s] Client EXIT (interface %s)", connId, iface.Name())
 	}()
 
 	ipClient, err := cidr.Host(subnet, int(slot)+1)

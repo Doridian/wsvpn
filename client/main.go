@@ -22,9 +22,13 @@ import (
 var defaultGateway = flag.Bool("default-gateway", false, "Route all traffic through VPN")
 var connectAddr = flag.String("connect", "", "Server address to connect to (ex. ws://example.com:9000)")
 var authFile = flag.String("auth-file", "", "File to read authentication from in the format user:password")
+
 var upScript = flag.String("up-script", "", "Script to run once the VPN is online")
 var downScript = flag.String("down-script", "", "Script to run when the VPN goes offline")
+
 var proxyAddr = flag.String("proxy", "", "HTTP proxy to use for connection (ex. http://example.com:8080)")
+
+var ifaceName = flag.String("interface-name", "", "Interface name of the interface to use")
 
 var caCertFile = flag.String("ca-certificates", "", "If specified, use all PEM certs in this file as valid root certs only")
 var insecure = flag.Bool("insecure", false, "Disable all TLS verification")
@@ -208,7 +212,7 @@ func main() {
 			waterMode = water.TAP
 		}
 
-		ifconfig := getPlatformSpecifics(cRemoteNet, mtu, water.Config{
+		ifconfig := getPlatformSpecifics(cRemoteNet, mtu, *ifaceName, water.Config{
 			DeviceType: waterMode,
 		})
 		iface, err = water.New(ifconfig)

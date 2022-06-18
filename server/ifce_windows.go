@@ -13,6 +13,10 @@ func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, 
 	return errors.New("running the server on Windows is not supported at the moment")
 }
 
-func extendTAPConfig(config *water.Config) {
+func extendTAPConfig(config *water.Config) error {
+	return nil
+}
 
+func extendTUNConfig(tunConfig *water.Config) error {
+	return nil
 }

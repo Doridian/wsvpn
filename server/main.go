@@ -24,6 +24,7 @@ var upgrader = websocket.Upgrader{
 }
 
 var slotMutex sync.Mutex
+var ifaceCreationMutex sync.Mutex
 var usedSlots map[uint64]bool = make(map[uint64]bool)
 
 var mtu = flag.Int("mtu", 1280, "MTU for the tunnel")
@@ -74,16 +75,20 @@ func main() {
 
 	tapMode = *useTap
 	if tapMode {
+		ifaceCreationMutex.Lock()
 		tapConfig := water.Config{
 			DeviceType: water.TAP,
 		}
-
-		extendTAPConfig(&tapConfig)
+		err = extendTAPConfig(&tapConfig)
+		if err != nil {
+			panic(err)
+		}
 
 		tapDev, err = water.New(tapConfig)
 		if err != nil {
 			panic(err)
 		}
+		ifaceCreationMutex.Unlock()
 
 		if *useTapNoConf {
 			modeString = "TAP_NOCONF"
@@ -202,9 +207,19 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	if tapMode {
 		iface = tapDev
 	} else {
-		iface, err = water.New(water.Config{
+		ifaceCreationMutex.Lock()
+		tunConfig := water.Config{
 			DeviceType: water.TUN,
-		})
+		}
+		err = extendTUNConfig(&tunConfig)
+		if err != nil {
+			log.Printf("[S] Error extending TUN config: %v", err)
+			conn.Close()
+			return
+		}
+
+		iface, err = water.New(tunConfig)
+		ifaceCreationMutex.Unlock()
 		if err != nil {
 			log.Printf("[S] Error creating new TUN: %v", err)
 			conn.Close()
@@ -220,6 +235,9 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 			slotMutex.Unlock()
 			conn.Close()
 			log.Println("[S] Cannot connect new client: IP slots exhausted")
+			if !tapMode {
+				iface.Close()
+			}
 			return
 		}
 	}
@@ -228,7 +246,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	connId := fmt.Sprintf("%d", slot)
 
-	log.Printf("[%s] Client ENTER", connId)
+	log.Printf("[%s] Client ENTER (interface %s)", connId, iface.Name())
 
 	socket := shared.MakeSocket(connId, conn, iface, tapMode)
 
@@ -237,7 +255,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		delete(usedSlots, slot)
 		slotMutex.Unlock()
 		socket.Close()
-		log.Printf("[%s] Client EXIT", connId)
+		log.Printf("[%s] Client EXIT (interface %s)", connId, iface.Name())
 	}()
 
 	ipClient, err := cidr.Host(subnet, int(slot)+1)

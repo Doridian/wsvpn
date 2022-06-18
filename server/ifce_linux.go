@@ -14,6 +14,7 @@ import (
 var useTapName = flag.String("tap-name", "", "Use specific TAP name")
 var useTapNoIfconfig = flag.Bool("tap-no-ifconfig", false, "Do not ifconfig the TAP")
 var useTapPersist = flag.Bool("tap-persist", false, "Set persist on TAP")
+var useTunNamePrefix = flag.String("tun-naming-prefix", "", "Use specific naming prefix for TUN interfaces, suffxed with a number starting at 0 (ex. wstun)")
 
 func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, ipServer net.IP, subnet *net.IPNet) error {
 	if *useTapNoIfconfig {
@@ -37,10 +38,20 @@ func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, 
 	return shared.ExecCmd("ip", "addr", "add", "dev", dev.Name(), ipServer.String(), "peer", ipClient.String())
 }
 
-func extendTAPConfig(tapConfig *water.Config) {
+func extendTAPConfig(tapConfig *water.Config) error {
 	tapName := *useTapName
 	if tapName != "" {
 		tapConfig.Name = tapName
 	}
 	tapConfig.Persist = *useTapPersist
+	return nil
+}
+
+func extendTUNConfig(tunConfig *water.Config) error {
+	tunNamePrefix := *useTunNamePrefix
+	if tunNamePrefix != "" {
+		tunConfig.Name = shared.FindLowestNetworkInterfaceByPrefix(tunNamePrefix)
+	}
+
+	return nil
 }

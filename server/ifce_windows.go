@@ -16,3 +16,7 @@ func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, 
 func extendTAPConfig(config *water.Config) {
 
 }
+
+func extendTUNConfig(tunConfig *water.Config) {
+
+}

@@ -77,7 +77,6 @@ func main() {
 		tapConfig := water.Config{
 			DeviceType: water.TAP,
 		}
-
 		extendTAPConfig(&tapConfig)
 
 		tapDev, err = water.New(tapConfig)
@@ -202,9 +201,12 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	if tapMode {
 		iface = tapDev
 	} else {
-		iface, err = water.New(water.Config{
+		tunConfig := water.Config{
 			DeviceType: water.TUN,
-		})
+		}
+		extendTUNConfig(&tunConfig)
+
+		iface, err = water.New(tunConfig)
 		if err != nil {
 			log.Printf("[S] Error creating new TUN: %v", err)
 			conn.Close()

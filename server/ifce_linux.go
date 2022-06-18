@@ -44,3 +44,7 @@ func extendTAPConfig(tapConfig *water.Config) {
 	}
 	tapConfig.Persist = *useTapPersist
 }
+
+func extendTUNConfig(tunConfig *water.Config) {
+
+}

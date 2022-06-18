@@ -35,9 +35,9 @@ var authenticatorStrPtr = flag.String("authenticator", "allow-all", "Which authe
 var authenticatorConfigStrPtr = flag.String("authenticator-config", "", "Authenticator config file (ex. htpasswd file for htpasswd authenticator, empty for default)")
 
 var useTap = flag.Bool("tap", false, "Use a TAP and not a TUN")
-var useTapNoConf = flag.Bool("tap-noconf", false, "Do not send IP config with TAP ignore -subnet)")
-var useTapIfaceNoConf = flag.Bool("tap-iface-noconf", false, "Do not configure TAP interface at all except MTU")
-var useClientToClient = flag.Bool("client-to-client", false, "Allow client-to-client communication (in TAP)")
+var useTapNoConf = flag.Bool("tap-remote-noconf", false, "Do not send IP or route configuration with TAP to remote")
+var useTapIfaceNoConf = flag.Bool("tap-local-noconf", false, "Do not configure local TAP interface at all except MTU")
+var useClientToClient = flag.Bool("allow-client-to-client", false, "Allow client-to-client communication (in TAP)")
 
 var tlsCert = flag.String("tls-cert", "", "TLS certificate file for listener")
 var tlsKey = flag.String("tls-key", "", "TLS key file for listener")

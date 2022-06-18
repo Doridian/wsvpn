@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"net"
 
+	"github.com/Doridian/wsvpn/shared"
 	"github.com/apparentlymart/go-cidr/cidr"
 )
 
@@ -23,8 +23,7 @@ func (r *remoteNet) getServerIP() string {
 }
 
 func (r *remoteNet) getNetmask() string {
-	mask := r.ipNet.Mask
-	return fmt.Sprintf("%d.%d.%d.%d", mask[0], mask[1], mask[2], mask[3])
+	return shared.IPNetGetNetMask(r.ipNet)
 }
 
 func parseRemoteNet(rNetStr string) (*remoteNet, error) {

@@ -51,3 +51,8 @@ func FindLowestNetworkInterfaceByPrefix(prefix string) string {
 		i += 1
 	}
 }
+
+func IPNetGetNetMask(ipNet *net.IPNet) string {
+	mask := ipNet.Mask
+	return fmt.Sprintf("%d.%d.%d.%d", mask[0], mask[1], mask[2], mask[3])
+}

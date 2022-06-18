@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/songgao/water"
@@ -14,7 +15,7 @@ import (
 var useTapName = flag.String("tap-name", "", "Use specific TAP name")
 var useTapNoIfconfig = flag.Bool("tap-no-ifconfig", false, "Do not ifconfig the TAP")
 var useTapPersist = flag.Bool("tap-persist", false, "Set persist on TAP")
-var useTunNamePattern = flag.String("tun-naming-pattern", "", "Use specific naming pattern for TUN interfaces, # for the number (ex. wstun#)")
+var useTunNamePrefix = flag.String("tun-naming-prefix", "", "Use specific naming prefix for TUN interfaces, suffxed with a number starting at 0 (ex. wstun)")
 
 func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, ipServer net.IP, subnet *net.IPNet) error {
 	if *useTapNoIfconfig {
@@ -48,5 +49,10 @@ func extendTAPConfig(tapConfig *water.Config) error {
 }
 
 func extendTUNConfig(tunConfig *water.Config) error {
+	tunNamePrefix := *useTunNamePrefix
+	if tunNamePrefix != "" {
+		tunConfig.Name = FindLowestNetworkInterfaceByPrefix(tunNamePrefix)
+	}
+
 	return nil
 }

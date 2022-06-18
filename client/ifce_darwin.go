@@ -36,7 +36,10 @@ func configIface(dev *water.Interface, ipConfig bool, rNet *remoteNet, mtu int, 
 	return nil
 }
 
-func getPlatformSpecifics(rNet *remoteNet, mtu int, config water.Config) water.Config {
+func getPlatformSpecifics(rNet *remoteNet, mtu int, name string, config water.Config) water.Config {
+	if name != "" {
+		config.Name = name
+	}
 	return config
 }
 

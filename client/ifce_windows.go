@@ -11,7 +11,7 @@ import (
 	"github.com/songgao/water"
 )
 
-var ifaceName = flag.String("ifname", "tap0901", "Name of the interface to use")
+var ifaceComponentID = flag.String("interface-component-id", "tap0901", "Commponent ID of the interface to use")
 
 func configIface(dev *water.Interface, ipConfig bool, rNet *remoteNet, mtu int, routeGateway bool) error {
 	err := shared.ExecCmd("netsh", "interface", "ipv4", "set", "subinterface", dev.Name(), fmt.Sprintf("mtu=%d", mtu))
@@ -30,9 +30,10 @@ func configIface(dev *water.Interface, ipConfig bool, rNet *remoteNet, mtu int, 
 	return shared.ExecCmd("netsh", "interface", "ip", "set", "address", "source=static", fmt.Sprintf("addr=%s", rNet.getClientIP()), fmt.Sprintf("name=%s", dev.Name()), fmt.Sprintf("mask=%s", rNet.getNetmask()), gw)
 }
 
-func getPlatformSpecifics(rNet *remoteNet, mtu int, config water.Config) water.Config {
-	config.ComponentID = *ifaceName
+func getPlatformSpecifics(rNet *remoteNet, mtu int, name string, config water.Config) water.Config {
+	config.ComponentID = *ifaceComponentID
 	config.Network = rNet.str
+	config.InterfaceName = name
 	return config
 }
 

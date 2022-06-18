@@ -74,6 +74,12 @@ func main() {
 	maxSlot = cidr.AddressCount(subnet) - 2
 
 	tapMode = *useTap
+
+	err = verifyPlatformFlags()
+	if err != nil {
+		panic(err)
+	}
+
 	if tapMode {
 		ifaceCreationMutex.Lock()
 		tapConfig := water.Config{

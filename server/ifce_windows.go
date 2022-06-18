@@ -37,3 +37,10 @@ func extendTAPConfig(config *water.Config) error {
 func extendTUNConfig(tunConfig *water.Config) error {
 	return errors.New("running the server on Windows requires using TAP mode")
 }
+
+func verifyPlatformFlags() error {
+	if !tapMode {
+		return errors.New("running the server on Windows requires using TAP mode")
+	}
+	return nil
+}

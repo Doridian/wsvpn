@@ -27,10 +27,10 @@ func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, 
 	return shared.ExecCmd("ifconfig", dev.Name(), ipServer.String(), ipClient.String(), "up")
 }
 
-func extendTAPConfig(config *water.Config) {
-
+func extendTAPConfig(config *water.Config) error {
+	return nil
 }
 
-func extendTUNConfig(tunConfig *water.Config) {
-
+func extendTUNConfig(tunConfig *water.Config) error {
+	return nil
 }

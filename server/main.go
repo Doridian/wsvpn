@@ -12,6 +12,7 @@ import (
 
 	"github.com/Doridian/wsvpn/server/authenticators"
 	"github.com/Doridian/wsvpn/shared"
+	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/gorilla/websocket"
 	"github.com/songgao/water"
@@ -107,13 +108,13 @@ func main() {
 			panic(err)
 		}
 
-		shared.SetMultiClientIfaceMode(true)
+		sockets.SetMultiClientIfaceMode(true)
 	} else {
-		shared.SetMultiClientIfaceMode(false)
+		sockets.SetMultiClientIfaceMode(false)
 		modeString = "TUN"
 	}
 
-	shared.SetClientToClient(*useClientToClient)
+	sockets.SetClientToClient(*useClientToClient)
 
 	authenticatorStr := *authenticatorStrPtr
 	if authenticatorStr == "allow-all" {
@@ -180,14 +181,14 @@ func serveTap() {
 		dest := shared.GetDestMAC(packet)
 		isUnicast := shared.MACIsUnicast(dest)
 
-		var s *shared.Socket
+		var s *sockets.Socket
 		if isUnicast {
-			s = shared.FindSocketByMAC(dest)
+			s = sockets.FindSocketByMAC(dest)
 			if s != nil {
-				s.WriteMessage(websocket.BinaryMessage, packet[:n])
+				s.WriteDataMessage(packet[:n])
 			}
 		} else {
-			shared.BroadcastMessage(websocket.BinaryMessage, packet[:n], nil)
+			sockets.BroadcastDataMessage(packet[:n], nil)
 		}
 	}
 }
@@ -254,7 +255,8 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[%s] Client ENTER (interface %s)", connId, iface.Name())
 
-	socket := shared.MakeSocket(connId, conn, iface, tapMode)
+	adapter := sockets.NewWebSocketAdapter(conn)
+	socket := sockets.MakeSocket(connId, adapter, iface, tapMode)
 
 	defer func() {
 		slotMutex.Lock()

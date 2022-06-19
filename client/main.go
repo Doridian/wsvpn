@@ -63,7 +63,7 @@ func main() {
 		return
 	}
 
-	shared.PrintVersion()
+	shared.PrintVersion("C")
 
 	dest, err := url.Parse(destUrlString)
 	if err != nil {
@@ -96,13 +96,13 @@ func main() {
 
 	header := http.Header{}
 	if userInfo != nil {
-		log.Printf("Connecting to %s as user %s", dest.Redacted(), userInfo.Username())
+		log.Printf("[C] Connecting to %s as user %s", dest.Redacted(), userInfo.Username())
 		if _, pws := userInfo.Password(); !pws {
 			productionWarnings("NO PASSWORD SET")
 		}
 		header.Add("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(userInfo.String())))
 	} else {
-		log.Printf("Connecting to %s without authentication", dest.String())
+		log.Printf("[C] Connecting to %s without authentication", dest.String())
 		productionWarnings("NO AUTHENTICATION SET")
 	}
 
@@ -114,7 +114,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		log.Printf("Using HTTP proxy %s", proxyUrl.Redacted())
+		log.Printf("[C] Using HTTP proxy %s", proxyUrl.Redacted())
 		dialer.Proxy = func(_ *http.Request) (*url.URL, error) {
 			return proxyUrl, nil
 		}
@@ -153,9 +153,9 @@ func main() {
 	websocketTlsConn, ok := conn.UnderlyingConn().(*tls.Conn)
 	if ok {
 		connState := websocketTlsConn.ConnectionState()
-		log.Printf("TLS %s connection established with cipher=%s", shared.TlsVersionString(connState.Version), tls.CipherSuiteName(connState.CipherSuite))
+		log.Printf("[C] TLS %s connection established with cipher=%s", shared.TlsVersionString(connState.Version), tls.CipherSuiteName(connState.CipherSuite))
 	} else {
-		log.Printf("Unencrypted connection established")
+		log.Printf("[C] Unencrypted connection established")
 	}
 
 	var iface *water.Interface
@@ -206,7 +206,7 @@ func main() {
 			return err
 		}
 
-		log.Printf("Network mode %s, subnet %s, mtu %d", mode, cRemoteNet.str, mtu)
+		log.Printf("[C] Network mode %s, subnet %s, mtu %d", mode, cRemoteNet.str, mtu)
 
 		var waterMode water.DeviceType
 		if mode == "TUN" {
@@ -223,14 +223,14 @@ func main() {
 			return err
 		}
 
-		log.Printf("Opened %s", iface.Name())
+		log.Printf("[C] Opened %s", iface.Name())
 
 		err = configIface(iface, mode != "TAP_NOCONF", cRemoteNet, mtu, *defaultGateway)
 		if err != nil {
 			return err
 		}
 
-		log.Printf("Configured interface, starting operations")
+		log.Printf("[C] Configured interface, starting operations")
 		err = socket.SetInterface(iface)
 		if err != nil {
 			return err

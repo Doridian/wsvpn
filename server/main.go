@@ -59,7 +59,7 @@ func main() {
 	flag.Usage = shared.UsageWithVersion
 	flag.Parse()
 
-	shared.PrintVersion()
+	shared.PrintVersion("S")
 
 	var err error
 	_, subnet, err = net.ParseCIDR(*subnetStr)

@@ -12,26 +12,26 @@ gobuild() {
 buildfor() {
 	export GOOS="$1"
 	export GOARCH="$2"
-	export EXESUFFIX=""
-	export GOARCHSUFFIX=""
+	EXESUFFIX=""
+	GOARCHSUFFIX=""
 	if [ "$GOOS" == "windows" ]
 	then
-		export EXESUFFIX=".exe"
+		EXESUFFIX=".exe"
 	fi
 
 	case "$GOARCH"
 	in
 		mips|mipsle)
-			export GOARCHSUFFIX="$GOMIPS"
+			GOARCHSUFFIX="$GOMIPS"
 			;;
 		arm)
-			export GOARCHSUFFIX="$GOARM"
+			GOARCHSUFFIX="$GOARM"
 			;;
 	esac
 
 	if [ ! -z "$GOARCHSUFFIX" ]
 	then
-		export GOARCHSUFFIX="-$GOARCHSUFFIX"
+		GOARCHSUFFIX="-$GOARCHSUFFIX"
 	fi
 
 	echo "Building for: $GOOS / $GOARCH$GOARCHSUFFIX"

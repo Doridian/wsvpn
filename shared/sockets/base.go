@@ -27,7 +27,7 @@ func (s *socketBase) SetControlMessageHandler(handler MessageHandler) {
 }
 
 func (s *socketBase) SetDataMessageHandler(handler MessageHandler) {
-	s.controlMessageHandler = handler
+	s.dataMessageHandler = handler
 }
 
 func (s *socketBase) SetPongHandler(handler func()) {

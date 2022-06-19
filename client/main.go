@@ -35,12 +35,6 @@ var ifaceName = flag.String("interface-name", "", "Interface name of the interfa
 var caCertFile = flag.String("ca-certificates", "", "If specified, use all PEM certs in this file as valid root certs only")
 var insecure = flag.Bool("insecure", false, "Disable all TLS verification")
 
-func productionWarnings(str string) {
-	for n := 0; n <= 5; n++ {
-		log.Printf("DO NOT USE THIS IN PRODUCTION! %s!", str)
-	}
-}
-
 func runEventScript(script *string, op string, cRemoteNet *remoteNet, iface *water.Interface) error {
 	if script == nil {
 		return nil
@@ -91,19 +85,18 @@ func main() {
 
 	if dest.User != nil {
 		dest.User = nil
-		productionWarnings("PASSWORD ON THE COMMAND LINE")
+		log.Printf("[C] WARNING: You have put the VPN password on the command line! This can cause security issues!")
 	}
 
 	header := http.Header{}
 	if userInfo != nil {
 		log.Printf("[C] Connecting to %s as user %s", dest.Redacted(), userInfo.Username())
 		if _, pws := userInfo.Password(); !pws {
-			productionWarnings("NO PASSWORD SET")
+			log.Printf("[C] WARNING: You have specified to connect to the VPN with a username but without a password!")
 		}
 		header.Add("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(userInfo.String())))
 	} else {
-		log.Printf("[C] Connecting to %s without authentication", dest.String())
-		productionWarnings("NO AUTHENTICATION SET")
+		log.Printf("[C] WARNING: Connecting to %s without authentication!", dest.String())
 	}
 
 	dialer := websocket.Dialer{}
@@ -127,7 +120,7 @@ func main() {
 	shared.TlsUseFlags(tlsConfig)
 
 	if tlsConfig.InsecureSkipVerify {
-		productionWarnings("TLS VERIFICATION DISABLED")
+		log.Printf("[C] WARNING: TLS verification disabled! This can cause security issues!")
 	}
 
 	caCertFileString := *caCertFile

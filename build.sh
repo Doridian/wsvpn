@@ -1,35 +1,43 @@
+#!/bin/bash
+set -euo pipefail
+
 VERSION="$(git describe --tags 2> /dev/null)"
 LDFLAGS="-X 'github.com/Doridian/wsvpn/shared.Version=${VERSION}'"
+
+gobuild() {
+	MOD="$1"
+	go build -ldflags="$LDFLAGS" -o "dist/$MOD-$GOOS-$GOARCH$GOARCHSUFFIX$EXESUFFIX" "./$MOD"
+}
 
 buildfor() {
 	export GOOS="$1"
 	export GOARCH="$2"
-	EXESUFFIX=""
-	GOARCHSUFFIX=""
+	export EXESUFFIX=""
+	export GOARCHSUFFIX=""
 	if [ "$GOOS" == "windows" ]
 	then
-		EXESUFFIX=".exe"
+		export EXESUFFIX=".exe"
 	fi
 
 	case "$GOARCH"
 	in
 		mips|mipsle)
-			GOARCHSUFFIX="$GOMIPS"
+			export GOARCHSUFFIX="$GOMIPS"
 			;;
 		arm)
-			GOARCHSUFFIX="$GOARM"
+			export GOARCHSUFFIX="$GOARM"
 			;;
 	esac
 
 	if [ ! -z "$GOARCHSUFFIX" ]
 	then
-		GOARCHSUFFIX="-$GOARCHSUFFIX"
+		export GOARCHSUFFIX="-$GOARCHSUFFIX"
 	fi
 
 	echo "Building for: $GOOS / $GOARCH$GOARCHSUFFIX"
 
-	go build -ldflags="$LDFLAGS" -o "dist/client-$GOOS-$GOARCH$GOARCHSUFFIX$EXESUFFIX" ./client
-	go build -ldflags="$LDFLAGS" -o "dist/server-$GOOS-$GOARCH$GOARCHSUFFIX$EXESUFFIX" ./server
+	gobuild client
+	gobuild server
 }
 
 buildmips() {
@@ -69,3 +77,7 @@ buildfor linux mips64le
 
 buildfor darwin amd64
 buildfor darwin arm64
+
+cd dist
+sha256sum * > sha256sums.txt
+cd ..

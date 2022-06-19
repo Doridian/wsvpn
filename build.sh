@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+#set -euo pipefail
 
 VERSION="$(git describe --tags 2> /dev/null)"
 LDFLAGS="-X 'github.com/Doridian/wsvpn/shared.Version=${VERSION}'"

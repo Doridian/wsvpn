@@ -1,4 +1,4 @@
-package sockets
+package adapters
 
 type MessageHandler = func(message []byte) bool
 

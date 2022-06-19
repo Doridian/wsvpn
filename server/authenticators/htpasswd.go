@@ -10,6 +10,8 @@ type HtpasswdAuthenticator struct {
 	authFile *htpasswd.File
 }
 
+var _ Authenticator = &HtpasswdAuthenticator{}
+
 func (a *HtpasswdAuthenticator) Load(configFile string) (err error) {
 	if configFile == "" {
 		configFile = "htpasswd"

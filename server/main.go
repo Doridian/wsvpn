@@ -13,6 +13,7 @@ import (
 	"github.com/Doridian/wsvpn/server/authenticators"
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/sockets"
+	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/gorilla/websocket"
 	"github.com/songgao/water"
@@ -255,7 +256,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[%s] Client ENTER (interface %s)", connId, iface.Name())
 
-	adapter := sockets.NewWebSocketAdapter(conn)
+	adapter := adapters.NewWebSocketAdapter(conn)
 	socket := sockets.MakeSocket(connId, adapter, iface, tapMode)
 
 	defer func() {

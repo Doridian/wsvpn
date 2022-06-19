@@ -16,6 +16,7 @@ import (
 
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/sockets"
+	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 	"github.com/gorilla/websocket"
 	"github.com/songgao/water"
 )
@@ -169,7 +170,7 @@ func main() {
 		}
 	}()
 
-	adapter := sockets.NewWebSocketAdapter(conn)
+	adapter := adapters.NewWebSocketAdapter(conn)
 	socket := sockets.MakeSocket("0", adapter, nil, false)
 	socket.AddCommandHandler("addroute", func(args []string) error {
 		if iface == nil || cRemoteNet == nil {

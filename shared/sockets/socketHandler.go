@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Doridian/wsvpn/shared"
+	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 	"github.com/songgao/water"
 )
 
@@ -55,7 +56,7 @@ type CommandHandler func(args []string) error
 type Socket struct {
 	lastCommandId         uint64 // This MUST be the first element of the struct, see https://github.com/golang/go/issues/23345
 	connId                string
-	adapter               SocketAdapter
+	adapter               adapters.SocketAdapter
 	iface                 *water.Interface
 	noIfaceReader         bool
 	wg                    *sync.WaitGroup
@@ -74,7 +75,7 @@ func SetClientToClient(enable bool) {
 	allowClientToClient = enable
 }
 
-func MakeSocket(connId string, adapter SocketAdapter, iface *water.Interface, noIfaceReader bool) *Socket {
+func MakeSocket(connId string, adapter adapters.SocketAdapter, iface *water.Interface, noIfaceReader bool) *Socket {
 	return &Socket{
 		connId:                connId,
 		adapter:               adapter,

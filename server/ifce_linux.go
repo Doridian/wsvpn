@@ -14,7 +14,7 @@ import (
 var useTapName = flag.String("tap-name", "", "Use specific TAP name")
 var useTapNoIfconfig = flag.Bool("tap-no-ifconfig", false, "Do not ifconfig the TAP")
 var useTapPersist = flag.Bool("tap-persist", false, "Set persist on TAP")
-var useTunNamePrefix = flag.String("tun-naming-prefix", "", "Use specific naming prefix for TUN interfaces, suffxed with a number starting at 0 (ex. wstun)")
+var useTunNamePrefix = flag.String("tun-naming-prefix", "", "Use specific naming prefix for TUN interfaces (e.g. wstun), automatically suffixed with a number starting at 0")
 
 func configIface(dev *water.Interface, ipConfig bool, mtu int, ipClient net.IP, ipServer net.IP, subnet *net.IPNet) error {
 	if *useTapNoIfconfig {

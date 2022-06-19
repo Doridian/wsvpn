@@ -24,7 +24,9 @@ func NewWebSocketAdapter(conn *websocket.Conn) *WebSocketAdapter {
 
 func (s *WebSocketAdapter) Serve() (error, bool) {
 	s.conn.SetPongHandler(func(appData string) error {
-		s.pongHandler()
+		if s.pongHandler != nil {
+			s.pongHandler()
+		}
 		return nil
 	})
 

@@ -226,12 +226,6 @@ func (s *Socket) Serve() {
 	allSockets[s] = s
 	allSocketsLock.Unlock()
 
-	s.wg.Add(1)
-	go func() {
-		defer s.closeDone()
-		s.adapter.Serve()
-	}()
-
 	s.adapter.SetDataMessageHandler(func(message []byte) bool {
 		if multiClientIface && len(message) >= 14 {
 			s.setMACFrom(message)
@@ -297,6 +291,12 @@ func (s *Socket) Serve() {
 	})
 
 	s.installPingPongHandlers(*pingIntervalPtr, *pingTimeoutPtr)
+
+	s.wg.Add(1)
+	go func() {
+		defer s.closeDone()
+		s.adapter.Serve()
+	}()
 
 	go s.sendDefaultWelcome()
 }

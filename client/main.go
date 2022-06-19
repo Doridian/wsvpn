@@ -85,14 +85,14 @@ func main() {
 
 	if dest.User != nil {
 		dest.User = nil
-		log.Printf("[C] WARNING: You have put the VPN password on the command line! This can cause security issues!")
+		log.Printf("[C] WARNING: You have put your password on the command line! This can cause security issues!")
 	}
 
 	header := http.Header{}
 	if userInfo != nil {
 		log.Printf("[C] Connecting to %s as user %s", dest.Redacted(), userInfo.Username())
 		if _, pws := userInfo.Password(); !pws {
-			log.Printf("[C] WARNING: You have specified to connect to the VPN with a username but without a password!")
+			log.Printf("[C] WARNING: You have specified to connect with a username but without a password!")
 		}
 		header.Add("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(userInfo.String())))
 	} else {

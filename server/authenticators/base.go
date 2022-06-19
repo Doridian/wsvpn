@@ -14,5 +14,5 @@ const (
 
 type Authenticator interface {
 	Load(configFile string) error
-	Authenticate(r *http.Request, w http.ResponseWriter) AuthResult
+	Authenticate(r *http.Request, w http.ResponseWriter) (AuthResult, string)
 }

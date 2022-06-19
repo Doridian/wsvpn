@@ -34,6 +34,8 @@ var ifaceName = flag.String("interface-name", "", "Interface name of the interfa
 
 var caCertFile = flag.String("ca-certificates", "", "If specified, use all PEM certs in this file as valid root certs only")
 var insecure = flag.Bool("insecure", false, "Disable all TLS verification")
+var tlsClientCert = flag.String("tls-client-cert", "", "TLS certificate file for client authentication")
+var tlsClientKey = flag.String("tls-client-key", "", "TLS key file for client authentication")
 
 func runEventScript(script *string, op string, cRemoteNet *remoteNet, iface *water.Interface) error {
 	if script == nil {
@@ -88,17 +90,6 @@ func main() {
 		log.Printf("[C] WARNING: You have put your password on the command line! This can cause security issues!")
 	}
 
-	header := http.Header{}
-	if userInfo != nil {
-		log.Printf("[C] Connecting to %s as user %s", dest.Redacted(), userInfo.Username())
-		if _, pws := userInfo.Password(); !pws {
-			log.Printf("[C] WARNING: You have specified to connect with a username but without a password!")
-		}
-		header.Add("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(userInfo.String())))
-	} else {
-		log.Printf("[C] WARNING: Connecting to %s without authentication!", dest.String())
-	}
-
 	dialer := websocket.Dialer{}
 
 	proxyUrlString := *proxyAddr
@@ -135,6 +126,37 @@ func main() {
 			panic(errors.New("error loading root CA file"))
 		}
 		tlsConfig.RootCAs = certPool
+	}
+
+	tlsClientCertStr := *tlsClientCert
+	tlsClientKeyStr := *tlsClientKey
+	if tlsClientCertStr != "" || tlsClientKeyStr != "" {
+		if tlsClientCertStr == "" || tlsClientKeyStr == "" {
+			panic(errors.New("provide either both tls-client-key and tls-client-cert or neither"))
+		}
+
+		tlsClientCertX509, err := tls.LoadX509KeyPair(tlsClientCertStr, tlsClientKeyStr)
+		if err != nil {
+			panic(err)
+		}
+		tlsConfig.Certificates = []tls.Certificate{tlsClientCertX509}
+	}
+
+	header := http.Header{}
+	if userInfo != nil {
+		if tlsClientCertStr == "" {
+			log.Printf("[C] Connecting to %s as user %s", dest.Redacted(), userInfo.Username())
+		} else {
+			log.Printf("[C] Connecting to %s as user %s with mutual TLS authentication", dest.Redacted(), userInfo.Username())
+		}
+		if _, pws := userInfo.Password(); !pws {
+			log.Printf("[C] WARNING: You have specified to connect with a username but without a password!")
+		}
+		header.Add("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(userInfo.String())))
+	} else if tlsClientCertStr == "" {
+		log.Printf("[C] WARNING: Connecting to %s without authentication!", dest.Redacted())
+	} else {
+		log.Printf("[C] Connecting to %s with mutual TLS authentication", dest.Redacted())
 	}
 
 	conn, _, err := dialer.Dial(dest.String(), header)

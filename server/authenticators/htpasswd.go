@@ -24,18 +24,18 @@ func respondWWWAuthenticateBasic(w http.ResponseWriter) {
 	w.Header().Add("WWW-Authenticate", "Basic")
 }
 
-func (a *HtpasswdAuthenticator) Authenticate(r *http.Request, w http.ResponseWriter) AuthResult {
+func (a *HtpasswdAuthenticator) Authenticate(r *http.Request, w http.ResponseWriter) (AuthResult, string) {
 	username, password, ok := r.BasicAuth()
 	if !ok {
 		respondWWWAuthenticateBasic(w)
-		return AUTH_FAILED_DEFAULT
+		return AUTH_FAILED_DEFAULT, ""
 	}
 
 	authOk := a.authFile.Match(username, password)
 	if !authOk {
 		respondWWWAuthenticateBasic(w)
-		return AUTH_FAILED_DEFAULT
+		return AUTH_FAILED_DEFAULT, ""
 	}
 
-	return AUTH_OK
+	return AUTH_OK, username
 }

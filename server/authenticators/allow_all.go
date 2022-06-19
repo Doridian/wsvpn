@@ -11,6 +11,6 @@ func (a *AllowAllAuthenticator) Load(configFile string) error {
 	return nil
 }
 
-func (a *AllowAllAuthenticator) Authenticate(r *http.Request, w http.ResponseWriter) AuthResult {
-	return AUTH_OK
+func (a *AllowAllAuthenticator) Authenticate(r *http.Request, w http.ResponseWriter) (AuthResult, string) {
+	return AUTH_OK, ""
 }

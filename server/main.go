@@ -2,9 +2,11 @@ package main
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -43,6 +45,7 @@ var useClientToClient = flag.Bool("allow-client-to-client", false, "Allow client
 
 var tlsCert = flag.String("tls-cert", "", "TLS certificate file for listener")
 var tlsKey = flag.String("tls-key", "", "TLS key file for listener")
+var tlsClientCA = flag.String("tls-client-ca", "", "If set, performs TLS client certificate authentication based on given CA certificate")
 
 var subnet *net.IPNet
 var ipServer net.IP
@@ -142,12 +145,34 @@ func main() {
 
 	tlsCertStr := *tlsCert
 	tlsKeyStr := *tlsKey
-	if tlsCertStr != "" || tlsKeyStr != "" {
+	tlsClientCAStr := *tlsClientCA
+	if tlsCertStr != "" || tlsKeyStr != "" || tlsClientCAStr != "" {
+		if tlsCertStr == "" && tlsKeyStr == "" {
+			panic(errors.New("tls-client-ca requires tls-key and tls-cert"))
+		}
+
 		if tlsCertStr == "" || tlsKeyStr == "" {
 			panic(errors.New("provide either both tls-key and tls-cert or neither"))
 		}
 
 		tlsConfig := &tls.Config{}
+
+		if tlsClientCAStr != "" {
+			tlsClientCAPEM, err := ioutil.ReadFile(tlsClientCAStr)
+			if err != nil {
+				panic(err)
+			}
+
+			tlsClientCAPool := x509.NewCertPool()
+			ok := tlsClientCAPool.AppendCertsFromPEM(tlsClientCAPEM)
+			if !ok {
+				panic(errors.New("error reading tls-client-ca PEM"))
+			}
+
+			tlsConfig.ClientCAs = tlsClientCAPool
+			tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
+		}
+
 		shared.TlsUseFlags(tlsConfig)
 
 		server := http.Server{
@@ -195,11 +220,20 @@ func serveTap() {
 }
 
 func serveWs(w http.ResponseWriter, r *http.Request) {
-	authResult := authenticator.Authenticate(r, w)
+	tlsUsername := ""
+	if r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
+		tlsUsername = r.TLS.PeerCertificates[0].Subject.CommonName
+	}
+	authResult, authUsername := authenticator.Authenticate(r, w)
 	if authResult != authenticators.AUTH_OK {
 		if authResult == authenticators.AUTH_FAILED_DEFAULT {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		}
+		return
+	}
+
+	if authUsername != "" && tlsUsername != "" && authUsername != tlsUsername {
+		http.Error(w, "Mutual TLS CN is not equal authenticator username", http.StatusUnauthorized)
 		return
 	}
 
@@ -221,6 +255,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		}
 		err = extendTUNConfig(&tunConfig)
 		if err != nil {
+			ifaceCreationMutex.Unlock()
 			log.Printf("[S] Error extending TUN config: %v", err)
 			conn.Close()
 			return
@@ -255,6 +290,14 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	connId := fmt.Sprintf("%d", slot)
 
 	log.Printf("[%s] Client ENTER (interface %s)", connId, iface.Name())
+
+	if authUsername != "" && tlsUsername != "" {
+		log.Printf("[%s] Client authenticated as %s via TLS and authenticator", connId, authUsername)
+	} else if authUsername != "" {
+		log.Printf("[%s] Client authenticated as %s via authenticator", connId, authUsername)
+	} else if tlsUsername != "" {
+		log.Printf("[%s] Client authenticated as %s via TLS", connId, tlsUsername)
+	}
 
 	adapter := adapters.NewWebSocketAdapter(conn)
 	socket := sockets.MakeSocket(connId, adapter, iface, tapMode)

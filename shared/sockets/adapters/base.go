@@ -4,6 +4,8 @@ type MessageHandler = func(message []byte) bool
 
 type SocketAdapter interface {
 	Close() error
+
+	// Boolean indicating whether the error was unexpected (true) or not (false)
 	Serve() (error, bool)
 
 	WriteControlMessage(message []byte) error

@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/Doridian/wsvpn/shared"
+	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/gorilla/websocket"
 	"github.com/songgao/water"
 )
@@ -168,7 +169,8 @@ func main() {
 		}
 	}()
 
-	socket := shared.MakeSocket("0", conn, nil, false)
+	adapter := sockets.NewWebSocketAdapter(conn)
+	socket := sockets.MakeSocket("0", adapter, nil, false)
 	socket.AddCommandHandler("addroute", func(args []string) error {
 		if iface == nil || cRemoteNet == nil {
 			return errors.New("cannot addroute before init")

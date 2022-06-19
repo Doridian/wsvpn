@@ -5,30 +5,65 @@ buildfor() {
 	export GOOS="$1"
 	export GOARCH="$2"
 	EXESUFFIX=""
+	GOARCHSUFFIX=""
 	if [ "$GOOS" == "windows" ]
 	then
 		EXESUFFIX=".exe"
 	fi
 
-	echo "Building for: $GOOS / $GOARCH"
+	case "$GOARCH"
+	in
+		mips|mipsle)
+			GOARCHSUFFIX="$GOMIPS"
+			;;
+		arm)
+			GOARCHSUFFIX="$GOARM"
+			;;
+	esac
 
-	go build -ldflags="$LDFLAGS" -o "dist/client-$GOOS-$GOARCH$EXESUFFIX" ./client
-	go build -ldflags="$LDFLAGS" -o "dist/server-$GOOS-$GOARCH$EXESUFFIX" ./server
+	if [ ! -z "$GOARCHSUFFIX" ]
+	then
+		GOARCHSUFFIX="-$GOARCHSUFFIX"
+	fi
+
+	echo "Building for: $GOOS / $GOARCH$GOARCHSUFFIX"
+
+	go build -ldflags="$LDFLAGS" -o "dist/client-$GOOS-$GOARCH$GOARCHSUFFIX$EXESUFFIX" ./client
+	go build -ldflags="$LDFLAGS" -o "dist/server-$GOOS-$GOARCH$GOARCHSUFFIX$EXESUFFIX" ./server
+}
+
+buildmips() {
+	export GOMIPS=""
+	buildfor "$1" "$2"
+	export GOMIPS="softfloat"
+	buildfor "$1" "$2"
+	export GOMIPS=""
+}
+
+buildarm() {
+	export GOARM="5"
+	buildfor "$1" "$2"
+	export GOARM="6"
+	buildfor "$1" "$2"
+	export GOARM="7"
+	buildfor "$1" "$2"
+	export GOARM=""
 }
 
 go mod download
 
-mkdir -p dist
+rm -rf dist && mkdir -p dist
 
 buildfor windows 386
 buildfor windows amd64
+buildfor windows arm64
 
 buildfor linux 386
 buildfor linux amd64
-buildfor linux arm
+buildarm linux arm
 buildfor linux arm64
-buildfor linux mips
-buildfor linux mipsle
+buildmips linux mips
+buildmips linux mipsle
 buildfor linux mips64
 buildfor linux mips64le
 

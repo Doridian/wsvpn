@@ -1,5 +1,7 @@
 package adapters
 
+import "crypto/tls"
+
 type MessageHandler = func(message []byte) bool
 
 type SocketAdapter interface {
@@ -7,6 +9,8 @@ type SocketAdapter interface {
 
 	// Boolean indicating whether the error was unexpected (true) or not (false)
 	Serve() (error, bool)
+	WaitReady()
+	Name() string
 
 	WriteControlMessage(message []byte) error
 	SetControlMessageHandler(handler MessageHandler)
@@ -16,6 +20,8 @@ type SocketAdapter interface {
 
 	WritePingMessage() error
 	SetPongHandler(handler func())
+
+	GetTLSConnectionState() (tls.ConnectionState, bool)
 }
 
 type socketBase struct {

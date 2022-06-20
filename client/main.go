@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
 	"errors"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
@@ -18,6 +20,7 @@ import (
 	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 	"github.com/gorilla/websocket"
+	"github.com/marten-seemann/webtransport-go"
 	"github.com/songgao/water"
 )
 
@@ -65,6 +68,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	dest.Scheme = strings.ToLower(dest.Scheme)
 
 	authFileString := *authFile
 	var userInfo *url.Userinfo
@@ -90,23 +94,8 @@ func main() {
 		log.Printf("[C] WARNING: You have put your password on the command line! This can cause security issues!")
 	}
 
-	dialer := websocket.Dialer{}
-
-	proxyUrlString := *proxyAddr
-	if proxyUrlString != "" {
-		proxyUrl, err := url.Parse(proxyUrlString)
-		if err != nil {
-			panic(err)
-		}
-		log.Printf("[C] Using HTTP proxy %s", proxyUrl.Redacted())
-		dialer.Proxy = func(_ *http.Request) (*url.URL, error) {
-			return proxyUrl, nil
-		}
-	}
-
 	tlsConfig := &tls.Config{}
 
-	dialer.TLSClientConfig = tlsConfig
 	tlsConfig.InsecureSkipVerify = *insecure
 	shared.TlsUseFlags(tlsConfig)
 
@@ -159,18 +148,57 @@ func main() {
 		log.Printf("[C] Connecting to %s with mutual TLS authentication", dest.Redacted())
 	}
 
-	conn, _, err := dialer.Dial(dest.String(), header)
-	if err != nil {
-		panic(err)
-	}
-	defer conn.Close()
+	var adapter adapters.SocketAdapter
+	switch dest.Scheme {
+	case "webtransport":
+		dest.Scheme = "https"
+		dialer := webtransport.Dialer{}
+		dialer.TLSClientConf = tlsConfig
 
-	websocketTlsConn, ok := conn.UnderlyingConn().(*tls.Conn)
+		if *proxyAddr != "" {
+			panic(errors.New("proxy is not support for WebTransport at the moment"))
+		}
+
+		_, conn, err := dialer.Dial(context.Background(), dest.String(), header)
+		if err != nil {
+			panic(err)
+		}
+
+		adapter = adapters.NewWebTransportAdapter(conn, false)
+	case "ws":
+	case "wss":
+		dialer := websocket.Dialer{}
+		proxyUrlString := *proxyAddr
+		if proxyUrlString != "" {
+			proxyUrl, err := url.Parse(proxyUrlString)
+			if err != nil {
+				panic(err)
+			}
+			log.Printf("[C] Using HTTP proxy %s", proxyUrl.Redacted())
+			dialer.Proxy = func(_ *http.Request) (*url.URL, error) {
+				return proxyUrl, nil
+			}
+		}
+		dialer.TLSClientConfig = tlsConfig
+
+		conn, _, err := dialer.Dial(dest.String(), header)
+		if err != nil {
+			panic(err)
+		}
+
+		adapter = adapters.NewWebSocketAdapter(conn)
+	default:
+		panic(fmt.Errorf("invalid protocol: %s", dest.Scheme))
+	}
+
+	defer adapter.Close()
+	connId := "0"
+
+	tlsConnState, ok := adapter.GetTLSConnectionState()
 	if ok {
-		connState := websocketTlsConn.ConnectionState()
-		log.Printf("[C] TLS %s connection established with cipher=%s", shared.TlsVersionString(connState.Version), tls.CipherSuiteName(connState.CipherSuite))
+		log.Printf("[%s] TLS %s %s connection established with cipher=%s", connId, shared.TlsVersionString(tlsConnState.Version), adapter.Name(), tls.CipherSuiteName(tlsConnState.CipherSuite))
 	} else {
-		log.Printf("[C] Unencrypted connection established")
+		log.Printf("[%s] Unencrypted %s connection established", connId, adapter.Name())
 	}
 
 	var iface *water.Interface
@@ -185,8 +213,7 @@ func main() {
 		}
 	}()
 
-	adapter := adapters.NewWebSocketAdapter(conn)
-	socket := sockets.MakeSocket("0", adapter, nil, false)
+	socket := sockets.MakeSocket(connId, adapter, nil, false)
 	socket.AddCommandHandler("addroute", func(args []string) error {
 		if iface == nil || cRemoteNet == nil {
 			return errors.New("cannot addroute before init")
@@ -221,7 +248,7 @@ func main() {
 			return err
 		}
 
-		log.Printf("[C] Network mode %s, subnet %s, mtu %d", mode, cRemoteNet.str, mtu)
+		log.Printf("[%s] Network mode %s, subnet %s, mtu %d", connId, mode, cRemoteNet.str, mtu)
 
 		var waterMode water.DeviceType
 		if mode == "TUN" {
@@ -238,14 +265,14 @@ func main() {
 			return err
 		}
 
-		log.Printf("[C] Opened %s", iface.Name())
+		log.Printf("[%s] Opened %s", connId, iface.Name())
 
 		err = configIface(iface, mode != "TAP_NOCONF", cRemoteNet, mtu, *defaultGateway)
 		if err != nil {
 			return err
 		}
 
-		log.Printf("[C] Configured interface, starting operations")
+		log.Printf("[%s] Configured interface, starting operations", connId)
 		err = socket.SetInterface(iface)
 		if err != nil {
 			return err

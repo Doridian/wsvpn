@@ -221,8 +221,6 @@ func (s *Socket) tryServeIfaceRead() {
 func (s *Socket) Serve() {
 	s.registerDefaultCommandHandlers()
 
-	s.tryServeIfaceRead()
-
 	allSocketsLock.Lock()
 	allSockets[s] = s
 	allSocketsLock.Unlock()
@@ -296,8 +294,15 @@ func (s *Socket) Serve() {
 	s.wg.Add(1)
 	go func() {
 		defer s.closeDone()
-		s.adapter.Serve()
+		err, unexpected := s.adapter.Serve()
+		if unexpected {
+			log.Printf("[%s] Client ERROR: %v", s.connId, err)
+		}
 	}()
+
+	s.adapter.WaitReady()
+
+	s.tryServeIfaceRead()
 
 	go s.sendDefaultWelcome()
 }
@@ -328,6 +333,7 @@ func (s *Socket) installPingPongHandlers(pingInterval time.Duration, pingTimeout
 				pingTimeoutTimer.Stop()
 				err := s.adapter.WritePingMessage()
 				if err != nil {
+					log.Printf("[%s] Error sending ping: %v", s.connId, err)
 					return
 				}
 				pingTimeoutTimer.Reset(pingTimeout)

@@ -18,14 +18,18 @@ import (
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/gorilla/websocket"
+	"github.com/lucas-clemente/quic-go/http3"
+	"github.com/marten-seemann/webtransport-go"
 	"github.com/songgao/water"
 )
 
-var upgrader = websocket.Upgrader{
+var webSocketUpgrader = &websocket.Upgrader{
 	ReadBufferSize:  2048,
 	WriteBufferSize: 2048,
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
+
+var webTransportServer *webtransport.Server
 
 var slotMutex sync.Mutex
 var ifaceCreationMutex sync.Mutex
@@ -34,6 +38,7 @@ var usedSlots map[uint64]bool = make(map[uint64]bool)
 var mtu = flag.Int("mtu", 1280, "MTU for the tunnel")
 var subnetStr = flag.String("subnet", "192.168.3.0/24", "Subnet for the tunnel clients")
 var listenAddr = flag.String("listen", "127.0.0.1:9000", "Listen address for the WebSocket interface")
+var listenHTTP3Enable = flag.Bool("enable-http3", false, "Enable HTTP/3 protocol")
 
 var authenticatorStrPtr = flag.String("authenticator", "allow-all", "Which authenticator to use (allow-all, htpasswd)")
 var authenticatorConfigStrPtr = flag.String("authenticator-config", "", "Authenticator config file (ex. htpasswd file for htpasswd authenticator, empty for default)")
@@ -55,6 +60,7 @@ var maxSlot uint64
 var tapMode bool
 var tapDev *water.Interface
 var modeString string
+var http3Enabled bool
 
 var authenticator authenticators.Authenticator
 
@@ -138,10 +144,11 @@ func main() {
 		go serveTap()
 	}
 
-	log.Printf("[S] VPN server online at %s, mode %s, serving subnet %s (%d max clients) with MTU %d",
-		*listenAddr, modeString, *subnetStr, maxSlot-1, *mtu)
+	httpHandlerFunc := http.HandlerFunc(serveSocket)
+	http3Enabled = *listenHTTP3Enable
 
-	http.HandleFunc("/", serveWs)
+	log.Printf("[S] VPN server online at %s (HTTP/3 %s), mode %s, serving subnet %s (%d max clients) with MTU %d",
+		*listenAddr, shared.BoolToString(http3Enabled, "enabled", "disabled"), modeString, *subnetStr, maxSlot-1, *mtu)
 
 	tlsCertStr := *tlsCert
 	tlsKeyStr := *tlsKey
@@ -175,17 +182,60 @@ func main() {
 
 		shared.TlsUseFlags(tlsConfig)
 
+		http3Wait := &sync.WaitGroup{}
+
+		if http3Enabled {
+			http3Wait.Add(1)
+
+			quicServer := http3.Server{
+				Addr:      *listenAddr,
+				TLSConfig: tlsConfig,
+				Handler:   httpHandlerFunc,
+			}
+
+			webTransportServer = &webtransport.Server{
+				H3:          quicServer,
+				CheckOrigin: func(r *http.Request) bool { return true },
+			}
+
+			go func() {
+				defer http3Wait.Done()
+				err := webTransportServer.ListenAndServeTLS(tlsCertStr, tlsKeyStr)
+				if err != nil {
+					panic(err)
+				}
+			}()
+
+			httpHandlerFunc = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				quicServer.SetQuicHeaders(w.Header())
+				serveSocket(w, r)
+			})
+		}
+
 		server := http.Server{
 			Addr:      *listenAddr,
 			TLSConfig: tlsConfig,
+			Handler:   httpHandlerFunc,
 		}
 
 		err = server.ListenAndServeTLS(tlsCertStr, tlsKeyStr)
+		if err != nil {
+			panic(err)
+		}
+
+		http3Wait.Wait()
 	} else {
-		err = http.ListenAndServe(*listenAddr, nil)
-	}
-	if err != nil {
-		panic(err)
+		if http3Enabled {
+			panic(errors.New("HTTP/3 requires TLS"))
+		}
+		server := http.Server{
+			Addr:    *listenAddr,
+			Handler: httpHandlerFunc,
+		}
+		err = server.ListenAndServe()
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -219,7 +269,7 @@ func serveTap() {
 	}
 }
 
-func serveWs(w http.ResponseWriter, r *http.Request) {
+func handleAuth(w http.ResponseWriter, r *http.Request) (bool, string) {
 	tlsUsername := ""
 	if r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
 		tlsUsername = r.TLS.PeerCertificates[0].Subject.CommonName
@@ -229,19 +279,94 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		if authResult == authenticators.AUTH_FAILED_DEFAULT {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		}
-		return
+		return false, ""
 	}
 
 	if authUsername != "" && tlsUsername != "" && authUsername != tlsUsername {
 		http.Error(w, "Mutual TLS CN is not equal authenticator username", http.StatusUnauthorized)
+		return false, ""
+	}
+
+	if authUsername == "" {
+		authUsername = tlsUsername
+	}
+
+	return true, authUsername
+}
+
+func serveWebSocket(w http.ResponseWriter, r *http.Request) (adapters.SocketAdapter, error) {
+	conn, err := webSocketUpgrader.Upgrade(w, r, nil)
+	if err != nil {
+		return nil, err
+	}
+	return adapters.NewWebSocketAdapter(conn), nil
+}
+
+func serveWebTransport(w http.ResponseWriter, r *http.Request) (adapters.SocketAdapter, error) {
+	conn, err := webTransportServer.Upgrade(w, r)
+	if err != nil {
+		return nil, err
+	}
+	return adapters.NewWebTransportAdapter(conn, true), nil
+}
+
+func serveSocket(w http.ResponseWriter, r *http.Request) {
+	authOk, authUsername := handleAuth(w, r)
+	if !authOk {
 		return
 	}
 
-	var err error
+	var slot uint64 = 1
+	slotMutex.Lock()
+	for usedSlots[slot] {
+		slot = slot + 1
+		if slot > maxSlot {
+			slotMutex.Unlock()
+			log.Println("[S] Cannot connect new client: IP slots exhausted")
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+	}
+	usedSlots[slot] = true
+	slotMutex.Unlock()
 
-	conn, err := upgrader.Upgrade(w, r, nil)
+	defer func() {
+		slotMutex.Lock()
+		delete(usedSlots, slot)
+		slotMutex.Unlock()
+	}()
+
+	connId := fmt.Sprintf("%d", slot)
+
+	var err error
+	var adapter adapters.SocketAdapter
+	if r.Proto == "webtransport" && http3Enabled {
+		adapter, err = serveWebTransport(w, r)
+	} else {
+		adapter, err = serveWebSocket(w, r)
+	}
+
 	if err != nil {
-		log.Printf("[S] Error upgrading to WS: %v", err)
+		log.Printf("[%s] Error upgrading connection: %v", connId, err)
+		return
+	}
+
+	defer adapter.Close()
+
+	tlsConnState, ok := adapter.GetTLSConnectionState()
+	if ok {
+		log.Printf("[%s] TLS %s %s connection established with cipher=%s", connId, shared.TlsVersionString(tlsConnState.Version), adapter.Name(), tls.CipherSuiteName(tlsConnState.CipherSuite))
+	} else {
+		log.Printf("[%s] Unencrypted %s connection established", connId, adapter.Name())
+	}
+
+	if authUsername != "" {
+		log.Printf("[%s] Client authenticated as %s", connId, authUsername)
+	}
+
+	ipClient, err := cidr.Host(subnet, int(slot)+1)
+	if err != nil {
+		log.Printf("[%s] Error transforming client IP: %v", connId, err)
 		return
 	}
 
@@ -256,67 +381,21 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		err = extendTUNConfig(&tunConfig)
 		if err != nil {
 			ifaceCreationMutex.Unlock()
-			log.Printf("[S] Error extending TUN config: %v", err)
-			conn.Close()
+			log.Printf("[%s] Error extending TUN config: %v", connId, err)
 			return
 		}
 
 		iface, err = water.New(tunConfig)
 		ifaceCreationMutex.Unlock()
 		if err != nil {
-			log.Printf("[S] Error creating new TUN: %v", err)
-			conn.Close()
+			log.Printf("[%s] Error creating new TUN: %v", connId, err)
 			return
 		}
-	}
 
-	var slot uint64 = 1
-	slotMutex.Lock()
-	for usedSlots[slot] {
-		slot = slot + 1
-		if slot > maxSlot {
-			slotMutex.Unlock()
-			conn.Close()
-			log.Println("[S] Cannot connect new client: IP slots exhausted")
-			if !tapMode {
-				iface.Close()
-			}
-			return
-		}
-	}
-	usedSlots[slot] = true
-	slotMutex.Unlock()
+		defer iface.Close()
 
-	connId := fmt.Sprintf("%d", slot)
+		log.Printf("[%s] Assigned interface %s", connId, iface.Name())
 
-	log.Printf("[%s] Client ENTER (interface %s)", connId, iface.Name())
-
-	if authUsername != "" && tlsUsername != "" {
-		log.Printf("[%s] Client authenticated as %s via TLS and authenticator", connId, authUsername)
-	} else if authUsername != "" {
-		log.Printf("[%s] Client authenticated as %s via authenticator", connId, authUsername)
-	} else if tlsUsername != "" {
-		log.Printf("[%s] Client authenticated as %s via TLS", connId, tlsUsername)
-	}
-
-	adapter := adapters.NewWebSocketAdapter(conn)
-	socket := sockets.MakeSocket(connId, adapter, iface, tapMode)
-
-	defer func() {
-		slotMutex.Lock()
-		delete(usedSlots, slot)
-		slotMutex.Unlock()
-		socket.Close()
-		log.Printf("[%s] Client EXIT (interface %s)", connId, iface.Name())
-	}()
-
-	ipClient, err := cidr.Host(subnet, int(slot)+1)
-	if err != nil {
-		log.Printf("[%s] Error transforming client IP: %v", connId, err)
-		return
-	}
-
-	if !tapMode {
 		err = configIface(iface, true, *mtu, ipClient, ipServer, subnet)
 		if err != nil {
 			log.Printf("[%s] Error configuring interface: %v", connId, err)
@@ -324,7 +403,13 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	socket.SendCommand("init", modeString, fmt.Sprintf("%s/%s", ipClient.String(), subnetSize), fmt.Sprintf("%d", *mtu))
+	socket := sockets.MakeSocket(connId, adapter, iface, tapMode)
+	defer socket.Close()
+
+	log.Printf("[%s] Connection fully established", connId)
+	defer log.Printf("[%s] Disconnected", connId)
+
 	socket.Serve()
+	socket.SendCommand("init", modeString, fmt.Sprintf("%s/%s", ipClient.String(), subnetSize), fmt.Sprintf("%d", *mtu))
 	socket.Wait()
 }

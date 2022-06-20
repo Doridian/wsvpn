@@ -56,3 +56,10 @@ func IPNetGetNetMask(ipNet *net.IPNet) string {
 	mask := ipNet.Mask
 	return fmt.Sprintf("%d.%d.%d.%d", mask[0], mask[1], mask[2], mask[3])
 }
+
+func BoolToString(val bool, trueval string, falseval string) string {
+	if val {
+		return trueval
+	}
+	return falseval
+}

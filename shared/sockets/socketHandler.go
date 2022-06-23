@@ -298,7 +298,9 @@ func (s *Socket) Serve() {
 			log.Printf("[%s] Error in in-band command %s: %v", s.connId, command.Command, err)
 		}
 
-		s.rawMakeAndSendCommand(&commands.ReplyParameters{Message: replyStr, Ok: replyOk}, command.ID)
+		if command.Command != commands.ReplyCommandName {
+			s.rawMakeAndSendCommand(&commands.ReplyParameters{Message: replyStr, Ok: replyOk}, command.ID)
+		}
 		return replyOk
 	})
 

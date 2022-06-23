@@ -235,7 +235,7 @@ func (s *Socket) tryServeIfaceRead() {
 }
 
 func (s *Socket) SetMTU(mtu int) {
-	s.packetBufferSize = mtu + 18
+	s.packetBufferSize = shared.GetPacketBufferSizeByMTU(mtu)
 }
 
 func (s *Socket) Serve() {

@@ -67,3 +67,7 @@ func BoolToString(val bool, trueval string, falseval string) string {
 func BoolToEnabled(val bool) string {
 	return BoolToString(val, "enabled", "disabled")
 }
+
+func GetPacketBufferSizeByMTU(mtu int) int {
+	return mtu + 18
+}

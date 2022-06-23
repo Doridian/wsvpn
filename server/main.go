@@ -65,6 +65,8 @@ var http3Enabled bool
 
 var authenticator authenticators.Authenticator
 
+var packetBufferSize int
+
 func main() {
 	flag.Usage = shared.UsageWithVersion
 	flag.Parse()
@@ -91,6 +93,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	packetBufferSize = shared.GetPacketBufferSizeByMTU(*mtu)
 
 	if tapMode {
 		ifaceCreationMutex.Lock()
@@ -244,7 +248,7 @@ func main() {
 func serveTap() {
 	defer panic(errors.New("TAP closed"))
 
-	packet := make([]byte, 2000)
+	packet := make([]byte, packetBufferSize)
 
 	for {
 		n, err := tapDev.Read(packet)

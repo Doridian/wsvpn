@@ -9,7 +9,7 @@ import (
 
 var (
 	Version         = "dev"
-	ProtocolVersion = 1
+	ProtocolVersion = 2
 )
 
 func PrintVersion(prefix string) {

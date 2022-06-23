@@ -1,17 +1,15 @@
 package sockets
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
-	"fmt"
 	"log"
-	"strconv"
-	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/Doridian/wsvpn/shared"
+	"github.com/Doridian/wsvpn/shared/commands"
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 	"github.com/songgao/water"
 )
@@ -51,10 +49,9 @@ func BroadcastDataMessage(data []byte, skip *Socket) {
 	}
 }
 
-type CommandHandler func(args []string) error
+type CommandHandler func(command *commands.IncomingCommand) error
 
 type Socket struct {
-	lastCommandId         uint64 // This MUST be the first element of the struct, see https://github.com/golang/go/issues/23345
 	connId                string
 	adapter               adapters.SocketAdapter
 	iface                 *water.Interface
@@ -65,6 +62,7 @@ type Socket struct {
 	closechanopen         bool
 	mac                   shared.MacAddr
 	remoteProtocolVersion int
+	packetBufferSize      int
 }
 
 func SetMultiClientIfaceMode(enable bool) {
@@ -82,13 +80,17 @@ func MakeSocket(connId string, adapter adapters.SocketAdapter, iface *water.Inte
 		iface:                 iface,
 		noIfaceReader:         noIfaceReader,
 		wg:                    &sync.WaitGroup{},
-		handlers:              make(map[string]CommandHandler),
+		handlers:              make(map[commands.CommandName]CommandHandler),
 		closechan:             make(chan bool),
 		closechanopen:         true,
 		mac:                   defaultMac,
-		lastCommandId:         0,
 		remoteProtocolVersion: 0,
+		packetBufferSize:      2000,
 	}
+}
+
+func (s *Socket) Wait() {
+	s.wg.Wait()
 }
 
 func (s *Socket) AddCommandHandler(command string, handler CommandHandler) {
@@ -96,44 +98,58 @@ func (s *Socket) AddCommandHandler(command string, handler CommandHandler) {
 }
 
 func (s *Socket) registerDefaultCommandHandlers() {
-	s.AddCommandHandler("version", func(args []string) error {
-		if len(args) != 2 {
-			return errors.New("version command needs 2 arguments")
-		}
-		protocolVersion, err := strconv.Atoi(args[0])
+	s.AddCommandHandler(commands.VersionCommandName, func(command *commands.IncomingCommand) error {
+		var parameters commands.VersionParameters
+		err := json.Unmarshal(command.Parameters, &parameters)
 		if err != nil {
 			return err
 		}
-		s.remoteProtocolVersion = protocolVersion
-		version := args[1]
-		log.Printf("[%s] Remote version is: %s (protocol %d)", s.connId, version, protocolVersion)
+		log.Printf("[%s] Remote version is: %s (protocol %d)", s.connId, parameters.Version, parameters.ProtocolVersion)
+		return nil
+	})
+
+	s.AddCommandHandler(commands.ReplyCommandName, func(command *commands.IncomingCommand) error {
+		var parameters commands.ReplyParameters
+		err := json.Unmarshal(command.Parameters, &parameters)
+		if err != nil {
+			return err
+		}
+		log.Printf("[%s] Got reply to command ID %s (%s): %s", s.connId, command.ID, shared.BoolToString(parameters.Ok, "ok", "error"), parameters.Message)
 		return nil
 	})
 }
 
 func (s *Socket) sendDefaultWelcome() {
-	s.SendCommand("version", fmt.Sprintf("%d", shared.ProtocolVersion), shared.Version)
+	s.MakeAndSendCommand(&commands.VersionParameters{Version: shared.Version, ProtocolVersion: shared.ProtocolVersion})
 }
 
-func (s *Socket) Wait() {
-	s.wg.Wait()
+func (s *Socket) MakeAndSendCommand(parameters commands.CommandParameters) error {
+	return s.rawMakeAndSendCommand(parameters, "")
 }
 
-func (s *Socket) rawSendCommand(commandId string, command string, args ...string) error {
-	err := s.adapter.WriteControlMessage([]byte(fmt.Sprintf("%s|%s|%s", commandId, command, strings.Join(args, "|"))))
+func (s *Socket) rawMakeAndSendCommand(parameters commands.CommandParameters, id string) error {
+	cmd, err := parameters.MakeCommand(id)
 	if err != nil {
-		log.Printf("[%s] Error writing control message: %v", s.connId, err)
+		log.Printf("[%s] Error preparing command: %v", s.connId, err)
+	}
+
+	cmdBytes, err := cmd.Serialize()
+	if err != nil {
+		log.Printf("[%s] Error serializing command: %v", s.connId, err)
 		s.Close()
 	}
+
+	err = s.adapter.WriteControlMessage(cmdBytes)
+	if err != nil {
+		log.Printf("[%s] Error sending command: %v", s.connId, err)
+		s.Close()
+	}
+
 	return err
 }
 
 func (s *Socket) WriteDataMessage(data []byte) error {
 	return s.adapter.WriteDataMessage(data)
-}
-
-func (s *Socket) SendCommand(command string, args ...string) error {
-	return s.rawSendCommand(fmt.Sprintf("%d", atomic.AddUint64(&s.lastCommandId, 1)), command, args...)
 }
 
 func (s *Socket) closeDone() {
@@ -201,7 +217,7 @@ func (s *Socket) tryServeIfaceRead() {
 	go func() {
 		defer s.closeDone()
 
-		packet := make([]byte, 2000)
+		packet := make([]byte, s.packetBufferSize)
 
 		for {
 			n, err := s.iface.Read(packet)
@@ -216,6 +232,10 @@ func (s *Socket) tryServeIfaceRead() {
 			}
 		}
 	}()
+}
+
+func (s *Socket) SetMTU(mtu int) {
+	s.packetBufferSize = mtu + 18
 }
 
 func (s *Socket) Serve() {
@@ -254,39 +274,32 @@ func (s *Socket) Serve() {
 	})
 
 	s.adapter.SetControlMessageHandler(func(message []byte) bool {
-		str := strings.Split(string(message), "|")
-		if len(str) < 2 {
-			log.Printf("[%s] Invalid in-band command structure", s.connId)
+		var err error
+		var command commands.IncomingCommand
+
+		err = json.Unmarshal(message, &command)
+		if err != nil {
+			log.Printf("[%s] Error deserializing command: %v", s.connId, err)
 			return false
 		}
 
-		commandId := str[0]
-		commandName := str[1]
-		if commandName == "reply" {
-			commandResult := "N/A"
-			if len(str) > 2 {
-				commandResult = str[2]
-			}
-			log.Printf("[%s] Got command reply ID %s: %s", s.connId, commandId, commandResult)
-			return true
-		}
-
-		var err error
-
-		handler := s.handlers[commandName]
+		handler := s.handlers[command.Command]
 		if handler == nil {
 			err = errors.New("unknown command")
 		} else {
-			err = handler(str[2:])
+			err = handler(&command)
 		}
 
+		replyOk := true
 		replyStr := "OK"
 		if err != nil {
+			replyOk = false
 			replyStr = err.Error()
-			log.Printf("[%s] Error in in-band command %s: %v", s.connId, commandName, err)
+			log.Printf("[%s] Error in in-band command %s: %v", s.connId, command.Command, err)
 		}
-		s.rawSendCommand(commandId, "reply", replyStr)
-		return err == nil
+
+		s.rawMakeAndSendCommand(&commands.ReplyParameters{Message: replyStr, Ok: replyOk}, command.ID)
+		return replyOk
 	})
 
 	s.installPingPongHandlers(*pingIntervalPtr, *pingTimeoutPtr)

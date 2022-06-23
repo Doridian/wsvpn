@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -13,10 +14,10 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 
 	"github.com/Doridian/wsvpn/shared"
+	"github.com/Doridian/wsvpn/shared/commands"
 	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 	"github.com/gorilla/websocket"
@@ -214,50 +215,51 @@ func main() {
 	}()
 
 	socket := sockets.MakeSocket(connId, adapter, nil, false)
-	socket.AddCommandHandler("addroute", func(args []string) error {
+	socket.AddCommandHandler(commands.AddRouteCommandName, func(command *commands.IncomingCommand) error {
+		var parameters commands.AddRouteParameters
+		err := json.Unmarshal(command.Parameters, &parameters)
+		if err != nil {
+			return err
+		}
+
 		if iface == nil || cRemoteNet == nil {
 			return errors.New("cannot addroute before init")
 		}
 
-		if len(args) != 1 {
-			return errors.New("addroute needs 1 argument")
-		}
-		_, routeNet, err := net.ParseCIDR(args[0])
+		_, routeNet, err := net.ParseCIDR(parameters.Route)
 		if err != nil {
 			return err
 		}
+
 		return addRoute(iface, cRemoteNet, routeNet)
 	})
-	socket.AddCommandHandler("init", func(args []string) error {
+
+	socket.AddCommandHandler(commands.InitCommandName, func(command *commands.IncomingCommand) error {
 		var err error
+		var parameters commands.InitParameters
 
-		if len(args) != 3 {
-			return errors.New("init needs 3 arguments")
-		}
-
-		mode := args[0]
-
-		rNetStr := args[1]
-		mtu, err := strconv.Atoi(args[2])
+		err = json.Unmarshal(command.Parameters, &parameters)
 		if err != nil {
 			return err
 		}
 
-		cRemoteNet, err = parseRemoteNet(rNetStr)
+		cRemoteNet, err = parseRemoteNet(parameters.IpAddress)
 		if err != nil {
 			return err
 		}
 
-		log.Printf("[%s] Network mode %s, subnet %s, mtu %d", connId, mode, cRemoteNet.str, mtu)
+		log.Printf("[%s] Network mode %s, subnet %s, mtu %d", connId, parameters.Mode, cRemoteNet.str, parameters.MTU)
+
+		socket.SetMTU(parameters.MTU)
 
 		var waterMode water.DeviceType
-		if mode == "TUN" {
+		if parameters.Mode == "TUN" {
 			waterMode = water.TUN
 		} else {
 			waterMode = water.TAP
 		}
 
-		ifconfig := getPlatformSpecifics(cRemoteNet, mtu, *ifaceName, water.Config{
+		ifconfig := getPlatformSpecifics(cRemoteNet, parameters.MTU, *ifaceName, water.Config{
 			DeviceType: waterMode,
 		})
 		iface, err = water.New(ifconfig)
@@ -267,7 +269,7 @@ func main() {
 
 		log.Printf("[%s] Opened %s", connId, iface.Name())
 
-		err = configIface(iface, mode != "TAP_NOCONF", cRemoteNet, mtu, *defaultGateway)
+		err = configIface(iface, parameters.Mode != "TAP_NOCONF", cRemoteNet, parameters.MTU, *defaultGateway)
 		if err != nil {
 			return err
 		}

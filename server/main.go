@@ -14,6 +14,7 @@ import (
 
 	"github.com/Doridian/wsvpn/server/authenticators"
 	"github.com/Doridian/wsvpn/shared"
+	"github.com/Doridian/wsvpn/shared/commands"
 	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 	"github.com/apparentlymart/go-cidr/cidr"
@@ -404,12 +405,13 @@ func serveSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	socket := sockets.MakeSocket(connId, adapter, iface, tapMode)
+	socket.SetMTU(*mtu)
 	defer socket.Close()
 
 	log.Printf("[%s] Connection fully established", connId)
 	defer log.Printf("[%s] Disconnected", connId)
 
 	socket.Serve()
-	socket.SendCommand("init", modeString, fmt.Sprintf("%s/%s", ipClient.String(), subnetSize), fmt.Sprintf("%d", *mtu))
+	socket.MakeAndSendCommand(&commands.InitParameters{Mode: modeString, IpAddress: fmt.Sprintf("%s/%s", ipClient.String(), subnetSize), MTU: *mtu})
 	socket.Wait()
 }

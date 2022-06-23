@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/apparentlymart/go-cidr v1.1.0
+	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/lucas-clemente/quic-go v0.27.1-0.20220609153137-4c96cf75bf40
 	github.com/marten-seemann/webtransport-go v0.0.0-20220609182542-114f4b62a5e8

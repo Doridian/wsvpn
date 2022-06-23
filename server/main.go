@@ -148,12 +148,13 @@ func main() {
 	httpHandlerFunc := http.HandlerFunc(serveSocket)
 	http3Enabled = *listenHTTP3Enable
 
-	log.Printf("[S] VPN server online at %s (HTTP/3 %s), mode %s, serving subnet %s (%d max clients) with MTU %d",
-		*listenAddr, shared.BoolToString(http3Enabled, "enabled", "disabled"), modeString, *subnetStr, maxSlot-1, *mtu)
-
 	tlsCertStr := *tlsCert
 	tlsKeyStr := *tlsKey
 	tlsClientCAStr := *tlsClientCA
+
+	log.Printf("[S] VPN server online at %s (HTTP/3 %s, TLS %s, mTLS %s), mode %s, serving subnet %s (%d max clients) with MTU %d",
+		*listenAddr, shared.BoolToEnabled(http3Enabled), shared.BoolToEnabled(tlsKeyStr != ""), shared.BoolToEnabled(tlsClientCAStr != ""), modeString, *subnetStr, maxSlot-1, *mtu)
+
 	if tlsCertStr != "" || tlsKeyStr != "" || tlsClientCAStr != "" {
 		if tlsCertStr == "" && tlsKeyStr == "" {
 			panic(errors.New("tls-client-ca requires tls-key and tls-cert"))

@@ -63,3 +63,7 @@ func BoolToString(val bool, trueval string, falseval string) string {
 	}
 	return falseval
 }
+
+func BoolToEnabled(val bool) string {
+	return BoolToString(val, "enabled", "disabled")
+}

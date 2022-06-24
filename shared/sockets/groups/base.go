@@ -19,6 +19,7 @@ func MakeSocketGroup() *SocketGroup {
 	return &SocketGroup{
 		AllowClientToClient: false,
 		macTable:            make(map[shared.MacAddr]*sockets.Socket),
+		socketTable:         make(map[*sockets.Socket]shared.MacAddr),
 		macLock:             &sync.RWMutex{},
 	}
 }

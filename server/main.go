@@ -128,6 +128,7 @@ func main() {
 		socketGroup = groups.MakeSocketGroup()
 		socketGroup.AllowClientToClient = *useClientToClient
 	} else {
+		socketGroup = nil
 		modeString = "TUN"
 	}
 

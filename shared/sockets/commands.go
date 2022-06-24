@@ -2,6 +2,7 @@ package sockets
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 
 	"github.com/Doridian/wsvpn/shared"
@@ -12,6 +13,39 @@ type CommandHandler func(command *commands.IncomingCommand) error
 
 func (s *Socket) AddCommandHandler(command string, handler CommandHandler) {
 	s.handlers[command] = handler
+}
+
+func (s *Socket) registerControlMessageHandler() {
+	s.adapter.SetControlMessageHandler(func(message []byte) bool {
+		var err error
+		var command commands.IncomingCommand
+
+		err = json.Unmarshal(message, &command)
+		if err != nil {
+			log.Printf("[%s] Error deserializing command: %v", s.connId, err)
+			return false
+		}
+
+		handler := s.handlers[command.Command]
+		if handler == nil {
+			err = errors.New("unknown command")
+		} else {
+			err = handler(&command)
+		}
+
+		replyOk := true
+		replyStr := "OK"
+		if err != nil {
+			replyOk = false
+			replyStr = err.Error()
+			log.Printf("[%s] Error in in-band command %s: %v", s.connId, command.Command, err)
+		}
+
+		if command.Command != commands.ReplyCommandName {
+			s.rawMakeAndSendCommand(&commands.ReplyParameters{Message: replyStr, Ok: replyOk}, command.ID)
+		}
+		return replyOk
+	})
 }
 
 func (s *Socket) registerDefaultCommandHandlers() {

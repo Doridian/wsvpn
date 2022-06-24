@@ -1,21 +1,14 @@
 package sockets
 
 import (
-	"encoding/json"
-	"errors"
-	"flag"
 	"log"
 	"sync"
-	"time"
 
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 	"github.com/songgao/water"
 )
-
-var pingIntervalPtr = flag.Duration("ping-interval", time.Second*time.Duration(30), "Send ping frames in this interval")
-var pingTimeoutPtr = flag.Duration("ping-timeout", time.Second*time.Duration(5), "Disconnect if no ping response is received after timeout")
 
 type Socket struct {
 	connId                string
@@ -87,36 +80,7 @@ func (s *Socket) Serve() {
 
 	s.registerDataHandler()
 
-	s.adapter.SetControlMessageHandler(func(message []byte) bool {
-		var err error
-		var command commands.IncomingCommand
-
-		err = json.Unmarshal(message, &command)
-		if err != nil {
-			log.Printf("[%s] Error deserializing command: %v", s.connId, err)
-			return false
-		}
-
-		handler := s.handlers[command.Command]
-		if handler == nil {
-			err = errors.New("unknown command")
-		} else {
-			err = handler(&command)
-		}
-
-		replyOk := true
-		replyStr := "OK"
-		if err != nil {
-			replyOk = false
-			replyStr = err.Error()
-			log.Printf("[%s] Error in in-band command %s: %v", s.connId, command.Command, err)
-		}
-
-		if command.Command != commands.ReplyCommandName {
-			s.rawMakeAndSendCommand(&commands.ReplyParameters{Message: replyStr, Ok: replyOk}, command.ID)
-		}
-		return replyOk
-	})
+	s.registerControlMessageHandler()
 
 	s.installPingPongHandlers(*pingIntervalPtr, *pingTimeoutPtr)
 

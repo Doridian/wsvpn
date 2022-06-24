@@ -1,9 +1,13 @@
 package sockets
 
 import (
+	"flag"
 	"log"
 	"time"
 )
+
+var pingIntervalPtr = flag.Duration("ping-interval", time.Second*time.Duration(30), "Send ping frames in this interval")
+var pingTimeoutPtr = flag.Duration("ping-timeout", time.Second*time.Duration(5), "Disconnect if no ping response is received after timeout")
 
 func (s *Socket) installPingPongHandlers(pingInterval time.Duration, pingTimeout time.Duration) {
 	if pingInterval <= 0 || pingTimeout <= 0 {

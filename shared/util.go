@@ -7,14 +7,16 @@ import (
 	"os/exec"
 )
 
+type MacAddr [6]byte
+
+var DefaultMac = MacAddr{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+
 func ExecCmd(cmd string, arg ...string) error {
 	cmdO := exec.Command(cmd, arg...)
 	cmdO.Stdout = os.Stdout
 	cmdO.Stderr = os.Stderr
 	return cmdO.Run()
 }
-
-type MacAddr [6]byte
 
 func GetSrcMAC(packet []byte) MacAddr {
 	var mac MacAddr

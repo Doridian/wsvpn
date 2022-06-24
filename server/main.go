@@ -17,6 +17,7 @@ import (
 	"github.com/Doridian/wsvpn/shared/commands"
 	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
+	"github.com/Doridian/wsvpn/shared/sockets/groups"
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/gorilla/websocket"
 	"github.com/lucas-clemente/quic-go/http3"
@@ -66,6 +67,7 @@ var http3Enabled bool
 var authenticator authenticators.Authenticator
 
 var packetBufferSize int
+var socketGroup *groups.SocketGroup
 
 func main() {
 	flag.Usage = shared.UsageWithVersion
@@ -123,13 +125,11 @@ func main() {
 			panic(err)
 		}
 
-		sockets.SetMultiClientIfaceMode(true)
+		socketGroup = groups.MakeSocketGroup()
+		socketGroup.AllowClientToClient = *useClientToClient
 	} else {
-		sockets.SetMultiClientIfaceMode(false)
 		modeString = "TUN"
 	}
-
-	sockets.SetClientToClient(*useClientToClient)
 
 	authenticatorStr := *authenticatorStrPtr
 	if authenticatorStr == "allow-all" {
@@ -253,24 +253,14 @@ func serveTap() {
 	for {
 		n, err := tapDev.Read(packet)
 		if err != nil {
-			log.Printf("[S] Error reading packet from tap: %v", err)
+			log.Printf("[S] Error reading packet from TAP: %v", err)
 			return
 		}
-		// Ignore everything that isn't an ethernet frame
-		if n < 14 {
-			continue
-		}
-		dest := shared.GetDestMAC(packet)
-		isUnicast := shared.MACIsUnicast(dest)
 
-		var s *sockets.Socket
-		if isUnicast {
-			s = sockets.FindSocketByMAC(dest)
-			if s != nil {
-				s.WriteDataMessage(packet[:n])
-			}
-		} else {
-			sockets.BroadcastDataMessage(packet[:n], nil)
+		_, err = socketGroup.HandlePacket(nil, packet[:n])
+		if err != nil {
+			log.Printf("[S] Error handling packet from TAP: %v", err)
+			return
 		}
 	}
 }
@@ -409,7 +399,7 @@ func serveSocket(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	socket := sockets.MakeSocket(connId, adapter, iface, tapMode)
+	socket := sockets.MakeSocket(connId, adapter, iface, !tapMode, socketGroup)
 	socket.SetMTU(*mtu)
 	defer socket.Close()
 

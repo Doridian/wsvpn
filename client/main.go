@@ -214,7 +214,7 @@ func main() {
 		}
 	}()
 
-	socket := sockets.MakeSocket(connId, adapter, nil, false)
+	socket := sockets.MakeSocket(connId, adapter, nil, true, nil)
 	socket.AddCommandHandler(commands.AddRouteCommandName, func(command *commands.IncomingCommand) error {
 		var parameters commands.AddRouteParameters
 		err := json.Unmarshal(command.Parameters, &parameters)

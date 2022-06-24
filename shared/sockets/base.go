@@ -25,7 +25,7 @@ type Socket struct {
 	packetHandler         PacketHandler
 }
 
-func MakeSocket(connId string, adapter adapters.SocketAdapter, iface *water.Interface, ifaceManaged bool, packetHandler PacketHandler) *Socket {
+func MakeSocket(connId string, adapter adapters.SocketAdapter, iface *water.Interface, ifaceManaged bool) *Socket {
 	return &Socket{
 		connId:                connId,
 		adapter:               adapter,
@@ -38,8 +38,11 @@ func MakeSocket(connId string, adapter adapters.SocketAdapter, iface *water.Inte
 		mac:                   shared.DefaultMac,
 		remoteProtocolVersion: 0,
 		packetBufferSize:      2000,
-		packetHandler:         packetHandler,
 	}
+}
+
+func (s *Socket) SetPacketHandler(packetHandler PacketHandler) {
+	s.packetHandler = packetHandler
 }
 
 func (s *Socket) GetConnectionID() string {

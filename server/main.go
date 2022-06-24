@@ -400,7 +400,10 @@ func serveSocket(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	socket := sockets.MakeSocket(connId, adapter, iface, !tapMode, socketGroup)
+	socket := sockets.MakeSocket(connId, adapter, iface, !tapMode)
+	if socketGroup != nil {
+		socket.SetPacketHandler(socketGroup)
+	}
 	socket.SetMTU(*mtu)
 	defer socket.Close()
 

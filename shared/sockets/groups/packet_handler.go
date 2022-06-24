@@ -14,7 +14,7 @@ func (g *SocketGroup) HandlePacket(socket *sockets.Socket, packet []byte) (bool,
 		g.setMACFrom(socket, packet)
 	}
 
-	if g.AllowClientToClient {
+	if socket == nil || g.AllowClientToClient {
 		dest := shared.GetDestMAC(packet)
 
 		if shared.MACIsUnicast(dest) {

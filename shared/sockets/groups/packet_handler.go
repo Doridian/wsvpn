@@ -25,7 +25,7 @@ func (g *SocketGroup) HandlePacket(socket *sockets.Socket, packet []byte) (bool,
 				return false, nil
 			}
 		} else {
-			g.BroadcastDataMessage(packet, socket)
+			g.broadcastDataMessage(packet, socket)
 		}
 
 		return true, nil

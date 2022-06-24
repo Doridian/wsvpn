@@ -7,7 +7,7 @@ import (
 	"github.com/Doridian/wsvpn/shared/sockets"
 )
 
-func (g *SocketGroup) BroadcastDataMessage(data []byte, skip *sockets.Socket) {
+func (g *SocketGroup) broadcastDataMessage(data []byte, skip *sockets.Socket) {
 	g.macLock.RLock()
 	targetList := make([]*sockets.Socket, 0, len(g.macTable))
 	for _, v := range g.macTable {

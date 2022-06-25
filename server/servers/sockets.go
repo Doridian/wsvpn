@@ -17,22 +17,22 @@ import (
 func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	connIdUUID, err := uuid.NewRandom()
+	clientIdUUID, err := uuid.NewRandom()
 	if err != nil {
 		log.Printf("[%s] Error creating client ID: %v", s.ServerID, err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	connId := connIdUUID.String()
+	clientId := fmt.Sprintf("CLIENT-%s", clientIdUUID.String())
 
 	if r.TLS != nil {
-		log.Printf("[%s] TLS %s connection established with cipher=%s", connId, shared.TlsVersionString(r.TLS.Version), tls.CipherSuiteName(r.TLS.CipherSuite))
+		log.Printf("[%s] TLS %s connection established with cipher=%s", clientId, shared.TlsVersionString(r.TLS.Version), tls.CipherSuiteName(r.TLS.CipherSuite))
 	} else {
-		log.Printf("[%s] Unencrypted connection established", connId)
+		log.Printf("[%s] Unencrypted connection established", clientId)
 	}
 
-	authOk := s.handleSocketAuth(connId, w, r)
+	authOk := s.handleSocketAuth(clientId, w, r)
 	if !authOk {
 		return
 	}
@@ -44,7 +44,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		slot = slot + 1
 		if slot > maxSlot {
 			s.slotMutex.Unlock()
-			log.Printf("[%s] Cannot connect new client: IP slots exhausted", connId)
+			log.Printf("[%s] Cannot connect new client: IP slots exhausted", clientId)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
@@ -66,17 +66,17 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		log.Printf("[%s] Error upgrading connection: %v", connId, err)
+		log.Printf("[%s] Error upgrading connection: %v", clientId, err)
 		return
 	}
 
 	defer adapter.Close()
 
-	log.Printf("[%s] Upgraded connection to %s", connId, adapter.Name())
+	log.Printf("[%s] Upgraded connection to %s", clientId, adapter.Name())
 
 	ipClient, err := s.VPNNet.GetIPAt(int(slot) + 1)
 	if err != nil {
-		log.Printf("[%s] Error transforming client IP: %v", connId, err)
+		log.Printf("[%s] Error transforming client IP: %v", clientId, err)
 		return
 	}
 
@@ -91,41 +91,41 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		err = s.extendTUNConfig(&tunConfig)
 		if err != nil {
 			s.ifaceCreationMutex.Unlock()
-			log.Printf("[%s] Error extending TUN config: %v", connId, err)
+			log.Printf("[%s] Error extending TUN config: %v", clientId, err)
 			return
 		}
 
 		iface, err = water.New(tunConfig)
 		s.ifaceCreationMutex.Unlock()
 		if err != nil {
-			log.Printf("[%s] Error creating new TUN: %v", connId, err)
+			log.Printf("[%s] Error creating new TUN: %v", clientId, err)
 			return
 		}
 
 		defer iface.Close()
 
-		log.Printf("[%s] Assigned interface %s", connId, iface.Name())
+		log.Printf("[%s] Assigned interface %s", clientId, iface.Name())
 
 		err = s.configIface(iface, ipClient)
 		if err != nil {
-			log.Printf("[%s] Error configuring interface: %v", connId, err)
+			log.Printf("[%s] Error configuring interface: %v", clientId, err)
 			return
 		}
 	}
 
-	socket := sockets.MakeSocket(connId, adapter, iface, s.Mode == shared.VPN_MODE_TUN)
+	socket := sockets.MakeSocket(clientId, adapter, iface, s.Mode == shared.VPN_MODE_TUN)
 	if s.SocketGroup != nil {
 		socket.SetPacketHandler(s.SocketGroup)
 	}
 	socket.SetMTU(s.mtu)
 	defer socket.Close()
 
-	log.Printf("[%s] Connection fully established", connId)
-	defer log.Printf("[%s] Disconnected", connId)
+	log.Printf("[%s] Connection fully established", clientId)
+	defer log.Printf("[%s] Disconnected", clientId)
 
 	socket.Serve()
 	socket.MakeAndSendCommand(&commands.InitParameters{
-		ClientID:   connId,
+		ClientID:   clientId,
 		ServerID:   s.ServerID,
 		Mode:       s.Mode.ToString(),
 		DoIpConfig: s.DoRemoteIpConfig,

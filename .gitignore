@@ -1,6 +1,6 @@
-/server/server
-/client/client
 *.exe
 *.exe~
+*.pem
+*.pem~
 /dist
 /htpasswd

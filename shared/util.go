@@ -66,6 +66,10 @@ func BoolToString(val bool, trueval string, falseval string) string {
 	return falseval
 }
 
+func BoolIfString(val bool, trueval string) string {
+	return BoolToString(val, trueval, "")
+}
+
 func BoolToEnabled(val bool) string {
 	return BoolToString(val, "enabled", "disabled")
 }

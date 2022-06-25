@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net"
 	"net/http"
 	"sync"
 
@@ -18,7 +17,6 @@ import (
 	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 	"github.com/Doridian/wsvpn/shared/sockets/groups"
-	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/gorilla/websocket"
 	"github.com/lucas-clemente/quic-go/http3"
 	"github.com/marten-seemann/webtransport-go"
@@ -54,15 +52,13 @@ var tlsCert = flag.String("tls-cert", "", "TLS certificate file for listener")
 var tlsKey = flag.String("tls-key", "", "TLS key file for listener")
 var tlsClientCA = flag.String("tls-client-ca", "", "If set, performs TLS client certificate authentication based on given CA certificate")
 
-var subnet *net.IPNet
-var ipServer net.IP
-var subnetSize string
-var maxSlot uint64
+var vpnNet *shared.VPNNet
 
 var tapMode bool
 var tapDev *water.Interface
 var modeString string
 var http3Enabled bool
+var doRemoteIpConfig bool
 
 var authenticator authenticators.Authenticator
 
@@ -76,18 +72,13 @@ func main() {
 	shared.PrintVersion("S")
 
 	var err error
-	_, subnet, err = net.ParseCIDR(*subnetStr)
+	vpnNet, err = shared.ParseVPNNet(*subnetStr)
 	if err != nil {
 		panic(err)
 	}
-	ipServer, err = cidr.Host(subnet, 1)
 	if err != nil {
 		panic(err)
 	}
-	subnetOnes, _ := subnet.Mask.Size()
-	subnetSize = fmt.Sprintf("%d", subnetOnes)
-
-	maxSlot = cidr.AddressCount(subnet) - 2
 
 	tapMode = *useTap
 
@@ -98,6 +89,7 @@ func main() {
 
 	packetBufferSize = shared.GetPacketBufferSizeByMTU(*mtu)
 
+	doRemoteIpConfig = true
 	if tapMode {
 		ifaceCreationMutex.Lock()
 		tapConfig := water.Config{
@@ -114,13 +106,12 @@ func main() {
 		}
 		ifaceCreationMutex.Unlock()
 
+		modeString = "TAP"
 		if *useTapNoConf {
-			modeString = "TAP_NOCONF"
-		} else {
-			modeString = "TAP"
+			doRemoteIpConfig = false
 		}
 
-		err = configIface(tapDev, !*useTapIfaceNoConf, *mtu, ipServer, ipServer, subnet)
+		err = configIface(tapDev, !*useTapIfaceNoConf, *mtu, vpnNet.GetServerIP(), vpnNet.GetServerIP(), vpnNet.GetSubnet())
 		if err != nil {
 			panic(err)
 		}
@@ -158,7 +149,7 @@ func main() {
 	tlsClientCAStr := *tlsClientCA
 
 	log.Printf("[S] VPN server online at %s (HTTP/3 %s, TLS %s, mTLS %s), mode %s, serving subnet %s (%d max clients) with MTU %d",
-		*listenAddr, shared.BoolToEnabled(http3Enabled), shared.BoolToEnabled(tlsKeyStr != ""), shared.BoolToEnabled(tlsClientCAStr != ""), modeString, *subnetStr, maxSlot-1, *mtu)
+		*listenAddr, shared.BoolToEnabled(http3Enabled), shared.BoolToEnabled(tlsKeyStr != ""), shared.BoolToEnabled(tlsClientCAStr != ""), modeString, *subnetStr, vpnNet.GetClientSlots(), *mtu)
 
 	if tlsCertStr != "" || tlsKeyStr != "" || tlsClientCAStr != "" {
 		if tlsCertStr == "" && tlsKeyStr == "" {
@@ -314,6 +305,7 @@ func serveSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var slot uint64 = 1
+	maxSlot := vpnNet.GetClientSlots() + 1
 	slotMutex.Lock()
 	for usedSlots[slot] {
 		slot = slot + 1
@@ -361,7 +353,7 @@ func serveSocket(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[%s] Client authenticated as %s", connId, authUsername)
 	}
 
-	ipClient, err := cidr.Host(subnet, int(slot)+1)
+	ipClient, err := vpnNet.GetIPAt(int(slot) + 1)
 	if err != nil {
 		log.Printf("[%s] Error transforming client IP: %v", connId, err)
 		return
@@ -393,7 +385,7 @@ func serveSocket(w http.ResponseWriter, r *http.Request) {
 
 		log.Printf("[%s] Assigned interface %s", connId, iface.Name())
 
-		err = configIface(iface, true, *mtu, ipClient, ipServer, subnet)
+		err = configIface(iface, true, *mtu, ipClient, vpnNet.GetServerIP(), vpnNet.GetSubnet())
 		if err != nil {
 			log.Printf("[%s] Error configuring interface: %v", connId, err)
 			return
@@ -411,6 +403,6 @@ func serveSocket(w http.ResponseWriter, r *http.Request) {
 	defer log.Printf("[%s] Disconnected", connId)
 
 	socket.Serve()
-	socket.MakeAndSendCommand(&commands.InitParameters{Mode: modeString, IpAddress: fmt.Sprintf("%s/%s", ipClient.String(), subnetSize), MTU: *mtu})
+	socket.MakeAndSendCommand(&commands.InitParameters{Mode: modeString, DoIpConfig: doRemoteIpConfig, IpAddress: fmt.Sprintf("%s/%d", ipClient.String(), vpnNet.GetSize()), MTU: *mtu})
 	socket.Wait()
 }

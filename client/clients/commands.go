@@ -41,13 +41,14 @@ func (c *Client) registerCommandHandlers() {
 			return err
 		}
 
-		c.ClientID = parameters.ClientID
-		if c.ClientID == "" {
+		if parameters.ClientID == "" {
 			clientUUID, err := uuid.NewRandom()
 			if err != nil {
 				return err
 			}
 			c.ClientID = clientUUID.String()
+		} else {
+			c.ClientID = parameters.ClientID
 		}
 
 		mode := shared.VPNModeFromString(parameters.Mode)

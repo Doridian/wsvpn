@@ -3,6 +3,7 @@ package clients
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net"
 
@@ -46,7 +47,7 @@ func (c *Client) registerCommandHandlers() {
 			if err != nil {
 				return err
 			}
-			c.socket.ConnectionID = clientUUID.String()
+			c.socket.ConnectionID = fmt.Sprintf("LOCAL-%s", clientUUID.String())
 		} else {
 			c.socket.ConnectionID = parameters.ClientID
 		}

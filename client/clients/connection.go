@@ -60,8 +60,8 @@ func (c *Client) connectAdapter() {
 
 	tlsConnState, ok := c.adapter.GetTLSConnectionState()
 	if ok {
-		log.Printf("[%s] TLS %s %s connection established with cipher=%s", c.socket.ConnectionID, shared.TlsVersionString(tlsConnState.Version), c.adapter.Name(), tls.CipherSuiteName(tlsConnState.CipherSuite))
+		log.Printf("[INIT] TLS %s %s connection established with cipher=%s", shared.TlsVersionString(tlsConnState.Version), c.adapter.Name(), tls.CipherSuiteName(tlsConnState.CipherSuite))
 	} else {
-		log.Printf("[%s] Unencrypted %s connection established", c.socket.ConnectionID, c.adapter.Name())
+		log.Printf("[INIT] Unencrypted %s connection established", c.adapter.Name())
 	}
 }

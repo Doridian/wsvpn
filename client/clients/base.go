@@ -69,9 +69,10 @@ func (c *Client) Serve() {
 	log.Printf("[%s] %sConnecting to %s with authentications: %s", c.ConnectionID, shared.BoolIfString(isWarning, "WARNING! "), c.ServerUrl.Redacted(), authText)
 
 	c.connectAdapter()
-	c.registerCommandHandlers()
 
 	c.socket = sockets.MakeSocket(c.ConnectionID, c.adapter, nil, true)
+	c.registerCommandHandlers()
+
 	c.socket.Serve()
 }
 

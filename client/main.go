@@ -76,10 +76,6 @@ func main() {
 	tlsConfig.InsecureSkipVerify = *insecure
 	shared.TlsUseFlags(tlsConfig)
 
-	if tlsConfig.InsecureSkipVerify {
-		log.Printf("[C] WARNING: TLS verification disabled! This can cause security issues!")
-	}
-
 	caCertFileString := *caCertFile
 	if caCertFileString != "" {
 		data, err := ioutil.ReadFile(caCertFileString)
@@ -125,7 +121,12 @@ func main() {
 	client.InterfaceName = *ifaceName
 	client.SetBasicAuthFromUserInfo(userInfo)
 	client.TLSConfig = tlsConfig
+	client.UpScript = *upScript
+	client.DownScript = *downScript
 
-	client.Serve()
+	err = client.Serve()
+	if err != nil {
+		panic(err)
+	}
 	client.Wait()
 }

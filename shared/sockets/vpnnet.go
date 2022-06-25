@@ -2,7 +2,6 @@ package sockets
 
 import (
 	"errors"
-	"log"
 
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/songgao/water"
@@ -35,7 +34,7 @@ func (s *Socket) tryServeIfaceRead() {
 		for {
 			n, err := s.iface.Read(packet)
 			if err != nil {
-				log.Printf("[%s] Error reading packet from tun: %v", s.ConnectionID, err)
+				s.log.Printf("Error reading packet from tun: %v", err)
 				return
 			}
 

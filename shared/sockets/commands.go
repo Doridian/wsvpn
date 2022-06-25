@@ -3,7 +3,7 @@ package sockets
 import (
 	"encoding/json"
 	"errors"
-	"log"
+	"fmt"
 
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
@@ -22,7 +22,7 @@ func (s *Socket) registerControlMessageHandler() {
 
 		err = json.Unmarshal(message, &command)
 		if err != nil {
-			log.Printf("[%s] Error deserializing command: %v", s.ConnectionID, err)
+			s.log.Printf("Error deserializing command: %v", err)
 			return false
 		}
 
@@ -38,7 +38,7 @@ func (s *Socket) registerControlMessageHandler() {
 		if err != nil {
 			replyOk = false
 			replyStr = err.Error()
-			log.Printf("[%s] Error in in-band command %s: %v", s.ConnectionID, command.Command, err)
+			s.log.Printf("Error in in-band command %s: %v", command.Command, err)
 		}
 
 		if command.Command != commands.ReplyCommandName {
@@ -55,7 +55,7 @@ func (s *Socket) registerDefaultCommandHandlers() {
 		if err != nil {
 			return err
 		}
-		log.Printf("[%s] Remote version is: %s (protocol %d)", s.ConnectionID, parameters.Version, parameters.ProtocolVersion)
+		s.log.Printf("Remote version is: %s (protocol %d)", parameters.Version, parameters.ProtocolVersion)
 		return nil
 	})
 
@@ -65,7 +65,7 @@ func (s *Socket) registerDefaultCommandHandlers() {
 		if err != nil {
 			return err
 		}
-		log.Printf("[%s] Got reply to command ID %s (%s): %s", s.ConnectionID, command.ID, shared.BoolToString(parameters.Ok, "ok", "error"), parameters.Message)
+		s.log.Printf("Got reply to command ID %s (%s): %s", command.ID, shared.BoolToString(parameters.Ok, "ok", "error"), parameters.Message)
 		return nil
 	})
 }
@@ -81,20 +81,21 @@ func (s *Socket) MakeAndSendCommand(parameters commands.CommandParameters) error
 func (s *Socket) rawMakeAndSendCommand(parameters commands.CommandParameters, id string) error {
 	cmd, err := parameters.MakeCommand(id)
 	if err != nil {
-		log.Printf("[%s] Error preparing command: %v", s.ConnectionID, err)
+		s.CloseError(fmt.Sprintf("Error preparing command: %v", err))
+		return err
 	}
 
 	cmdBytes, err := cmd.Serialize()
 	if err != nil {
-		log.Printf("[%s] Error serializing command: %v", s.ConnectionID, err)
-		s.Close()
+		s.CloseError(fmt.Sprintf("Error serializing command: %v", err))
+		return err
 	}
 
 	err = s.adapter.WriteControlMessage(cmdBytes)
 	if err != nil {
-		log.Printf("[%s] Error sending command: %v", s.ConnectionID, err)
-		s.Close()
+		s.CloseError(fmt.Sprintf("Error sending command: %v", err))
+		return err
 	}
 
-	return err
+	return nil
 }

@@ -26,6 +26,9 @@ type Client struct {
 	UpScript          string
 	DownScript        string
 
+	log        *log.Logger
+	clientID   string
+	serverID   string
 	mtu        int
 	doIpConfig bool
 	iface      *water.Interface
@@ -36,13 +39,16 @@ type Client struct {
 
 func NewClient() *Client {
 	return &Client{
-		Headers: make(http.Header),
+		Headers:  make(http.Header),
+		clientID: "UNSET",
+		serverID: "UNSET",
+		log:      shared.MakeLogger("CLIENT", "UNSET"),
 	}
 }
 
-func (c *Client) Serve() {
+func (c *Client) Serve() error {
 	if c.TLSConfig != nil && c.TLSConfig.InsecureSkipVerify {
-		log.Println("[INIT] WARNING: TLS verification disabled! This can cause security issues!")
+		c.log.Printf("WARNING: TLS verification disabled! This can cause security issues!")
 	}
 
 	useMTLS := c.TLSConfig != nil && len(c.TLSConfig.Certificates) > 0
@@ -63,14 +69,19 @@ func (c *Client) Serve() {
 		isWarning = false
 	}
 
-	log.Printf("[INIT] %sConnecting to %s with authentications: %s", shared.BoolIfString(isWarning, "WARNING! "), c.ServerUrl.Redacted(), authText)
+	c.log.Printf("%sConnecting to %s with authentications: %s", shared.BoolIfString(isWarning, "WARNING: "), c.ServerUrl.Redacted(), authText)
 
-	c.connectAdapter()
+	err := c.connectAdapter()
+	if err != nil {
+		return err
+	}
 
-	c.socket = sockets.MakeSocket("INIT", c.adapter, nil, true)
+	c.socket = sockets.MakeSocket(c.log, c.adapter, nil, true)
 	c.registerCommandHandlers()
 
 	c.socket.Serve()
+
+	return nil
 }
 
 func (c *Client) Wait() {

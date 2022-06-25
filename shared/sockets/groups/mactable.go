@@ -1,8 +1,6 @@
 package groups
 
 import (
-	"log"
-
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/sockets"
 )
@@ -49,8 +47,7 @@ func (g *SocketGroup) setMACFrom(socket *sockets.Socket, msg []byte) {
 	}
 
 	if g.macTable[srcMac] != nil {
-		log.Printf("[%s] MAC collision: Killing", socket.ConnectionID)
-		socket.Close()
+		socket.CloseError("MAC collision")
 		return
 	}
 

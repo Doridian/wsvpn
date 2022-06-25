@@ -44,7 +44,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	server.ServerID = serverUUID.String()
+	server.SetServerID(serverUUID.String())
 
 	server.VPNNet, err = shared.ParseVPNNet(*subnetStr)
 	if err != nil {
@@ -121,5 +121,8 @@ func main() {
 		server.TLSConfig = tlsConfig
 	}
 
-	server.Serve()
+	err = server.Serve()
+	if err != nil {
+		panic(err)
+	}
 }

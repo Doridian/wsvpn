@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -16,7 +15,7 @@ import (
 	"github.com/marten-seemann/webtransport-go"
 )
 
-func (c *Client) connectAdapter() {
+func (c *Client) connectAdapter() error {
 	clientUrl := *c.ServerUrl
 
 	clientUrl.Scheme = strings.ToLower(clientUrl.Scheme)
@@ -28,12 +27,12 @@ func (c *Client) connectAdapter() {
 		dialer.TLSClientConf = c.TLSConfig
 
 		if c.ProxyUrl != nil {
-			panic(errors.New("proxy is not support for WebTransport at the moment"))
+			return errors.New("proxy is not support for WebTransport at the moment")
 		}
 
 		_, conn, err := dialer.Dial(context.Background(), clientUrl.String(), c.Headers)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		c.adapter = adapters.NewWebTransportAdapter(conn, false)
@@ -41,7 +40,7 @@ func (c *Client) connectAdapter() {
 	case "wss":
 		dialer := websocket.Dialer{}
 		if c.ProxyUrl != nil {
-			log.Printf("[C] Using HTTP proxy %s", c.ProxyUrl.Redacted())
+			c.log.Printf("Using HTTP proxy %s", c.ProxyUrl.Redacted())
 			dialer.Proxy = func(_ *http.Request) (*url.URL, error) {
 				return c.ProxyUrl, nil
 			}
@@ -50,7 +49,7 @@ func (c *Client) connectAdapter() {
 
 		conn, _, err := dialer.Dial(clientUrl.String(), c.Headers)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		c.adapter = adapters.NewWebSocketAdapter(conn)
@@ -60,8 +59,10 @@ func (c *Client) connectAdapter() {
 
 	tlsConnState, ok := c.adapter.GetTLSConnectionState()
 	if ok {
-		log.Printf("[INIT] TLS %s %s connection established with cipher=%s", shared.TlsVersionString(tlsConnState.Version), c.adapter.Name(), tls.CipherSuiteName(tlsConnState.CipherSuite))
+		c.log.Printf("TLS %s %s connection established with cipher=%s", shared.TlsVersionString(tlsConnState.Version), c.adapter.Name(), tls.CipherSuiteName(tlsConnState.CipherSuite))
 	} else {
-		log.Printf("[INIT] Unencrypted %s connection established", c.adapter.Name())
+		c.log.Printf("Unencrypted %s connection established", c.adapter.Name())
 	}
+
+	return nil
 }

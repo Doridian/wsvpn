@@ -2,7 +2,6 @@ package servers
 
 import (
 	"errors"
-	"log"
 
 	"github.com/songgao/water"
 )
@@ -15,13 +14,13 @@ func (s *Server) serveTAP() {
 	for {
 		n, err := s.tapIface.Read(packet)
 		if err != nil {
-			log.Printf("[%s] Error reading packet from TAP: %v", s.ServerID, err)
+			s.log.Printf("Error reading packet from TAP: %v", err)
 			return
 		}
 
 		_, err = s.SocketGroup.HandlePacket(nil, packet[:n])
 		if err != nil {
-			log.Printf("[%s] Error handling packet from TAP: %v", s.ServerID, err)
+			s.log.Printf("Error handling packet from TAP: %v", err)
 			return
 		}
 	}

@@ -3,12 +3,10 @@ package clients
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"net"
 
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
-	"github.com/google/uuid"
 	"github.com/songgao/water"
 )
 
@@ -41,14 +39,12 @@ func (c *Client) registerCommandHandlers() {
 			return err
 		}
 
-		if parameters.ClientID == "" {
-			clientUUID, err := uuid.NewRandom()
-			if err != nil {
-				return err
-			}
-			c.socket.ConnectionID = clientUUID.String()
-		} else {
-			c.socket.ConnectionID = parameters.ClientID
+		if parameters.ClientID != "" {
+			c.clientID = parameters.ClientID
+			shared.UpdateLogger(c.log, "CLIENT", c.clientID)
+		}
+		if parameters.ServerID != "" {
+			c.serverID = parameters.ServerID
 		}
 
 		mode := shared.VPNModeFromString(parameters.Mode)
@@ -60,7 +56,7 @@ func (c *Client) registerCommandHandlers() {
 
 		c.doIpConfig = parameters.DoIpConfig
 
-		log.Printf("[%s] Network mode %s, subnet %s, mtu %d, IPConfig %s", c.socket.ConnectionID, parameters.Mode, c.remoteNet.GetRaw(), parameters.MTU, shared.BoolToEnabled(c.doIpConfig))
+		c.log.Printf("Network mode %s, subnet %s, mtu %d, IPConfig %s", parameters.Mode, c.remoteNet.GetRaw(), parameters.MTU, shared.BoolToEnabled(c.doIpConfig))
 
 		ifconfig := c.getPlatformSpecifics(water.Config{
 			DeviceType: mode.ToWaterDeviceType(),
@@ -70,7 +66,7 @@ func (c *Client) registerCommandHandlers() {
 			return err
 		}
 
-		log.Printf("[%s] Opened %s", c.socket.ConnectionID, c.iface.Name())
+		c.log.Printf("Opened %s", c.iface.Name())
 
 		c.setMTUNoInterface(parameters.MTU)
 		err = c.configureInterface()
@@ -83,7 +79,7 @@ func (c *Client) registerCommandHandlers() {
 			return err
 		}
 
-		log.Printf("[%s] Configured interface, starting operations", c.socket.ConnectionID)
+		c.log.Printf("Configured interface, starting operations")
 		err = c.socket.SetInterface(c.iface)
 		if err != nil {
 			return err

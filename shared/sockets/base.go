@@ -11,7 +11,6 @@ import (
 )
 
 type Socket struct {
-	ConnectionID          string
 	adapter               adapters.SocketAdapter
 	iface                 *water.Interface
 	ifaceManaged          bool
@@ -23,11 +22,11 @@ type Socket struct {
 	remoteProtocolVersion int
 	packetBufferSize      int
 	packetHandler         PacketHandler
+	log                   *log.Logger
 }
 
-func MakeSocket(connId string, adapter adapters.SocketAdapter, iface *water.Interface, ifaceManaged bool) *Socket {
+func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *water.Interface, ifaceManaged bool) *Socket {
 	return &Socket{
-		ConnectionID:          connId,
 		adapter:               adapter,
 		iface:                 iface,
 		ifaceManaged:          ifaceManaged,
@@ -38,6 +37,7 @@ func MakeSocket(connId string, adapter adapters.SocketAdapter, iface *water.Inte
 		mac:                   shared.DefaultMac,
 		remoteProtocolVersion: 0,
 		packetBufferSize:      2000,
+		log:                   logger,
 	}
 }
 
@@ -51,6 +51,11 @@ func (s *Socket) Wait() {
 
 func (s *Socket) closeDone() {
 	s.wg.Done()
+	s.Close()
+}
+
+func (s *Socket) CloseError(err string) {
+	s.log.Printf("Closing because: %s", err)
 	s.Close()
 }
 
@@ -88,7 +93,7 @@ func (s *Socket) Serve() {
 		defer s.closeDone()
 		err, unexpected := s.adapter.Serve()
 		if unexpected {
-			log.Printf("[%s] Client ERROR: %v", s.ConnectionID, err)
+			s.log.Printf("Adapter ERROR: %v", err)
 		}
 	}()
 

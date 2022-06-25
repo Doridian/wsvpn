@@ -2,6 +2,7 @@ package servers
 
 import (
 	"crypto/tls"
+	"log"
 	"sync"
 
 	"github.com/Doridian/wsvpn/server/authenticators"
@@ -22,6 +23,8 @@ type Server struct {
 	packetBufferSize   int
 	mtu                int
 	tapIface           *water.Interface
+	log                *log.Logger
+	serverId           string
 
 	SocketGroup      *groups.SocketGroup
 	VPNNet           *shared.VPNNet
@@ -32,7 +35,6 @@ type Server struct {
 	HTTP3Enabled     bool
 	Authenticator    authenticators.Authenticator
 	Mode             shared.VPNMode
-	ServerID         string
 }
 
 func NewServer() *Server {
@@ -40,7 +42,13 @@ func NewServer() *Server {
 		slotMutex:          &sync.Mutex{},
 		ifaceCreationMutex: &sync.Mutex{},
 		usedSlots:          make(map[uint64]bool),
+		log:                shared.MakeLogger("SERVER", "UNSET"),
 	}
+}
+
+func (s *Server) SetServerID(serverId string) {
+	s.serverId = serverId
+	shared.UpdateLogger(s.log, "SERVER", s.serverId)
 }
 
 func (s *Server) Serve() error {

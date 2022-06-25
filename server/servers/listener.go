@@ -48,7 +48,7 @@ func (s *Server) listenEncrypted() error {
 			defer http3Wait.Done()
 			err := s.webTransportServer.ListenAndServe()
 			if err != nil {
-				panic(err)
+				panic(err) // TODO: This should not panic
 			}
 		}()
 

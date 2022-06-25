@@ -7,7 +7,7 @@ import (
 )
 
 func (s *Server) serveTAP() {
-	defer panic(errors.New("TAP closed"))
+	defer panic(errors.New("TAP closed")) // TODO: This should not panic
 
 	packet := make([]byte, s.packetBufferSize)
 

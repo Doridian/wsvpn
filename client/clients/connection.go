@@ -54,7 +54,7 @@ func (c *Client) connectAdapter() error {
 
 		c.adapter = adapters.NewWebSocketAdapter(conn)
 	default:
-		panic(fmt.Errorf("invalid protocol: %s", serverUrlCopy.Scheme))
+		return fmt.Errorf("invalid protocol: %s", serverUrlCopy.Scheme)
 	}
 
 	tlsConnState, ok := c.adapter.GetTLSConnectionState()

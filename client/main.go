@@ -12,6 +12,7 @@ import (
 
 	"github.com/Doridian/wsvpn/client/clients"
 	"github.com/Doridian/wsvpn/shared"
+	"github.com/Doridian/wsvpn/shared/cli"
 )
 
 var defaultGateway = flag.Bool("default-gateway", false, "Route all traffic through VPN")
@@ -74,7 +75,7 @@ func main() {
 	tlsConfig := &tls.Config{}
 
 	tlsConfig.InsecureSkipVerify = *insecure
-	shared.TlsUseFlags(tlsConfig)
+	cli.TlsUseFlags(tlsConfig)
 
 	caCertFileString := *caCertFile
 	if caCertFileString != "" {
@@ -116,6 +117,7 @@ func main() {
 		client.ProxyUrl = proxyUrl
 	}
 
+	client.SocketConfigurator = &cli.PingFlagsSocketConfigurator{}
 	client.SetDefaultGateway = *defaultGateway
 	client.ServerUrl = dest
 	client.InterfaceName = *ifaceName

@@ -3,6 +3,7 @@ package sockets
 import (
 	"log"
 	"sync"
+	"time"
 
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
@@ -23,6 +24,8 @@ type Socket struct {
 	packetBufferSize      int
 	packetHandler         PacketHandler
 	log                   *log.Logger
+	pingInterval          time.Duration
+	pingTimeout           time.Duration
 }
 
 func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *water.Interface, ifaceManaged bool) *Socket {
@@ -39,6 +42,11 @@ func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *water
 		packetBufferSize:      2000,
 		log:                   logger,
 	}
+}
+
+func (s *Socket) ConfigurePing(pingInterval time.Duration, pingTimeout time.Duration) {
+	s.pingInterval = pingInterval
+	s.pingTimeout = pingTimeout
 }
 
 func (s *Socket) SetPacketHandler(packetHandler PacketHandler) {
@@ -86,7 +94,7 @@ func (s *Socket) Serve() {
 
 	s.registerControlMessageHandler()
 
-	s.installPingPongHandlers(*pingIntervalPtr, *pingTimeoutPtr)
+	s.installPingPongHandlers()
 
 	s.wg.Add(1)
 	go func() {

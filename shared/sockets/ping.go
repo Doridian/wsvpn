@@ -1,16 +1,12 @@
 package sockets
 
 import (
-	"flag"
 	"time"
 )
 
-var pingIntervalPtr = flag.Duration("ping-interval", time.Second*time.Duration(30), "Send ping frames in this interval")
-var pingTimeoutPtr = flag.Duration("ping-timeout", time.Second*time.Duration(5), "Disconnect if no ping response is received after timeout")
-
-func (s *Socket) installPingPongHandlers(pingInterval time.Duration, pingTimeout time.Duration) {
-	if pingInterval <= 0 || pingTimeout <= 0 {
-		s.log.Printf("Ping disabled")
+func (s *Socket) installPingPongHandlers() {
+	if s.pingInterval <= 0 || s.pingTimeout <= 0 {
+		s.log.Println("Ping disabled")
 		return
 	}
 
@@ -30,16 +26,16 @@ func (s *Socket) installPingPongHandlers(pingInterval time.Duration, pingTimeout
 
 		for {
 			select {
-			case <-time.After(pingInterval):
+			case <-time.After(s.pingInterval):
 				pingTimeoutTimer.Stop()
 				err := s.adapter.WritePingMessage()
 				if err != nil {
 					s.log.Printf("Error sending ping: %v", err)
 					return
 				}
-				pingTimeoutTimer.Reset(pingTimeout)
+				pingTimeoutTimer.Reset(s.pingTimeout)
 			case <-pingTimeoutTimer.C:
-				s.log.Printf("Ping timeout")
+				s.log.Println("Ping timeout")
 				return
 			case <-s.closechan:
 				return
@@ -47,5 +43,5 @@ func (s *Socket) installPingPongHandlers(pingInterval time.Duration, pingTimeout
 		}
 	}()
 
-	s.log.Printf("Ping enabled with interval %v and timeout %v", pingInterval, pingTimeout)
+	s.log.Printf("Ping enabled with interval %v and timeout %v", s.pingInterval, s.pingTimeout)
 }

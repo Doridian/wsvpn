@@ -115,11 +115,20 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	socket := sockets.MakeSocket(clientLogger, adapter, iface, s.Mode == shared.VPN_MODE_TUN)
+	defer socket.Close()
+
+	if s.SocketConfigurator != nil {
+		err := s.SocketConfigurator.ConfigureSocket(socket)
+		if err != nil {
+			clientLogger.Printf("Error configuring socket: %v", err)
+			http.Error(w, "Error configuring socket", http.StatusInternalServerError)
+			return
+		}
+	}
 	if s.SocketGroup != nil {
 		socket.SetPacketHandler(s.SocketGroup)
 	}
 	socket.SetMTU(s.mtu)
-	defer socket.Close()
 
 	clientLogger.Println("Connection fully established")
 	defer clientLogger.Println("Disconnected")

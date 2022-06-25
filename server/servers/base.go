@@ -7,6 +7,7 @@ import (
 
 	"github.com/Doridian/wsvpn/server/authenticators"
 	"github.com/Doridian/wsvpn/shared"
+	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/Doridian/wsvpn/shared/sockets/groups"
 	"github.com/gorilla/websocket"
 	"github.com/marten-seemann/webtransport-go"
@@ -14,6 +15,17 @@ import (
 )
 
 type Server struct {
+	SocketGroup        *groups.SocketGroup
+	VPNNet             *shared.VPNNet
+	DoLocalIpConfig    bool
+	DoRemoteIpConfig   bool
+	TLSConfig          *tls.Config
+	ListenAddr         string
+	HTTP3Enabled       bool
+	Authenticator      authenticators.Authenticator
+	Mode               shared.VPNMode
+	SocketConfigurator sockets.SocketConfigurator
+
 	webSocketUpgrader  *websocket.Upgrader
 	webTransportServer *webtransport.Server
 
@@ -25,16 +37,6 @@ type Server struct {
 	tapIface           *water.Interface
 	log                *log.Logger
 	serverId           string
-
-	SocketGroup      *groups.SocketGroup
-	VPNNet           *shared.VPNNet
-	DoLocalIpConfig  bool
-	DoRemoteIpConfig bool
-	TLSConfig        *tls.Config
-	ListenAddr       string
-	HTTP3Enabled     bool
-	Authenticator    authenticators.Authenticator
-	Mode             shared.VPNMode
 }
 
 func NewServer() *Server {

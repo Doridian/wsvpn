@@ -10,6 +10,7 @@ import (
 	"github.com/Doridian/wsvpn/server/authenticators"
 	"github.com/Doridian/wsvpn/server/servers"
 	"github.com/Doridian/wsvpn/shared"
+	"github.com/Doridian/wsvpn/shared/cli"
 	"github.com/Doridian/wsvpn/shared/sockets/groups"
 	"github.com/google/uuid"
 )
@@ -51,6 +52,7 @@ func main() {
 		panic(err)
 	}
 
+	server.SocketConfigurator = &cli.PingFlagsSocketConfigurator{}
 	server.DoLocalIpConfig = !*skipLocalIpConf
 	server.DoRemoteIpConfig = !*skipRemoteIpConf
 	server.ListenAddr = *listenAddr
@@ -116,7 +118,7 @@ func main() {
 			tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
 		}
 
-		shared.TlsUseFlags(tlsConfig)
+		cli.TlsUseFlags(tlsConfig)
 
 		server.TLSConfig = tlsConfig
 	}

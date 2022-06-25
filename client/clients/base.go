@@ -17,14 +17,15 @@ const clientEventUp = "up"
 const clientEventDown = "down"
 
 type Client struct {
-	TLSConfig         *tls.Config
-	ProxyUrl          *url.URL
-	ServerUrl         *url.URL
-	Headers           http.Header
-	InterfaceName     string
-	SetDefaultGateway bool
-	UpScript          string
-	DownScript        string
+	TLSConfig          *tls.Config
+	ProxyUrl           *url.URL
+	ServerUrl          *url.URL
+	Headers            http.Header
+	InterfaceName      string
+	SetDefaultGateway  bool
+	UpScript           string
+	DownScript         string
+	SocketConfigurator sockets.SocketConfigurator
 
 	log        *log.Logger
 	clientID   string
@@ -77,6 +78,12 @@ func (c *Client) Serve() error {
 	}
 
 	c.socket = sockets.MakeSocket(c.log, c.adapter, nil, true)
+	if c.SocketConfigurator != nil {
+		err := c.SocketConfigurator.ConfigureSocket(c.socket)
+		if err != nil {
+			return err
+		}
+	}
 	c.registerCommandHandlers()
 
 	c.socket.Serve()

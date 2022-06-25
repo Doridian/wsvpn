@@ -10,11 +10,20 @@ import (
 	"github.com/Doridian/wsvpn/shared/commands"
 	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
+	"github.com/google/uuid"
 	"github.com/songgao/water"
 )
 
 func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
-	authOk, authUsername := s.handleSocketAuth(w, r)
+	connId := uuid.NewString()
+
+	if r.TLS != nil {
+		log.Printf("[%s] TLS %s connection established with cipher=%s", connId, shared.TlsVersionString(r.TLS.Version), tls.CipherSuiteName(r.TLS.CipherSuite))
+	} else {
+		log.Printf("[%s] Unencrypted connection established", connId)
+	}
+
+	authOk := s.handleSocketAuth(connId, w, r)
 	if !authOk {
 		return
 	}
@@ -26,7 +35,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		slot = slot + 1
 		if slot > maxSlot {
 			s.slotMutex.Unlock()
-			log.Println("[S] Cannot connect new client: IP slots exhausted")
+			log.Printf("[%s] Cannot connect new client: IP slots exhausted", connId)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
@@ -39,8 +48,6 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		delete(s.usedSlots, slot)
 		s.slotMutex.Unlock()
 	}()
-
-	connId := fmt.Sprintf("%d", slot)
 
 	var err error
 	var adapter adapters.SocketAdapter
@@ -57,16 +64,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 
 	defer adapter.Close()
 
-	tlsConnState, ok := adapter.GetTLSConnectionState()
-	if ok {
-		log.Printf("[%s] TLS %s %s connection established with cipher=%s", connId, shared.TlsVersionString(tlsConnState.Version), adapter.Name(), tls.CipherSuiteName(tlsConnState.CipherSuite))
-	} else {
-		log.Printf("[%s] Unencrypted %s connection established", connId, adapter.Name())
-	}
-
-	if authUsername != "" {
-		log.Printf("[%s] Client authenticated as %s", connId, authUsername)
-	}
+	log.Printf("[%s] Upgraded connection to %s", connId, adapter.Name())
 
 	ipClient, err := s.VPNNet.GetIPAt(int(slot) + 1)
 	if err != nil {
@@ -107,7 +105,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	socket := sockets.MakeSocket(connId, adapter, iface, s.Mode == shared.VPN_MODE_TAP)
+	socket := sockets.MakeSocket(connId, adapter, iface, s.Mode == shared.VPN_MODE_TUN)
 	if s.SocketGroup != nil {
 		socket.SetPacketHandler(s.SocketGroup)
 	}

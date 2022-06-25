@@ -122,7 +122,6 @@ func main() {
 
 	client.SetDefaultGateway = *defaultGateway
 	client.ServerUrl = dest
-	client.ConnectionID = "0"
 	client.InterfaceName = *ifaceName
 	client.SetBasicAuthFromUserInfo(userInfo)
 	client.TLSConfig = tlsConfig

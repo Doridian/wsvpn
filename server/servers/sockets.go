@@ -15,7 +15,16 @@ import (
 )
 
 func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
-	connId := uuid.NewString()
+	var err error
+
+	connIdUUID, err := uuid.NewRandom()
+	if err != nil {
+		log.Printf("[S] Error creating client ID: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	connId := connIdUUID.String()
 
 	if r.TLS != nil {
 		log.Printf("[%s] TLS %s connection established with cipher=%s", connId, shared.TlsVersionString(r.TLS.Version), tls.CipherSuiteName(r.TLS.CipherSuite))
@@ -49,7 +58,6 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		s.slotMutex.Unlock()
 	}()
 
-	var err error
 	var adapter adapters.SocketAdapter
 	if r.Proto == "webtransport" && s.HTTP3Enabled {
 		adapter, err = s.serveWebTransport(w, r)
@@ -116,6 +124,12 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	defer log.Printf("[%s] Disconnected", connId)
 
 	socket.Serve()
-	socket.MakeAndSendCommand(&commands.InitParameters{Mode: s.Mode.ToString(), DoIpConfig: s.DoRemoteIpConfig, IpAddress: fmt.Sprintf("%s/%d", ipClient.String(), s.VPNNet.GetSize()), MTU: s.mtu})
+	socket.MakeAndSendCommand(&commands.InitParameters{
+		ClientID:   connId,
+		Mode:       s.Mode.ToString(),
+		DoIpConfig: s.DoRemoteIpConfig,
+		IpAddress:  fmt.Sprintf("%s/%d", ipClient.String(), s.VPNNet.GetSize()),
+		MTU:        s.mtu,
+	})
 	socket.Wait()
 }

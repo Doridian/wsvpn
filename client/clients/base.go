@@ -21,7 +21,7 @@ type Client struct {
 	ProxyUrl          *url.URL
 	ServerUrl         *url.URL
 	Headers           http.Header
-	ConnectionID      string
+	ClientID          string
 	InterfaceName     string
 	SetDefaultGateway bool
 	UpScript          string
@@ -37,13 +37,14 @@ type Client struct {
 
 func NewClient() *Client {
 	return &Client{
-		Headers: make(http.Header),
+		Headers:  make(http.Header),
+		ClientID: "Init",
 	}
 }
 
 func (c *Client) Serve() {
 	if c.TLSConfig != nil && c.TLSConfig.InsecureSkipVerify {
-		log.Printf("[%s] WARNING: TLS verification disabled! This can cause security issues!", c.ConnectionID)
+		log.Printf("[%s] WARNING: TLS verification disabled! This can cause security issues!", c.ClientID)
 	}
 
 	useMTLS := c.TLSConfig != nil && len(c.TLSConfig.Certificates) > 0
@@ -64,11 +65,11 @@ func (c *Client) Serve() {
 		isWarning = false
 	}
 
-	log.Printf("[%s] %sConnecting to %s with authentications: %s", c.ConnectionID, shared.BoolIfString(isWarning, "WARNING! "), c.ServerUrl.Redacted(), authText)
+	log.Printf("[%s] %sConnecting to %s with authentications: %s", c.ClientID, shared.BoolIfString(isWarning, "WARNING! "), c.ServerUrl.Redacted(), authText)
 
 	c.connectAdapter()
 
-	c.socket = sockets.MakeSocket(c.ConnectionID, c.adapter, nil, true)
+	c.socket = sockets.MakeSocket(c.ClientID, c.adapter, nil, true)
 	c.registerCommandHandlers()
 
 	c.socket.Serve()

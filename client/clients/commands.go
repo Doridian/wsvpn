@@ -8,6 +8,7 @@ import (
 
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
+	"github.com/google/uuid"
 	"github.com/songgao/water"
 )
 
@@ -38,6 +39,15 @@ func (c *Client) registerCommandHandlers() {
 		err = json.Unmarshal(command.Parameters, &parameters)
 		if err != nil {
 			return err
+		}
+
+		c.ClientID = parameters.ClientID
+		if c.ClientID == "" {
+			clientUUID, err := uuid.NewRandom()
+			if err != nil {
+				return err
+			}
+			c.ClientID = clientUUID.String()
 		}
 
 		mode := shared.VPNModeFromString(parameters.Mode)

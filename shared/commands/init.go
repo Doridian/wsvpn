@@ -7,6 +7,7 @@ type InitParameters struct {
 	DoIpConfig bool              `json:"do_ip_config"`
 	IpAddress  IpAddressWithCIDR `json:"ip_address"`
 	MTU        int               `json:"mtu"`
+	ClientID   string            `json:"client_id"`
 }
 
 func (c *InitParameters) MakeCommand(id string) (*OutgoingCommand, error) {

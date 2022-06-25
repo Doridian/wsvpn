@@ -1,6 +1,7 @@
 package servers
 
 import (
+	"crypto/tls"
 	"errors"
 	"log"
 	"net/http"
@@ -74,8 +75,9 @@ func (s *Server) listenEncrypted() error {
 }
 
 func (s *Server) Listen() error {
-	log.Printf("[S] VPN server online at %s (HTTP/3 %s, TLS %s, mTLS %s), mode %s, serving subnet %s (%d max clients) with MTU %d",
-		s.ListenAddr, shared.BoolToEnabled(s.HTTP3Enabled), shared.BoolToEnabled(s.TLSConfig != nil), shared.BoolToEnabled(s.TLSConfig != nil && s.TLSConfig.ClientCAs != nil), s.Mode.ToString(), s.VPNNet.GetRaw(), s.VPNNet.GetClientSlots(), s.mtu)
+	log.Printf("[%s] VPN server online at %s (HTTP/3 %s, TLS %s, mTLS %s), mode %s, serving subnet %s (%d max clients) with MTU %d",
+		s.ServerID, s.ListenAddr, shared.BoolToEnabled(s.HTTP3Enabled), shared.BoolToEnabled(s.TLSConfig != nil),
+		shared.BoolToEnabled(s.TLSConfig != nil && s.TLSConfig.ClientAuth == tls.RequireAndVerifyClientCert), s.Mode.ToString(), s.VPNNet.GetRaw(), s.VPNNet.GetClientSlots(), s.mtu)
 
 	s.webSocketUpgrader = &websocket.Upgrader{
 		ReadBufferSize:  2048,

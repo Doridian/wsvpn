@@ -7,6 +7,7 @@ type InitParameters struct {
 	DoIpConfig bool              `json:"do_ip_config"`
 	IpAddress  IpAddressWithCIDR `json:"ip_address"`
 	MTU        int               `json:"mtu"`
+	ServerID   string            `json:"server_id"`
 	ClientID   string            `json:"client_id"`
 }
 

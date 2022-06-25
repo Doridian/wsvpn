@@ -19,7 +19,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 
 	connIdUUID, err := uuid.NewRandom()
 	if err != nil {
-		log.Printf("[S] Error creating client ID: %v", err)
+		log.Printf("[%s] Error creating client ID: %v", s.ServerID, err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -126,6 +126,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	socket.Serve()
 	socket.MakeAndSendCommand(&commands.InitParameters{
 		ClientID:   connId,
+		ServerID:   s.ServerID,
 		Mode:       s.Mode.ToString(),
 		DoIpConfig: s.DoRemoteIpConfig,
 		IpAddress:  fmt.Sprintf("%s/%d", ipClient.String(), s.VPNNet.GetSize()),

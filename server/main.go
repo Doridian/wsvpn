@@ -11,6 +11,7 @@ import (
 	"github.com/Doridian/wsvpn/server/servers"
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/sockets/groups"
+	"github.com/google/uuid"
 )
 
 var mtu = flag.Int("mtu", 1280, "MTU for the tunnel")
@@ -38,6 +39,12 @@ func main() {
 
 	var err error
 	server := servers.NewServer()
+
+	serverUUID, err := uuid.NewRandom()
+	if err != nil {
+		panic(err)
+	}
+	server.ServerID = serverUUID.String()
 
 	server.VPNNet, err = shared.ParseVPNNet(*subnetStr)
 	if err != nil {

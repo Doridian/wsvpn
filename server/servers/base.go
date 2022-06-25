@@ -32,6 +32,7 @@ type Server struct {
 	HTTP3Enabled     bool
 	Authenticator    authenticators.Authenticator
 	Mode             shared.VPNMode
+	ServerID         string
 }
 
 func NewServer() *Server {

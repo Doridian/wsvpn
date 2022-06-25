@@ -9,6 +9,6 @@ var (
 	ProtocolVersion = 3
 )
 
-func PrintVersion(prefix string) {
-	log.Printf("Local version is: %s (protocol %d)", prefix, Version, ProtocolVersion)
+func PrintVersion() {
+	log.Printf("Local version is: %s (protocol %d)", Version, ProtocolVersion)
 }

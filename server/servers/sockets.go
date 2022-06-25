@@ -20,7 +20,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	clientIdUUID, err := uuid.NewRandom()
 	if err != nil {
 		log.Printf("[%s] Error creating client ID: %v", s.ServerID, err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		http.Error(w, "Error creating client ID", http.StatusInternalServerError)
 		return
 	}
 
@@ -45,7 +45,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		if slot > maxSlot {
 			s.slotMutex.Unlock()
 			log.Printf("[%s] Cannot connect new client: IP slots exhausted", clientId)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, "IP slots exhausted", http.StatusInternalServerError)
 			return
 		}
 	}

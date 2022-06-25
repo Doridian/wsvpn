@@ -32,7 +32,7 @@ var upScript = flag.String("up-script", "", "Script to run once the VPN is onlin
 var downScript = flag.String("down-script", "", "Script to run when the VPN goes offline")
 
 func main() {
-	flag.Usage = shared.UsageWithVersion
+	flag.Usage = cli.UsageWithVersion
 	flag.Parse()
 
 	destUrlString := *connectAddr

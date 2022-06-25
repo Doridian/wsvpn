@@ -33,7 +33,7 @@ var tlsKey = flag.String("tls-key", "", "TLS key file for listener")
 var tlsClientCA = flag.String("tls-client-ca", "", "If set, performs TLS client certificate authentication based on given CA certificate")
 
 func main() {
-	flag.Usage = shared.UsageWithVersion
+	flag.Usage = cli.UsageWithVersion
 	flag.Parse()
 
 	shared.PrintVersion("S")

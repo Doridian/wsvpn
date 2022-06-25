@@ -47,5 +47,5 @@ func (s *Socket) installPingPongHandlers(pingInterval time.Duration, pingTimeout
 		}
 	}()
 
-	s.log.Printf(" Ping enabled with interval %v and timeout %v", pingInterval, pingTimeout)
+	s.log.Printf("Ping enabled with interval %v and timeout %v", pingInterval, pingTimeout)
 }

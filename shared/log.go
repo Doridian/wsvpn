@@ -7,7 +7,7 @@ import (
 )
 
 func makeLoggerPrefix(logType string, prefix string) string {
-	return fmt.Sprintf("[%s-%s]", logType, prefix)
+	return fmt.Sprintf("[%s-%s] ", logType, prefix)
 }
 
 func MakeLogger(logType string, prefix string) *log.Logger {

@@ -11,7 +11,7 @@ import (
 )
 
 type Socket struct {
-	connId                string
+	ConnectionID          string
 	adapter               adapters.SocketAdapter
 	iface                 *water.Interface
 	ifaceManaged          bool
@@ -27,7 +27,7 @@ type Socket struct {
 
 func MakeSocket(connId string, adapter adapters.SocketAdapter, iface *water.Interface, ifaceManaged bool) *Socket {
 	return &Socket{
-		connId:                connId,
+		ConnectionID:          connId,
 		adapter:               adapter,
 		iface:                 iface,
 		ifaceManaged:          ifaceManaged,
@@ -43,10 +43,6 @@ func MakeSocket(connId string, adapter adapters.SocketAdapter, iface *water.Inte
 
 func (s *Socket) SetPacketHandler(packetHandler PacketHandler) {
 	s.packetHandler = packetHandler
-}
-
-func (s *Socket) GetConnectionID() string {
-	return s.connId
 }
 
 func (s *Socket) Wait() {
@@ -92,7 +88,7 @@ func (s *Socket) Serve() {
 		defer s.closeDone()
 		err, unexpected := s.adapter.Serve()
 		if unexpected {
-			log.Printf("[%s] Client ERROR: %v", s.connId, err)
+			log.Printf("[%s] Client ERROR: %v", s.ConnectionID, err)
 		}
 	}()
 

@@ -22,7 +22,7 @@ func (s *Socket) registerControlMessageHandler() {
 
 		err = json.Unmarshal(message, &command)
 		if err != nil {
-			log.Printf("[%s] Error deserializing command: %v", s.connId, err)
+			log.Printf("[%s] Error deserializing command: %v", s.ConnectionID, err)
 			return false
 		}
 
@@ -38,7 +38,7 @@ func (s *Socket) registerControlMessageHandler() {
 		if err != nil {
 			replyOk = false
 			replyStr = err.Error()
-			log.Printf("[%s] Error in in-band command %s: %v", s.connId, command.Command, err)
+			log.Printf("[%s] Error in in-band command %s: %v", s.ConnectionID, command.Command, err)
 		}
 
 		if command.Command != commands.ReplyCommandName {
@@ -55,7 +55,7 @@ func (s *Socket) registerDefaultCommandHandlers() {
 		if err != nil {
 			return err
 		}
-		log.Printf("[%s] Remote version is: %s (protocol %d)", s.connId, parameters.Version, parameters.ProtocolVersion)
+		log.Printf("[%s] Remote version is: %s (protocol %d)", s.ConnectionID, parameters.Version, parameters.ProtocolVersion)
 		return nil
 	})
 
@@ -65,7 +65,7 @@ func (s *Socket) registerDefaultCommandHandlers() {
 		if err != nil {
 			return err
 		}
-		log.Printf("[%s] Got reply to command ID %s (%s): %s", s.connId, command.ID, shared.BoolToString(parameters.Ok, "ok", "error"), parameters.Message)
+		log.Printf("[%s] Got reply to command ID %s (%s): %s", s.ConnectionID, command.ID, shared.BoolToString(parameters.Ok, "ok", "error"), parameters.Message)
 		return nil
 	})
 }
@@ -81,18 +81,18 @@ func (s *Socket) MakeAndSendCommand(parameters commands.CommandParameters) error
 func (s *Socket) rawMakeAndSendCommand(parameters commands.CommandParameters, id string) error {
 	cmd, err := parameters.MakeCommand(id)
 	if err != nil {
-		log.Printf("[%s] Error preparing command: %v", s.connId, err)
+		log.Printf("[%s] Error preparing command: %v", s.ConnectionID, err)
 	}
 
 	cmdBytes, err := cmd.Serialize()
 	if err != nil {
-		log.Printf("[%s] Error serializing command: %v", s.connId, err)
+		log.Printf("[%s] Error serializing command: %v", s.ConnectionID, err)
 		s.Close()
 	}
 
 	err = s.adapter.WriteControlMessage(cmdBytes)
 	if err != nil {
-		log.Printf("[%s] Error sending command: %v", s.connId, err)
+		log.Printf("[%s] Error sending command: %v", s.ConnectionID, err)
 		s.Close()
 	}
 

@@ -35,7 +35,7 @@ func (s *Socket) tryServeIfaceRead() {
 		for {
 			n, err := s.iface.Read(packet)
 			if err != nil {
-				log.Printf("[%s] Error reading packet from tun: %v", s.connId, err)
+				log.Printf("[%s] Error reading packet from tun: %v", s.ConnectionID, err)
 				return
 			}
 

@@ -9,7 +9,7 @@ func (s *Socket) registerDataHandler() {
 		if s.packetHandler != nil {
 			res, err := s.packetHandler.HandlePacket(s, message)
 			if err != nil {
-				log.Printf("[%s] Error in packet handler: %v", s.connId, err)
+				log.Printf("[%s] Error in packet handler: %v", s.ConnectionID, err)
 				return false
 			}
 			if res {
@@ -28,7 +28,7 @@ func (s *Socket) registerDataHandler() {
 func (s *Socket) WriteDataMessage(data []byte) error {
 	err := s.adapter.WriteDataMessage(data)
 	if err != nil {
-		log.Printf("[%s] Error sending data message: %v", s.connId, err)
+		log.Printf("[%s] Error sending data message: %v", s.ConnectionID, err)
 		s.Close()
 	}
 	return err

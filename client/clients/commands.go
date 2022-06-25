@@ -46,9 +46,9 @@ func (c *Client) registerCommandHandlers() {
 			if err != nil {
 				return err
 			}
-			c.ClientID = clientUUID.String()
+			c.socket.ConnectionID = clientUUID.String()
 		} else {
-			c.ClientID = parameters.ClientID
+			c.socket.ConnectionID = parameters.ClientID
 		}
 
 		mode := shared.VPNModeFromString(parameters.Mode)
@@ -60,7 +60,7 @@ func (c *Client) registerCommandHandlers() {
 
 		c.doIpConfig = parameters.DoIpConfig
 
-		log.Printf("[%s] Network mode %s, subnet %s, mtu %d, IPConfig %s", c.socket.GetConnectionID(), parameters.Mode, c.remoteNet.GetRaw(), parameters.MTU, shared.BoolToEnabled(c.doIpConfig))
+		log.Printf("[%s] Network mode %s, subnet %s, mtu %d, IPConfig %s", c.socket.ConnectionID, parameters.Mode, c.remoteNet.GetRaw(), parameters.MTU, shared.BoolToEnabled(c.doIpConfig))
 
 		ifconfig := c.getPlatformSpecifics(water.Config{
 			DeviceType: mode.ToWaterDeviceType(),
@@ -70,7 +70,7 @@ func (c *Client) registerCommandHandlers() {
 			return err
 		}
 
-		log.Printf("[%s] Opened %s", c.socket.GetConnectionID(), c.iface.Name())
+		log.Printf("[%s] Opened %s", c.socket.ConnectionID, c.iface.Name())
 
 		c.setMTUNoInterface(parameters.MTU)
 		err = c.configureInterface()
@@ -83,7 +83,7 @@ func (c *Client) registerCommandHandlers() {
 			return err
 		}
 
-		log.Printf("[%s] Configured interface, starting operations", c.socket.GetConnectionID())
+		log.Printf("[%s] Configured interface, starting operations", c.socket.ConnectionID)
 		err = c.socket.SetInterface(c.iface)
 		if err != nil {
 			return err

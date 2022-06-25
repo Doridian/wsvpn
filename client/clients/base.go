@@ -43,7 +43,7 @@ func NewClient() *Client {
 
 func (c *Client) Serve() {
 	if c.TLSConfig != nil && c.TLSConfig.InsecureSkipVerify {
-		log.Printf("[C] WARNING: TLS verification disabled! This can cause security issues!")
+		log.Printf("[%s] WARNING: TLS verification disabled! This can cause security issues!", c.ConnectionID)
 	}
 
 	useMTLS := c.TLSConfig != nil && len(c.TLSConfig.Certificates) > 0

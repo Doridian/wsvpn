@@ -16,13 +16,13 @@ import (
 )
 
 func (c *Client) connectAdapter() error {
-	clientUrl := *c.ServerUrl
+	serverUrlCopy := *c.ServerUrl
 
-	clientUrl.Scheme = strings.ToLower(clientUrl.Scheme)
+	serverUrlCopy.Scheme = strings.ToLower(serverUrlCopy.Scheme)
 
-	switch clientUrl.Scheme {
+	switch serverUrlCopy.Scheme {
 	case "webtransport":
-		clientUrl.Scheme = "https"
+		serverUrlCopy.Scheme = "https"
 		dialer := webtransport.Dialer{}
 		dialer.TLSClientConf = c.TLSConfig
 
@@ -30,7 +30,7 @@ func (c *Client) connectAdapter() error {
 			return errors.New("proxy is not support for WebTransport at the moment")
 		}
 
-		_, conn, err := dialer.Dial(context.Background(), clientUrl.String(), c.Headers)
+		_, conn, err := dialer.Dial(context.Background(), serverUrlCopy.String(), c.Headers)
 		if err != nil {
 			return err
 		}
@@ -47,14 +47,14 @@ func (c *Client) connectAdapter() error {
 		}
 		dialer.TLSClientConfig = c.TLSConfig
 
-		conn, _, err := dialer.Dial(clientUrl.String(), c.Headers)
+		conn, _, err := dialer.Dial(serverUrlCopy.String(), c.Headers)
 		if err != nil {
 			return err
 		}
 
 		c.adapter = adapters.NewWebSocketAdapter(conn)
 	default:
-		panic(fmt.Errorf("invalid protocol: %s", clientUrl.Scheme))
+		panic(fmt.Errorf("invalid protocol: %s", serverUrlCopy.Scheme))
 	}
 
 	tlsConnState, ok := c.adapter.GetTLSConnectionState()

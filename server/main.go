@@ -5,7 +5,6 @@ import (
 	"crypto/x509"
 	"errors"
 	"flag"
-	"fmt"
 	"io/ioutil"
 
 	"github.com/Doridian/wsvpn/server/authenticators"
@@ -45,7 +44,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	server.ServerID = fmt.Sprintf("SERVER-%s", serverUUID.String())
+	server.ServerID = serverUUID.String()
 
 	server.VPNNet, err = shared.ParseVPNNet(*subnetStr)
 	if err != nil {

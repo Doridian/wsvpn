@@ -24,7 +24,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	clientId := fmt.Sprintf("CLIENT-%s", clientIdUUID.String())
+	clientId := clientIdUUID.String()
 
 	if r.TLS != nil {
 		log.Printf("[%s] TLS %s connection established with cipher=%s", clientId, shared.TlsVersionString(r.TLS.Version), tls.CipherSuiteName(r.TLS.CipherSuite))

@@ -42,8 +42,6 @@ func NewClient() *Client {
 }
 
 func (c *Client) Serve() {
-	defer c.Close()
-
 	if c.TLSConfig != nil && c.TLSConfig.InsecureSkipVerify {
 		log.Printf("[C] WARNING: TLS verification disabled! This can cause security issues!")
 	}

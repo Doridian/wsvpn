@@ -36,7 +36,7 @@ func main() {
 	flag.Usage = cli.UsageWithVersion
 	flag.Parse()
 
-	shared.PrintVersion("S")
+	shared.PrintVersion()
 
 	var err error
 	server := servers.NewServer()

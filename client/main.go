@@ -41,7 +41,7 @@ func main() {
 		return
 	}
 
-	shared.PrintVersion("C")
+	shared.PrintVersion()
 
 	dest, err := url.Parse(destUrlString)
 	if err != nil {

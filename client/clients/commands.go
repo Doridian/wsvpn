@@ -3,7 +3,6 @@ package clients
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net"
 
@@ -41,15 +40,7 @@ func (c *Client) registerCommandHandlers() {
 			return err
 		}
 
-		var waterMode water.DeviceType
-		switch parameters.Mode {
-		case "TUN":
-			waterMode = water.TUN
-		case "TAP":
-			waterMode = water.TAP
-		default:
-			return fmt.Errorf("invalid network mode %s", parameters.Mode)
-		}
+		mode := shared.VPNModeFromString(parameters.Mode)
 
 		c.remoteNet, err = shared.ParseVPNNet(parameters.IpAddress)
 		if err != nil {
@@ -61,7 +52,7 @@ func (c *Client) registerCommandHandlers() {
 		log.Printf("[%s] Network mode %s, subnet %s, mtu %d, IPConfig %s", c.socket.GetConnectionID(), parameters.Mode, c.remoteNet.GetRaw(), parameters.MTU, shared.BoolToEnabled(c.doIpConfig))
 
 		ifconfig := c.getPlatformSpecifics(water.Config{
-			DeviceType: waterMode,
+			DeviceType: mode.ToWaterDeviceType(),
 		})
 		c.iface, err = water.New(ifconfig)
 		if err != nil {

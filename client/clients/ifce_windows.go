@@ -11,7 +11,7 @@ import (
 	"github.com/songgao/water"
 )
 
-var ifaceComponentID = flag.String("interface-component-id", "tap0901", "Commponent ID of the interface to use")
+var ifaceComponentID = flag.String("interface-component-id", "tap0901", "Commponent ID of the interface to use") // TODO: No flag parsing in Client
 
 func (c *Client) configureInterfaceMTU() error {
 	return shared.ExecCmd("netsh", "interface", "ipv4", "set", "subinterface", c.iface.Name(), fmt.Sprintf("mtu=%d", c.mtu))

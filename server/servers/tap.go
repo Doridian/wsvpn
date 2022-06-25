@@ -28,20 +28,22 @@ func (s *Server) serveTAP() {
 }
 
 func (s *Server) createTAP() error {
+	var err error
+
 	s.ifaceCreationMutex.Lock()
 	tapConfig := water.Config{
 		DeviceType: water.TAP,
 	}
-	err := s.extendTAPConfig(&tapConfig)
+	err = s.extendTAPConfig(&tapConfig)
 	if err != nil {
 		return err
 	}
 
-	tapDev, err := water.New(tapConfig)
+	s.tapIface, err = water.New(tapConfig)
 	if err != nil {
 		return err
 	}
 	s.ifaceCreationMutex.Unlock()
 
-	return s.configIface(tapDev, s.VPNNet.GetServerIP())
+	return s.configIface(s.tapIface, s.VPNNet.GetServerIP())
 }

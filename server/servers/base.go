@@ -7,10 +7,10 @@ import (
 	"sync"
 
 	"github.com/Doridian/wsvpn/server/authenticators"
+	"github.com/Doridian/wsvpn/server/upgraders"
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/Doridian/wsvpn/shared/sockets/groups"
-	"github.com/Doridian/wsvpn/shared/sockets/upgraders"
 	"github.com/songgao/water"
 )
 

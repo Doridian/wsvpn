@@ -7,8 +7,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/Doridian/wsvpn/client/connectors"
 	"github.com/Doridian/wsvpn/shared"
-	"github.com/Doridian/wsvpn/shared/sockets/connectors"
 )
 
 func (c *Client) GetProxyUrl() *url.URL {

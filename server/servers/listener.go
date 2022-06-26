@@ -5,8 +5,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/Doridian/wsvpn/server/upgraders"
 	"github.com/Doridian/wsvpn/shared"
-	"github.com/Doridian/wsvpn/shared/sockets/upgraders"
 	"github.com/lucas-clemente/quic-go/http3"
 )
 

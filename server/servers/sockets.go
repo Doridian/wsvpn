@@ -60,10 +60,11 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	var adapter adapters.SocketAdapter
-	if r.Proto == "webtransport" && s.HTTP3Enabled {
-		adapter, err = s.serveWebTransport(w, r)
-	} else {
-		adapter, err = s.serveWebSocket(w, r)
+	for _, upgrader := range s.upgraders {
+		if !upgrader.Matches(r) {
+			continue
+		}
+		adapter, err = upgrader.Upgrade(w, r)
 	}
 
 	if err != nil {

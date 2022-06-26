@@ -9,8 +9,7 @@ import (
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/Doridian/wsvpn/shared/sockets/groups"
-	"github.com/gorilla/websocket"
-	"github.com/marten-seemann/webtransport-go"
+	"github.com/Doridian/wsvpn/shared/sockets/upgraders"
 	"github.com/songgao/water"
 )
 
@@ -26,9 +25,7 @@ type Server struct {
 	Mode               shared.VPNMode
 	SocketConfigurator sockets.SocketConfigurator
 
-	webSocketUpgrader  *websocket.Upgrader
-	webTransportServer *webtransport.Server
-
+	upgraders          []upgraders.SocketUpgrader
 	slotMutex          *sync.Mutex
 	ifaceCreationMutex *sync.Mutex
 	usedSlots          map[uint64]bool

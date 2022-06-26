@@ -10,6 +10,7 @@ import (
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
+	"github.com/Doridian/wsvpn/shared/sockets/connectors"
 	"github.com/songgao/water"
 )
 
@@ -36,14 +37,16 @@ type Client struct {
 	remoteNet  *shared.VPNNet
 	socket     *sockets.Socket
 	adapter    adapters.SocketAdapter
+	connectors map[string]connectors.SocketConnector
 }
 
 func NewClient() *Client {
 	return &Client{
-		Headers:  make(http.Header),
-		clientID: "UNSET",
-		serverID: "UNSET",
-		log:      shared.MakeLogger("CLIENT", "UNSET"),
+		Headers:    make(http.Header),
+		clientID:   "UNSET",
+		serverID:   "UNSET",
+		log:        shared.MakeLogger("CLIENT", "UNSET"),
+		connectors: make(map[string]connectors.SocketConnector),
 	}
 }
 

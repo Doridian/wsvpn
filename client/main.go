@@ -107,6 +107,7 @@ func main() {
 
 	client := clients.NewClient()
 	defer client.Close()
+	client.RegisterDefaultConnectors()
 
 	proxyAddrString := *proxyAddr
 	if proxyAddrString != "" {

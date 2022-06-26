@@ -7,9 +7,8 @@ import (
 	"sync"
 
 	"github.com/Doridian/wsvpn/shared"
-	"github.com/gorilla/websocket"
+	"github.com/Doridian/wsvpn/shared/sockets/upgraders"
 	"github.com/lucas-clemente/quic-go/http3"
-	"github.com/marten-seemann/webtransport-go"
 )
 
 func (s *Server) listenPlaintext() error {
@@ -28,34 +27,29 @@ func (s *Server) listenPlaintext() error {
 func (s *Server) listenEncrypted() error {
 	httpHandlerFunc := http.HandlerFunc(s.serveSocket)
 
-	http3Wait := &sync.WaitGroup{}
+	listenerWaitGroup := &sync.WaitGroup{}
 
 	if s.HTTP3Enabled {
-		http3Wait.Add(1)
+		listenerWaitGroup.Add(1)
 
-		quicServer := http3.Server{
+		quicServer := &http3.Server{
 			Addr:      s.ListenAddr,
 			TLSConfig: s.TLSConfig,
 			Handler:   httpHandlerFunc,
 		}
 
-		s.webTransportServer = &webtransport.Server{
-			H3:          quicServer,
-			CheckOrigin: func(r *http.Request) bool { return true },
-		}
-
-		go func() {
-			defer http3Wait.Done()
-			err := s.webTransportServer.ListenAndServe()
-			if err != nil {
-				panic(err) // TODO: This should not panic
-			}
-		}()
+		s.upgraders = append(s.upgraders, upgraders.NewWebTransportUpgrader(quicServer))
 
 		httpHandlerFunc = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			quicServer.SetQuicHeaders(w.Header())
 			s.serveSocket(w, r)
 		})
+
+		// This should be at the end of this func, but WebTransport calls it for us, and there is no way to avoid it
+		// err := quicServer.ListenAndServe()
+		// if err != nil {
+		//	return err
+		// }
 	}
 
 	server := http.Server{
@@ -64,25 +58,34 @@ func (s *Server) listenEncrypted() error {
 		Handler:   httpHandlerFunc,
 	}
 
+	s.upgraders = append(s.upgraders, upgraders.NewWebSocketUpgrader())
+
+	for _, upgraderLoop := range s.upgraders {
+		listenerWaitGroup.Add(1)
+		go func(upgrader upgraders.SocketUpgrader) {
+			defer listenerWaitGroup.Done()
+			err := upgrader.ListenAndServe()
+			if err != nil {
+				panic(err) // TODO: This should not panic
+			}
+		}(upgraderLoop)
+	}
+
 	err := server.ListenAndServeTLS("", "")
 	if err != nil {
 		return err
 	}
 
-	http3Wait.Wait()
+	listenerWaitGroup.Wait()
 	return nil
 }
 
 func (s *Server) Listen() error {
+	s.upgraders = make([]upgraders.SocketUpgrader, 0)
+
 	s.log.Printf("VPN server online at %s (HTTP/3 %s, TLS %s, mTLS %s), Mode %s, Subnet %s (%d max clients), MTU %d",
 		s.ListenAddr, shared.BoolToEnabled(s.HTTP3Enabled), shared.BoolToEnabled(s.TLSConfig != nil),
 		shared.BoolToEnabled(s.TLSConfig != nil && s.TLSConfig.ClientAuth == tls.RequireAndVerifyClientCert), s.Mode.ToString(), s.VPNNet.GetRaw(), s.VPNNet.GetClientSlots(), s.mtu)
-
-	s.webSocketUpgrader = &websocket.Upgrader{
-		ReadBufferSize:  2048,
-		WriteBufferSize: 2048,
-		CheckOrigin:     func(r *http.Request) bool { return true },
-	}
 
 	if s.TLSConfig == nil {
 		return s.listenPlaintext()

@@ -1,6 +1,8 @@
 package adapters
 
-import "crypto/tls"
+import (
+	"crypto/tls"
+)
 
 type MessageHandler = func(message []byte) bool
 

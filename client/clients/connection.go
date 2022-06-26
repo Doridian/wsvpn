@@ -1,61 +1,55 @@
 package clients
 
 import (
-	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/Doridian/wsvpn/shared"
-	"github.com/Doridian/wsvpn/shared/sockets/adapters"
-	"github.com/gorilla/websocket"
-	"github.com/marten-seemann/webtransport-go"
+	"github.com/Doridian/wsvpn/shared/sockets/connectors"
 )
 
-func (c *Client) connectAdapter() error {
-	serverUrlCopy := *c.ServerUrl
+func (c *Client) GetProxyUrl() *url.URL {
+	return c.ProxyUrl
+}
 
-	serverUrlCopy.Scheme = strings.ToLower(serverUrlCopy.Scheme)
+func (c *Client) GetTLSConfig() *tls.Config {
+	return c.TLSConfig
+}
 
-	switch serverUrlCopy.Scheme {
-	case "webtransport":
-		serverUrlCopy.Scheme = "https"
-		dialer := webtransport.Dialer{}
-		dialer.TLSClientConf = c.TLSConfig
+func (c *Client) GetHeaders() http.Header {
+	return c.Headers
+}
 
-		if c.ProxyUrl != nil {
-			return errors.New("proxy is not support for WebTransport at the moment")
-		}
+func (c *Client) GetServerUrl() *url.URL {
+	return c.ServerUrl
+}
 
-		_, conn, err := dialer.Dial(context.Background(), serverUrlCopy.String(), c.Headers)
-		if err != nil {
-			return err
-		}
+func (c *Client) RegisterDefaultConnectors() {
+	c.registerConnector(connectors.NewWebSocketConnector())
+	c.registerConnector(connectors.NewWebTransportConnector())
+}
 
-		c.adapter = adapters.NewWebTransportAdapter(conn, false)
-	case "ws":
-	case "wss":
-		dialer := websocket.Dialer{}
-		if c.ProxyUrl != nil {
-			c.log.Printf("Using HTTP proxy %s", c.ProxyUrl.Redacted())
-			dialer.Proxy = func(_ *http.Request) (*url.URL, error) {
-				return c.ProxyUrl, nil
-			}
-		}
-		dialer.TLSClientConfig = c.TLSConfig
-
-		conn, _, err := dialer.Dial(serverUrlCopy.String(), c.Headers)
-		if err != nil {
-			return err
-		}
-
-		c.adapter = adapters.NewWebSocketAdapter(conn)
-	default:
-		return fmt.Errorf("invalid protocol: %s", serverUrlCopy.Scheme)
+func (c *Client) registerConnector(connector connectors.SocketConnector) {
+	for _, scheme := range connector.GetSchemes() {
+		c.connectors[scheme] = connector
 	}
+}
+
+func (c *Client) connectAdapter() error {
+	scheme := strings.ToLower(c.ServerUrl.Scheme)
+	connector, ok := c.connectors[scheme]
+	if !ok {
+		return fmt.Errorf("invalid protocol: %s", scheme)
+	}
+
+	adapter, err := connector.Dial(c)
+	if err != nil {
+		return err
+	}
+	c.adapter = adapter
 
 	tlsConnState, ok := c.adapter.GetTLSConnectionState()
 	if ok {

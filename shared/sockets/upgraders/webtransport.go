@@ -38,3 +38,7 @@ func (u *WebTransportUpgrader) ListenAndServe() error {
 func (u *WebTransportUpgrader) Matches(r *http.Request) bool {
 	return r.Proto == "webtransport"
 }
+
+func (u *WebTransportUpgrader) Close() error {
+	return u.server.Close()
+}

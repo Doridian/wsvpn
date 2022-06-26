@@ -2,6 +2,7 @@ package servers
 
 import (
 	"crypto/tls"
+	"io"
 	"log"
 	"sync"
 
@@ -34,6 +35,9 @@ type Server struct {
 	tapIface           *water.Interface
 	log                *log.Logger
 	serverId           string
+	serveErrorChannel  chan error
+	serveWaitGroup     *sync.WaitGroup
+	closers            []io.Closer
 }
 
 func NewServer() *Server {
@@ -42,6 +46,9 @@ func NewServer() *Server {
 		ifaceCreationMutex: &sync.Mutex{},
 		usedSlots:          make(map[uint64]bool),
 		log:                shared.MakeLogger("SERVER", "UNSET"),
+		serveErrorChannel:  make(chan error),
+		serveWaitGroup:     &sync.WaitGroup{},
+		closers:            make([]io.Closer, 0),
 	}
 }
 
@@ -61,10 +68,27 @@ func (s *Server) Serve() error {
 		if err != nil {
 			return err
 		}
+		s.serveWaitGroup.Add(1)
+		s.closers = append(s.closers, s.tapIface)
 		go s.serveTAP()
 	}
 
-	return s.Listen()
+	s.listen()
+
+	go func() {
+		s.serveWaitGroup.Wait()
+		s.serveErrorChannel <- nil
+	}()
+
+	err = <-s.serveErrorChannel
+	for _, closer := range s.closers {
+		closer.Close()
+	}
+	return err
+}
+
+func (s *Server) Close() {
+	s.serveErrorChannel <- nil
 }
 
 func (s *Server) SetMTU(mtu int) {

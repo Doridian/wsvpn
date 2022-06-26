@@ -38,3 +38,7 @@ func (u *WebSocketUpgrader) ListenAndServe() error {
 func (u *WebSocketUpgrader) Matches(r *http.Request) bool {
 	return r.Header.Get("Upgrade") == "websocket"
 }
+
+func (u *WebSocketUpgrader) Close() error {
+	return nil
+}

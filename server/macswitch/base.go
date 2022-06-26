@@ -1,4 +1,4 @@
-package groups
+package macswitch
 
 import (
 	"sync"
@@ -7,7 +7,7 @@ import (
 	"github.com/Doridian/wsvpn/shared/sockets"
 )
 
-type SocketGroup struct {
+type MACSwitch struct {
 	AllowClientToClient bool
 
 	macTable    map[shared.MacAddr]*sockets.Socket
@@ -15,8 +15,8 @@ type SocketGroup struct {
 	macLock     *sync.RWMutex
 }
 
-func MakeSocketGroup() *SocketGroup {
-	return &SocketGroup{
+func MakeMACSwitch() *MACSwitch {
+	return &MACSwitch{
 		AllowClientToClient: false,
 		macTable:            make(map[shared.MacAddr]*sockets.Socket),
 		socketTable:         make(map[*sockets.Socket]shared.MacAddr),

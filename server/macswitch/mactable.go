@@ -1,11 +1,11 @@
-package groups
+package macswitch
 
 import (
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/sockets"
 )
 
-func (g *SocketGroup) broadcastDataMessage(data []byte, skip *sockets.Socket) {
+func (g *MACSwitch) broadcastDataMessage(data []byte, skip *sockets.Socket) {
 	g.macLock.RLock()
 	targetList := make([]*sockets.Socket, 0, len(g.macTable))
 	for _, v := range g.macTable {
@@ -21,14 +21,14 @@ func (g *SocketGroup) broadcastDataMessage(data []byte, skip *sockets.Socket) {
 	}
 }
 
-func (g *SocketGroup) findSocketByMAC(mac shared.MacAddr) *sockets.Socket {
+func (g *MACSwitch) findSocketByMAC(mac shared.MacAddr) *sockets.Socket {
 	g.macLock.RLock()
 	defer g.macLock.RUnlock()
 
 	return g.macTable[mac]
 }
 
-func (g *SocketGroup) setMACFrom(socket *sockets.Socket, msg []byte) {
+func (g *MACSwitch) setMACFrom(socket *sockets.Socket, msg []byte) {
 	srcMac := shared.GetSrcMAC(msg)
 	socketMac, ok := g.socketTable[socket]
 	if !ok {

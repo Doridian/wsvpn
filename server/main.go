@@ -8,10 +8,10 @@ import (
 	"io/ioutil"
 
 	"github.com/Doridian/wsvpn/server/authenticators"
+	"github.com/Doridian/wsvpn/server/macswitch"
 	"github.com/Doridian/wsvpn/server/servers"
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/cli"
-	"github.com/Doridian/wsvpn/shared/sockets/groups"
 	"github.com/google/uuid"
 )
 
@@ -24,7 +24,7 @@ var authenticatorStrPtr = flag.String("authenticator", "allow-all", "Which authe
 var authenticatorConfigStrPtr = flag.String("authenticator-config", "", "Authenticator config file (ex. htpasswd file for htpasswd authenticator, empty for default)")
 
 var useTap = flag.Bool("tap", false, "Use a TAP and not a TUN")
-var useClientToClient = flag.Bool("allow-client-to-client", false, "Allow client-to-client communication (in TAP)")
+var allowClientToClient = flag.Bool("allow-client-to-client", false, "Allow client-to-client communication (in TAP)")
 var skipRemoteIpConf = flag.Bool("iface-remote-noconf", false, "Do not send IP or route configuration to remote except MTU")
 var skipLocalIpConf = flag.Bool("iface-local-noconf", false, "Do not configure local interface at all except MTU")
 
@@ -60,9 +60,10 @@ func main() {
 	server.HTTP3Enabled = *listenHTTP3Enable
 
 	if *useTap {
+		macSwitch := macswitch.MakeMACSwitch()
+		macSwitch.AllowClientToClient = *allowClientToClient
 		server.Mode = shared.VPN_MODE_TAP
-		server.SocketGroup = groups.MakeSocketGroup()
-		server.SocketGroup.AllowClientToClient = *useClientToClient
+		server.PacketHandler = macSwitch
 	} else {
 		server.Mode = shared.VPN_MODE_TUN
 	}

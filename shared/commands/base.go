@@ -12,18 +12,21 @@ type IpAddressWithCIDR = string
 type CommandID = string
 type CommandName = string
 
-type baseCommand[T any] struct {
-	ID         CommandID   `json:"id"`
-	Command    CommandName `json:"command"`
-	Parameters T           `json:"parameters"`
-}
-
 type CommandParameters interface {
 	MakeCommand(id string) (*OutgoingCommand, error)
 }
 
-type IncomingCommand = baseCommand[json.RawMessage]
-type OutgoingCommand = baseCommand[CommandParameters]
+type IncomingCommand struct {
+	ID         CommandID       `json:"id"`
+	Command    CommandName     `json:"command"`
+	Parameters json.RawMessage `json:"parameters"`
+}
+
+type OutgoingCommand struct {
+	ID         CommandID         `json:"id"`
+	Command    CommandName       `json:"command"`
+	Parameters CommandParameters `json:"parameters"`
+}
 
 func makeCommand(name string, id string, parameters CommandParameters) (*OutgoingCommand, error) {
 	cmd := &OutgoingCommand{Command: name, ID: id, Parameters: parameters}

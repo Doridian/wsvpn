@@ -11,6 +11,7 @@ type SocketAdapter interface {
 
 	// Boolean indicating whether the error was unexpected (true) or not (false)
 	Serve() (error, bool)
+
 	WaitReady()
 	Name() string
 

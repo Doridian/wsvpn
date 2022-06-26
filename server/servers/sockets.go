@@ -129,8 +129,8 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if s.SocketGroup != nil {
-		socket.SetPacketHandler(s.SocketGroup)
+	if s.PacketHandler != nil {
+		socket.SetPacketHandler(s.PacketHandler)
 	}
 	socket.SetMTU(s.mtu)
 

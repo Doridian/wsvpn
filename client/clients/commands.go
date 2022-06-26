@@ -1,7 +1,6 @@
 package clients
 
 import (
-	"encoding/json"
 	"errors"
 	"net"
 
@@ -14,7 +13,7 @@ func (c *Client) registerCommandHandlers() {
 	c.socket.AddCommandHandler(commands.AddRouteCommandName, func(command *commands.IncomingCommand) error {
 		var err error
 		var parameters commands.AddRouteParameters
-		err = json.Unmarshal(command.Parameters, &parameters)
+		err = command.DeserializeParameters(&parameters)
 		if err != nil {
 			return err
 		}
@@ -34,7 +33,7 @@ func (c *Client) registerCommandHandlers() {
 	c.socket.AddCommandHandler(commands.InitCommandName, func(command *commands.IncomingCommand) error {
 		var err error
 		var parameters commands.InitParameters
-		err = json.Unmarshal(command.Parameters, &parameters)
+		err = command.DeserializeParameters(&parameters)
 		if err != nil {
 			return err
 		}

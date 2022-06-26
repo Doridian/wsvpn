@@ -1,7 +1,6 @@
 package sockets
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -18,9 +17,9 @@ func (s *Socket) AddCommandHandler(command string, handler CommandHandler) {
 func (s *Socket) registerControlMessageHandler() {
 	s.adapter.SetControlMessageHandler(func(message []byte) bool {
 		var err error
-		var command commands.IncomingCommand
+		var command *commands.IncomingCommand
 
-		err = json.Unmarshal(message, &command)
+		command, err = commands.DeserializeCommand(message)
 		if err != nil {
 			s.log.Printf("Error deserializing command: %v", err)
 			return false
@@ -30,7 +29,7 @@ func (s *Socket) registerControlMessageHandler() {
 		if handler == nil {
 			err = errors.New("unknown command")
 		} else {
-			err = handler(&command)
+			err = handler(command)
 		}
 
 		replyOk := true
@@ -51,7 +50,7 @@ func (s *Socket) registerControlMessageHandler() {
 func (s *Socket) registerDefaultCommandHandlers() {
 	s.AddCommandHandler(commands.VersionCommandName, func(command *commands.IncomingCommand) error {
 		var parameters commands.VersionParameters
-		err := json.Unmarshal(command.Parameters, &parameters)
+		err := command.DeserializeParameters(&parameters)
 		if err != nil {
 			return err
 		}
@@ -61,7 +60,7 @@ func (s *Socket) registerDefaultCommandHandlers() {
 
 	s.AddCommandHandler(commands.ReplyCommandName, func(command *commands.IncomingCommand) error {
 		var parameters commands.ReplyParameters
-		err := json.Unmarshal(command.Parameters, &parameters)
+		err := command.DeserializeParameters(&parameters)
 		if err != nil {
 			return err
 		}

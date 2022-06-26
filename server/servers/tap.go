@@ -12,6 +12,7 @@ func (s *Server) serveTAP() {
 		s.serveWaitGroup.Done()
 	}()
 
+	// TODO: For change-able MTU we need to re-create this buffer
 	packet := make([]byte, s.packetBufferSize)
 
 	for {
@@ -21,7 +22,7 @@ func (s *Server) serveTAP() {
 			return
 		}
 
-		_, err = s.SocketGroup.HandlePacket(nil, packet[:n])
+		_, err = s.PacketHandler.HandlePacket(nil, packet[:n])
 		if err != nil {
 			s.log.Printf("Error handling packet from TAP: %v", err)
 			return

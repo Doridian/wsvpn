@@ -10,12 +10,11 @@ import (
 	"github.com/Doridian/wsvpn/server/upgraders"
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/sockets"
-	"github.com/Doridian/wsvpn/shared/sockets/groups"
 	"github.com/songgao/water"
 )
 
 type Server struct {
-	SocketGroup        *groups.SocketGroup
+	PacketHandler      sockets.PacketHandler
 	VPNNet             *shared.VPNNet
 	DoLocalIpConfig    bool
 	DoRemoteIpConfig   bool

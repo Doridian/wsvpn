@@ -1,11 +1,11 @@
-package groups
+package macswitch
 
 import (
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/sockets"
 )
 
-func (g *SocketGroup) HandlePacket(socket *sockets.Socket, packet []byte) (bool, error) {
+func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, error) {
 	if len(packet) < 14 {
 		return false, nil
 	}
@@ -34,11 +34,11 @@ func (g *SocketGroup) HandlePacket(socket *sockets.Socket, packet []byte) (bool,
 	return false, nil
 }
 
-func (g *SocketGroup) RegisterSocket(socket *sockets.Socket) {
+func (g *MACSwitch) RegisterSocket(socket *sockets.Socket) {
 
 }
 
-func (g *SocketGroup) UnregisterSocket(socket *sockets.Socket) {
+func (g *MACSwitch) UnregisterSocket(socket *sockets.Socket) {
 	g.macLock.Lock()
 	defer g.macLock.Unlock()
 	socketMac, ok := g.socketTable[socket]

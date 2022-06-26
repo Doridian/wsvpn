@@ -2,6 +2,7 @@ package servers
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -60,6 +61,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	var adapter adapters.SocketAdapter
+	err = errors.New("no matching upgrader")
 	for _, upgrader := range s.upgraders {
 		if !upgrader.Matches(r) {
 			continue

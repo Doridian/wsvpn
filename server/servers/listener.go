@@ -11,17 +11,42 @@ import (
 	"github.com/lucas-clemente/quic-go/http3"
 )
 
+func (s *Server) listenUpgraders(listenerWaitGroup *sync.WaitGroup) {
+	for _, upgraderLoop := range s.upgraders {
+		listenerWaitGroup.Add(1)
+		go func(upgrader upgraders.SocketUpgrader) {
+			defer listenerWaitGroup.Done()
+			err := upgrader.ListenAndServe()
+			if err != nil {
+				panic(err) // TODO: This should not panic
+			}
+		}(upgraderLoop)
+	}
+}
+
 func (s *Server) listenPlaintext() error {
 	httpHandlerFunc := http.HandlerFunc(s.serveSocket)
 
 	if s.HTTP3Enabled {
 		return errors.New("HTTP/3 requires TLS")
 	}
+
+	listenerWaitGroup := &sync.WaitGroup{}
+	s.upgraders = append(s.upgraders, upgraders.NewWebSocketUpgrader())
+
+	s.listenUpgraders(listenerWaitGroup)
+
 	server := http.Server{
 		Addr:    s.ListenAddr,
 		Handler: httpHandlerFunc,
 	}
-	return server.ListenAndServe()
+	err := server.ListenAndServe()
+	if err != nil {
+		return err
+	}
+
+	listenerWaitGroup.Wait()
+	return nil
 }
 
 func (s *Server) listenEncrypted() error {
@@ -60,16 +85,7 @@ func (s *Server) listenEncrypted() error {
 
 	s.upgraders = append(s.upgraders, upgraders.NewWebSocketUpgrader())
 
-	for _, upgraderLoop := range s.upgraders {
-		listenerWaitGroup.Add(1)
-		go func(upgrader upgraders.SocketUpgrader) {
-			defer listenerWaitGroup.Done()
-			err := upgrader.ListenAndServe()
-			if err != nil {
-				panic(err) // TODO: This should not panic
-			}
-		}(upgraderLoop)
-	}
+	s.listenUpgraders(listenerWaitGroup)
 
 	err := server.ListenAndServeTLS("", "")
 	if err != nil {

@@ -65,6 +65,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		adapter, err = upgrader.Upgrade(w, r)
+		break
 	}
 
 	if err != nil {

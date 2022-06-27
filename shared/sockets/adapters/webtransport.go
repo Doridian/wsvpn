@@ -121,7 +121,10 @@ func (s *WebTransportAdapter) serveControl() {
 	defer s.wg.Done()
 	defer s.Close()
 
-	var len uint64
+	var msgLen uint16
+	var msgLenLower uint8
+	var msgLenUpper uint8
+
 	var msgType StreamMessageType
 	var err error
 	reader := bufio.NewReader(s.stream)
@@ -135,12 +138,19 @@ serveLoop:
 
 		switch msgType {
 		case messageTypeControl:
-			len, err = quicvarint.Read(reader)
+			msgLenUpper, err = reader.ReadByte()
 			if err != nil {
 				break
 			}
 
-			data := make([]byte, len)
+			msgLenLower, err = reader.ReadByte()
+			if err != nil {
+				break
+			}
+
+			msgLen = uint16(msgLenLower) | (uint16(msgLenUpper) << 8)
+
+			data := make([]byte, msgLen)
 			_, err = io.ReadFull(reader, data)
 			if err != nil {
 				break
@@ -199,9 +209,15 @@ func (s *WebTransportAdapter) WriteControlMessage(message []byte) error {
 		return errors.New("not ready")
 	}
 
+	msgLen := len(message)
+	if msgLen > 65535 {
+		return errors.New("control message too large")
+	}
+
 	buf := &bytes.Buffer{}
 	buf.WriteByte(messageTypeControl)
-	quicvarint.Write(buf, uint64(len(message)))
+	buf.WriteByte(uint8((msgLen >> 8) & 0xFF))
+	buf.WriteByte(uint8(msgLen & 0xFF))
 	buf.Write(message)
 
 	msg := buf.Bytes()

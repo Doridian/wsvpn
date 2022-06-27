@@ -17,9 +17,12 @@ import (
 	webtransport "github.com/marten-seemann/webtransport-go"
 )
 
+type StreamMessageType = byte
+
 const (
-	pingRequest  = "PING"
-	pingResponse = "PONG"
+	messageTypeControl StreamMessageType = iota
+	messageTypePing
+	messageTypePong
 )
 
 type WebTransportAdapter struct {
@@ -119,36 +122,43 @@ func (s *WebTransportAdapter) serveControl() {
 	defer s.Close()
 
 	var len uint64
+	var msgType StreamMessageType
 	var err error
 	reader := bufio.NewReader(s.stream)
 
+serveLoop:
 	for {
-		len, err = quicvarint.Read(reader)
+		msgType, err = reader.ReadByte()
 		if err != nil {
 			break
 		}
 
-		data := make([]byte, len)
-		_, err = io.ReadFull(reader, data)
-		if err != nil {
-			break
-		}
-
-		switch string(data) {
-		case pingRequest:
-			err = s.WriteControlMessage([]byte(pingResponse))
+		switch msgType {
+		case messageTypeControl:
+			len, err = quicvarint.Read(reader)
 			if err != nil {
 				break
 			}
-			continue
-		case pingResponse:
+
+			data := make([]byte, len)
+			_, err = io.ReadFull(reader, data)
+			if err != nil {
+				break
+			}
+
+			s.controlMessageHandler(data)
+
+		case messageTypePing:
+			_, err = s.stream.Write([]byte{messageTypePong})
+			if err != nil {
+				break serveLoop
+			}
+
+		case messageTypePong:
 			if s.pongHandler != nil {
 				s.pongHandler()
 			}
-			continue
 		}
-
-		s.controlMessageHandler(data)
 	}
 
 	if err != nil {
@@ -190,6 +200,7 @@ func (s *WebTransportAdapter) WriteControlMessage(message []byte) error {
 	}
 
 	buf := &bytes.Buffer{}
+	buf.WriteByte(messageTypeControl)
 	quicvarint.Write(buf, uint64(len(message)))
 	buf.Write(message)
 
@@ -207,6 +218,7 @@ func (s *WebTransportAdapter) WriteDataMessage(message []byte) error {
 	if !s.isReady {
 		return errors.New("not ready")
 	}
+
 	buf := &bytes.Buffer{}
 	quicvarint.Write(buf, s.streamId/4)
 	buf.Write(message)
@@ -217,7 +229,9 @@ func (s *WebTransportAdapter) WritePingMessage() error {
 	if !s.isReady {
 		return errors.New("not ready")
 	}
-	return s.WriteControlMessage([]byte(pingRequest))
+
+	_, err := s.stream.Write([]byte{messageTypePing})
+	return err
 }
 
 func (s *WebTransportAdapter) Name() string {

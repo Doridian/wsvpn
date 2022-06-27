@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"io"
 	"reflect"
 	"sync"
 	"unsafe"
@@ -117,15 +118,27 @@ func (s *WebTransportAdapter) serveControl() {
 	defer s.wg.Done()
 	defer s.Close()
 
-	controlScanner := bufio.NewScanner(s.stream)
-	for controlScanner.Scan() {
-		data := controlScanner.Bytes()
+	var len uint64
+	var err error
+	reader := bufio.NewReader(s.stream)
+
+	for {
+		len, err = quicvarint.Read(reader)
+		if err != nil {
+			break
+		}
+
+		data := make([]byte, len)
+		_, err = io.ReadFull(reader, data)
+		if err != nil {
+			break
+		}
+
 		switch string(data) {
 		case pingRequest:
-			err := s.WriteControlMessage([]byte(pingResponse))
+			err = s.WriteControlMessage([]byte(pingResponse))
 			if err != nil {
-				s.handleServeError(err, true)
-				return
+				break
 			}
 			continue
 		case pingResponse:
@@ -134,12 +147,12 @@ func (s *WebTransportAdapter) serveControl() {
 			}
 			continue
 		}
+
 		s.controlMessageHandler(data)
 	}
 
-	err := controlScanner.Err()
 	if err != nil {
-		s.handleServeError(err, true)
+		s.handleServeError(err, err != io.EOF)
 	}
 }
 
@@ -175,10 +188,18 @@ func (s *WebTransportAdapter) WriteControlMessage(message []byte) error {
 	if !s.isReady {
 		return errors.New("not ready")
 	}
+
 	buf := &bytes.Buffer{}
+	quicvarint.Write(buf, uint64(len(message)))
 	buf.Write(message)
-	buf.WriteByte('\n')
-	_, err := s.stream.Write(buf.Bytes())
+
+	msg := buf.Bytes()
+
+	n, err := s.stream.Write(msg)
+	if err == nil && n != len(msg) {
+		return errors.New("could not write full message")
+	}
+
 	return err
 }
 

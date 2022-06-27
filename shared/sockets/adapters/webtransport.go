@@ -16,6 +16,11 @@ import (
 	webtransport "github.com/marten-seemann/webtransport-go"
 )
 
+const (
+	pingRequest  = "PING"
+	pingResponse = "PONG"
+)
+
 type WebTransportAdapter struct {
 	socketBase
 	qconn     quic.Connection
@@ -116,14 +121,14 @@ func (s *WebTransportAdapter) serveControl() {
 	for controlScanner.Scan() {
 		data := controlScanner.Bytes()
 		switch string(data) {
-		case "PING":
-			err := s.WriteControlMessage([]byte("PONG"))
+		case pingRequest:
+			err := s.WriteControlMessage([]byte(pingResponse))
 			if err != nil {
 				s.handleServeError(err, true)
 				return
 			}
 			continue
-		case "PONG":
+		case pingResponse:
 			if s.pongHandler != nil {
 				s.pongHandler()
 			}
@@ -155,7 +160,7 @@ func (s *WebTransportAdapter) serveData() {
 			break
 		}
 		if quarterStreamId*4 != s.streamId {
-			s.handleServeError(errors.New("wrong quarter streamID"), true)
+			s.handleServeError(errors.New("wrong quarterStreamId"), true)
 			break
 		}
 		s.dataMessageHandler(buf.Bytes())
@@ -191,7 +196,7 @@ func (s *WebTransportAdapter) WritePingMessage() error {
 	if !s.isReady {
 		return errors.New("not ready")
 	}
-	return s.WriteControlMessage([]byte("PING"))
+	return s.WriteControlMessage([]byte(pingRequest))
 }
 
 func (s *WebTransportAdapter) Name() string {

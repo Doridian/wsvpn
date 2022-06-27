@@ -11,6 +11,8 @@ import (
 	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 	"github.com/google/uuid"
+	"github.com/lucas-clemente/quic-go"
+	"github.com/lucas-clemente/quic-go/http3"
 	"github.com/songgao/water"
 )
 
@@ -28,13 +30,24 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 
 	clientLogger := shared.MakeLogger("CLIENT", clientId)
 
-	if r.TLS != nil {
-		clientLogger.Printf("TLS %s connection established with cipher=%s", shared.TlsVersionString(r.TLS.Version), tls.CipherSuiteName(r.TLS.CipherSuite))
+	tlsConnectionState := r.TLS
+
+	http3Hijacker, ok := w.(http3.Hijacker)
+	if ok {
+		qconn, ok := http3Hijacker.StreamCreator().(quic.Connection)
+		if ok {
+			qlsState := qconn.ConnectionState().TLS.ConnectionState
+			tlsConnectionState = &qlsState
+		}
+	}
+
+	if tlsConnectionState != nil {
+		clientLogger.Printf("TLS %s connection established with cipher=%s", shared.TlsVersionString(tlsConnectionState.Version), tls.CipherSuiteName(tlsConnectionState.CipherSuite))
 	} else {
 		clientLogger.Printf("Unencrypted connection established")
 	}
 
-	authOk := s.handleSocketAuth(clientLogger, w, r)
+	authOk := s.handleSocketAuth(clientLogger, w, r, tlsConnectionState)
 	if !authOk {
 		return
 	}

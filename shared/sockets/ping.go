@@ -15,6 +15,7 @@ func (s *Socket) installPingPongHandlers() {
 	pingTimeoutTimer.Stop()
 
 	s.adapter.SetPongHandler(func() {
+		s.log.Println("Received pong")
 		pingTimeoutTimer.Stop()
 	})
 
@@ -28,6 +29,7 @@ func (s *Socket) installPingPongHandlers() {
 			select {
 			case <-time.After(s.pingInterval):
 				pingTimeoutTimer.Stop()
+				s.log.Println("Sent ping")
 				err := s.adapter.WritePingMessage()
 				if err != nil {
 					s.log.Printf("Error sending ping: %v", err)

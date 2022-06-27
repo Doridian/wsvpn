@@ -1,16 +1,17 @@
 package servers
 
 import (
+	"crypto/tls"
 	"log"
 	"net/http"
 
 	"github.com/Doridian/wsvpn/server/authenticators"
 )
 
-func (s *Server) handleSocketAuth(logger *log.Logger, w http.ResponseWriter, r *http.Request) bool {
+func (s *Server) handleSocketAuth(logger *log.Logger, w http.ResponseWriter, r *http.Request, tlsState *tls.ConnectionState) bool {
 	tlsUsername := ""
-	if r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
-		tlsUsername = r.TLS.PeerCertificates[0].Subject.CommonName
+	if tlsState != nil && len(tlsState.PeerCertificates) > 0 {
+		tlsUsername = tlsState.PeerCertificates[0].Subject.CommonName
 	}
 	authResult, authUsername := s.Authenticator.Authenticate(r, w)
 	if authResult != authenticators.AUTH_OK {

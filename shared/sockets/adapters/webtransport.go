@@ -97,7 +97,7 @@ func (s *WebTransportAdapter) Serve() (error, bool) {
 	s.streamId = getStreamID(s.stream)
 
 	s.wg.Add(1)
-	go s.serveControl()
+	go s.serveStream()
 
 	s.wg.Add(1)
 	go s.serveData()
@@ -117,7 +117,7 @@ func (s *WebTransportAdapter) handleServeError(err error, unexpected bool) {
 	}
 }
 
-func (s *WebTransportAdapter) serveControl() {
+func (s *WebTransportAdapter) serveStream() {
 	defer s.wg.Done()
 	defer s.Close()
 
@@ -210,7 +210,7 @@ func (s *WebTransportAdapter) WriteControlMessage(message []byte) error {
 	}
 
 	msgLen := len(message)
-	if msgLen > 65535 {
+	if msgLen > 0xFFFF {
 		return errors.New("control message too large")
 	}
 

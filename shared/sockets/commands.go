@@ -80,19 +80,19 @@ func (s *Socket) MakeAndSendCommand(parameters commands.CommandParameters) error
 func (s *Socket) rawMakeAndSendCommand(parameters commands.CommandParameters, id string) error {
 	cmd, err := parameters.MakeCommand(id)
 	if err != nil {
-		s.CloseError(fmt.Sprintf("Error preparing command: %v", err))
+		s.CloseError(fmt.Errorf("error preparing command: %v", err))
 		return err
 	}
 
 	cmdBytes, err := cmd.Serialize(s.commandSerializationType)
 	if err != nil {
-		s.CloseError(fmt.Sprintf("Error serializing command: %v", err))
+		s.CloseError(fmt.Errorf("error serializing command: %v", err))
 		return err
 	}
 
 	err = s.adapter.WriteControlMessage(cmdBytes)
 	if err != nil {
-		s.CloseError(fmt.Sprintf("Error sending command: %v", err))
+		s.CloseError(fmt.Errorf("error sending command: %v", err))
 		return err
 	}
 

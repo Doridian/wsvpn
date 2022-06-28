@@ -1,6 +1,8 @@
 package macswitch
 
 import (
+	"errors"
+
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/sockets"
 )
@@ -47,7 +49,7 @@ func (g *MACSwitch) setMACFrom(socket *sockets.Socket, msg []byte) {
 	}
 
 	if g.macTable[srcMac] != nil {
-		socket.CloseError("MAC collision")
+		socket.CloseError(errors.New("MAC collision"))
 		return
 	}
 

@@ -64,8 +64,8 @@ func (s *Socket) closeDone() {
 	s.Close()
 }
 
-func (s *Socket) CloseError(err string) {
-	s.log.Printf("Closing because: %s", err)
+func (s *Socket) CloseError(err error) {
+	s.log.Printf("Closing because: %v", err)
 	s.Close()
 }
 

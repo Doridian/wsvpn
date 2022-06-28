@@ -14,7 +14,7 @@ import (
 	"github.com/lucas-clemente/quic-go"
 	"github.com/lucas-clemente/quic-go/http3"
 	"github.com/lucas-clemente/quic-go/quicvarint"
-	webtransport "github.com/marten-seemann/webtransport-go"
+	"github.com/marten-seemann/webtransport-go"
 )
 
 type StreamMessageType = byte

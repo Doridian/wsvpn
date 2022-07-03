@@ -28,12 +28,15 @@ func (c *WebSocketConnector) Dial(config SocketConnectorConfig) (adapters.Socket
 	}
 	dialer.TLSClientConfig = config.GetTLSConfig()
 
-	conn, _, err := dialer.Dial(config.GetServerUrl().String(), config.GetHeaders())
+	headers := config.GetHeaders()
+	addSupportedSerializationHeader(headers)
+	conn, resp, err := dialer.Dial(config.GetServerUrl().String(), headers)
 	if err != nil {
 		return nil, err
 	}
 
-	return adapters.NewWebSocketAdapter(conn), nil
+	serializationType := readSerializationType(resp.Header)
+	return adapters.NewWebSocketAdapter(conn, serializationType), nil
 }
 
 func (c *WebSocketConnector) GetSchemes() []string {

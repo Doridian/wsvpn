@@ -28,7 +28,9 @@ func (u *WebSocketUpgrader) Upgrade(w http.ResponseWriter, r *http.Request) (ada
 	if err != nil {
 		return nil, err
 	}
-	return adapters.NewWebSocketAdapter(conn), nil
+
+	serializationType := determineBestSerialization(r.Header)
+	return adapters.NewWebSocketAdapter(conn, serializationType), nil
 }
 
 func (u *WebSocketUpgrader) ListenAndServe() error {

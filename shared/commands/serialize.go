@@ -17,18 +17,22 @@ const (
 
 var serializationTypeMap map[string]SerializationType
 var serializationTypeReverseMap map[SerializationType]string
+var serializationTypePriorityMap map[SerializationType]int
 var serializationInit = &sync.Once{}
 
+func addSerializationType(stype SerializationType, name string, priority int) {
+	serializationTypeMap[name] = stype
+	serializationTypeReverseMap[stype] = name
+	serializationTypePriorityMap[stype] = priority
+}
+
 func initSerializationTypeMaps() {
-	serializationTypeMap = make(map[string]int)
-	serializationTypeReverseMap = make(map[int]string)
+	serializationTypeMap = make(map[string]SerializationType)
+	serializationTypeReverseMap = make(map[SerializationType]string)
+	serializationTypePriorityMap = make(map[SerializationType]int)
 
-	serializationTypeMap["json"] = SerializationTypeJson
-	serializationTypeMap["protobuf"] = SerializationTypeProtobuf
-
-	for name, stype := range serializationTypeMap {
-		serializationTypeReverseMap[stype] = name
-	}
+	addSerializationType(SerializationTypeJson, "json", 1)
+	addSerializationType(SerializationTypeProtobuf, "protobuf", 2)
 }
 
 func initSerializationTypeMapsOnce() {
@@ -45,6 +49,12 @@ func SerializationTypeToString(stype SerializationType) string {
 	return name
 }
 
+func SerializationTypePriority(stype SerializationType) int {
+	initSerializationTypeMapsOnce()
+
+	return serializationTypePriorityMap[stype]
+}
+
 func SerializationTypeFromString(name string) SerializationType {
 	initSerializationTypeMapsOnce()
 
@@ -53,6 +63,22 @@ func SerializationTypeFromString(name string) SerializationType {
 		return SerializationTypeInvalid
 	}
 	return stype
+}
+
+func GetSupportedSerializationTypes() []SerializationType {
+	res := make([]SerializationType, 0, len(serializationTypeMap))
+	for _, stype := range serializationTypeMap {
+		res = append(res, stype)
+	}
+	return res
+}
+
+func GetSupportedSerializationTypeNames() []string {
+	res := make([]string, 0, len(serializationTypeMap))
+	for name := range serializationTypeMap {
+		res = append(res, name)
+	}
+	return res
 }
 
 func (c *OutgoingCommand) Serialize(serializationType SerializationType) ([]byte, error) {

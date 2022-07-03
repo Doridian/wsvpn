@@ -27,12 +27,15 @@ func (c *WebTransportConnector) Dial(config SocketConnectorConfig) (adapters.Soc
 		return nil, errors.New("proxy is not support for WebTransport at the moment")
 	}
 
-	_, conn, err := dialer.Dial(context.Background(), serverUrl.String(), config.GetHeaders())
+	headers := config.GetHeaders()
+	addSupportedSerializationHeader(headers)
+	resp, conn, err := dialer.Dial(context.Background(), serverUrl.String(), headers)
 	if err != nil {
 		return nil, err
 	}
 
-	return adapters.NewWebTransportAdapter(conn, false), nil
+	serializationType := readSerializationType(resp.Header)
+	return adapters.NewWebTransportAdapter(conn, serializationType, false), nil
 }
 
 func (c *WebTransportConnector) GetSchemes() []string {

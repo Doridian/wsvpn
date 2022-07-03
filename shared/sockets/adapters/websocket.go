@@ -11,16 +11,18 @@ import (
 
 type WebSocketAdapter struct {
 	socketBase
-	conn      *websocket.Conn
-	writeLock *sync.Mutex
+	conn              *websocket.Conn
+	writeLock         *sync.Mutex
+	serializationType commands.SerializationType
 }
 
 var _ SocketAdapter = &WebSocketAdapter{}
 
-func NewWebSocketAdapter(conn *websocket.Conn) *WebSocketAdapter {
+func NewWebSocketAdapter(conn *websocket.Conn, serializationType commands.SerializationType) *WebSocketAdapter {
 	return &WebSocketAdapter{
-		conn:      conn,
-		writeLock: &sync.Mutex{},
+		conn:              conn,
+		writeLock:         &sync.Mutex{},
+		serializationType: serializationType,
 	}
 }
 
@@ -97,5 +99,5 @@ func (s *WebSocketAdapter) Name() string {
 }
 
 func (s *WebSocketAdapter) GetCommandSerializationType() commands.SerializationType {
-	return commands.SerializationTypeJson
+	return s.serializationType
 }

@@ -28,14 +28,15 @@ const (
 
 type WebTransportAdapter struct {
 	socketBase
-	qconn     quic.Connection
-	conn      *webtransport.Conn
-	streamId  uint64
-	stream    webtransport.Stream
-	isServer  bool
-	wg        *sync.WaitGroup
-	readyWait *sync.WaitGroup
-	isReady   bool
+	qconn             quic.Connection
+	conn              *webtransport.Conn
+	streamId          uint64
+	stream            webtransport.Stream
+	isServer          bool
+	wg                *sync.WaitGroup
+	readyWait         *sync.WaitGroup
+	isReady           bool
+	serializationType commands.SerializationType
 
 	lastServeError           error
 	lastServeErrorUnexpected bool
@@ -58,14 +59,15 @@ func getQuicConnection(conn *webtransport.Conn) quic.Connection {
 	return getPrivateField(conn, "qconn").(quic.Connection)
 }
 
-func NewWebTransportAdapter(conn *webtransport.Conn, isServer bool) *WebTransportAdapter {
+func NewWebTransportAdapter(conn *webtransport.Conn, serializationType commands.SerializationType, isServer bool) *WebTransportAdapter {
 	adapter := &WebTransportAdapter{
-		conn:      conn,
-		qconn:     getQuicConnection(conn),
-		isServer:  isServer,
-		readyWait: &sync.WaitGroup{},
-		wg:        &sync.WaitGroup{},
-		isReady:   false,
+		conn:              conn,
+		qconn:             getQuicConnection(conn),
+		isServer:          isServer,
+		readyWait:         &sync.WaitGroup{},
+		wg:                &sync.WaitGroup{},
+		isReady:           false,
+		serializationType: serializationType,
 	}
 	adapter.readyWait.Add(1)
 	return adapter
@@ -256,5 +258,5 @@ func (s *WebTransportAdapter) Name() string {
 }
 
 func (s *WebTransportAdapter) GetCommandSerializationType() commands.SerializationType {
-	return commands.SerializationTypeJson
+	return s.serializationType
 }

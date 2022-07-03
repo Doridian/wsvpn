@@ -28,7 +28,9 @@ func (u *WebTransportUpgrader) Upgrade(w http.ResponseWriter, r *http.Request) (
 	if err != nil {
 		return nil, err
 	}
-	return adapters.NewWebTransportAdapter(conn, true), nil
+
+	serializationType := determineBestSerialization(r.Header)
+	return adapters.NewWebTransportAdapter(conn, serializationType, true), nil
 }
 
 func (u *WebTransportUpgrader) ListenAndServe() error {

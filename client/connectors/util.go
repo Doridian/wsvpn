@@ -22,6 +22,5 @@ func readSerializationType(header http.Header) commands.SerializationType {
 	if stype == commands.SerializationTypeInvalid {
 		return commands.SerializationTypeJson
 	}
-
 	return stype
 }

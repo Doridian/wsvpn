@@ -19,7 +19,7 @@ func determineBestSerialization(header http.Header) commands.SerializationType {
 		return commands.SerializationTypeJson
 	}
 
-	bestSerializationType := commands.SerializationTypeInvalid
+	bestSerializationType := commands.SerializationTypeJson
 	bestSerializationTypePriority := -1
 
 	serializations := strings.Split(res, ",")

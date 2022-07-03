@@ -17,5 +17,11 @@ func readSerializationType(header http.Header) commands.SerializationType {
 	if res == "" {
 		return commands.SerializationTypeJson
 	}
-	return commands.SerializationTypeFromString(res)
+
+	stype := commands.SerializationTypeFromString(res)
+	if stype == commands.SerializationTypeInvalid {
+		return commands.SerializationTypeJson
+	}
+
+	return stype
 }

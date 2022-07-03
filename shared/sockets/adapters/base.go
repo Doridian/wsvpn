@@ -2,6 +2,8 @@ package adapters
 
 import (
 	"crypto/tls"
+
+	"github.com/Doridian/wsvpn/shared/commands"
 )
 
 type MessageHandler = func(message []byte) bool
@@ -25,6 +27,8 @@ type SocketAdapter interface {
 	SetPongHandler(handler func())
 
 	GetTLSConnectionState() (tls.ConnectionState, bool)
+
+	GetCommandSerializationType() commands.SerializationType
 }
 
 type socketBase struct {

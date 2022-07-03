@@ -3,13 +3,57 @@ package commands
 import (
 	"encoding/json"
 	"errors"
+	"strings"
+	"sync"
 )
 
 type SerializationType = int
 
 const (
-	SerializationTypeJson SerializationType = iota
+	SerializationTypeInvalid SerializationType = iota
+	SerializationTypeJson
+	SerializationTypeProtobuf
 )
+
+var serializationTypeMap map[string]SerializationType
+var serializationTypeReverseMap map[SerializationType]string
+var serializationInit = &sync.Once{}
+
+func initSerializationTypeMaps() {
+	serializationTypeMap = make(map[string]int)
+	serializationTypeReverseMap = make(map[int]string)
+
+	serializationTypeMap["json"] = SerializationTypeJson
+	serializationTypeMap["protobuf"] = SerializationTypeProtobuf
+
+	for name, stype := range serializationTypeMap {
+		serializationTypeReverseMap[stype] = name
+	}
+}
+
+func initSerializationTypeMapsOnce() {
+	serializationInit.Do(initSerializationTypeMaps)
+}
+
+func SerializationTypeToString(stype SerializationType) string {
+	initSerializationTypeMapsOnce()
+
+	name, ok := serializationTypeReverseMap[stype]
+	if !ok {
+		return ""
+	}
+	return name
+}
+
+func SerializationTypeFromString(name string) SerializationType {
+	initSerializationTypeMapsOnce()
+
+	stype, ok := serializationTypeMap[strings.ToLower(name)]
+	if !ok {
+		return SerializationTypeInvalid
+	}
+	return stype
+}
 
 func (c *OutgoingCommand) Serialize(serializationType SerializationType) ([]byte, error) {
 	switch serializationType {

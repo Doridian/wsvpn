@@ -11,6 +11,7 @@ import (
 	"sync"
 	"unsafe"
 
+	"github.com/Doridian/wsvpn/shared/commands"
 	"github.com/lucas-clemente/quic-go"
 	"github.com/lucas-clemente/quic-go/http3"
 	"github.com/lucas-clemente/quic-go/quicvarint"
@@ -252,4 +253,8 @@ func (s *WebTransportAdapter) WritePingMessage() error {
 
 func (s *WebTransportAdapter) Name() string {
 	return "WebTransport"
+}
+
+func (s *WebTransportAdapter) GetCommandSerializationType() commands.SerializationType {
+	return commands.SerializationTypeJson
 }

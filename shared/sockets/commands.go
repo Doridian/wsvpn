@@ -19,7 +19,7 @@ func (s *Socket) registerControlMessageHandler() {
 		var err error
 		var command *commands.IncomingCommand
 
-		command, err = commands.DeserializeCommand(message, s.commandSerializationType)
+		command, err = commands.DeserializeCommand(message, s.adapter.GetCommandSerializationType())
 		if err != nil {
 			s.log.Printf("Error deserializing command: %v", err)
 			return false
@@ -84,7 +84,7 @@ func (s *Socket) rawMakeAndSendCommand(parameters commands.CommandParameters, id
 		return err
 	}
 
-	cmdBytes, err := cmd.Serialize(s.commandSerializationType)
+	cmdBytes, err := cmd.Serialize(s.adapter.GetCommandSerializationType())
 	if err != nil {
 		s.CloseError(fmt.Errorf("error serializing command: %v", err))
 		return err

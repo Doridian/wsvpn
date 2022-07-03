@@ -12,37 +12,35 @@ import (
 )
 
 type Socket struct {
-	adapter                  adapters.SocketAdapter
-	iface                    *water.Interface
-	ifaceManaged             bool
-	wg                       *sync.WaitGroup
-	handlers                 map[string]CommandHandler
-	closechan                chan bool
-	closechanopen            bool
-	mac                      shared.MacAddr
-	remoteProtocolVersion    int
-	packetBufferSize         int
-	packetHandler            PacketHandler
-	log                      *log.Logger
-	pingInterval             time.Duration
-	pingTimeout              time.Duration
-	commandSerializationType commands.SerializationType
+	adapter               adapters.SocketAdapter
+	iface                 *water.Interface
+	ifaceManaged          bool
+	wg                    *sync.WaitGroup
+	handlers              map[string]CommandHandler
+	closechan             chan bool
+	closechanopen         bool
+	mac                   shared.MacAddr
+	remoteProtocolVersion int
+	packetBufferSize      int
+	packetHandler         PacketHandler
+	log                   *log.Logger
+	pingInterval          time.Duration
+	pingTimeout           time.Duration
 }
 
 func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *water.Interface, ifaceManaged bool) *Socket {
 	return &Socket{
-		adapter:                  adapter,
-		iface:                    iface,
-		ifaceManaged:             ifaceManaged,
-		wg:                       &sync.WaitGroup{},
-		handlers:                 make(map[commands.CommandName]CommandHandler),
-		closechan:                make(chan bool),
-		closechanopen:            true,
-		mac:                      shared.DefaultMac,
-		remoteProtocolVersion:    0,
-		packetBufferSize:         2000,
-		log:                      logger,
-		commandSerializationType: commands.SerializationTypeJson,
+		adapter:               adapter,
+		iface:                 iface,
+		ifaceManaged:          ifaceManaged,
+		wg:                    &sync.WaitGroup{},
+		handlers:              make(map[commands.CommandName]CommandHandler),
+		closechan:             make(chan bool),
+		closechanopen:         true,
+		mac:                   shared.DefaultMac,
+		remoteProtocolVersion: 0,
+		packetBufferSize:      2000,
+		log:                   logger,
 	}
 }
 

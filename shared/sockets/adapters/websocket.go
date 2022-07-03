@@ -5,6 +5,7 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/Doridian/wsvpn/shared/commands"
 	"github.com/gorilla/websocket"
 )
 
@@ -93,4 +94,8 @@ func (s *WebSocketAdapter) WritePingMessage() error {
 
 func (s *WebSocketAdapter) Name() string {
 	return "WebSocket"
+}
+
+func (s *WebSocketAdapter) GetCommandSerializationType() commands.SerializationType {
+	return commands.SerializationTypeJson
 }

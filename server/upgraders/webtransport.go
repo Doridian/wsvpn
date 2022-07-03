@@ -24,12 +24,13 @@ func NewWebTransportUpgrader(quicServer *http3.Server) *WebTransportUpgrader {
 }
 
 func (u *WebTransportUpgrader) Upgrade(w http.ResponseWriter, r *http.Request) (adapters.SocketAdapter, error) {
+	serializationType := handleHTTPSerializationHeaders(w, r)
+
 	conn, err := u.server.Upgrade(w, r)
 	if err != nil {
 		return nil, err
 	}
 
-	serializationType := determineBestSerialization(r.Header)
 	return adapters.NewWebTransportAdapter(conn, serializationType, true), nil
 }
 

@@ -4,12 +4,17 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
 )
 
+func handleHTTPSerializationHeaders(w http.ResponseWriter, r *http.Request) commands.SerializationType {
+	serializationType := determineBestSerialization(r.Header)
+	addSerializationHeader(w.Header(), serializationType)
+	return serializationType
+}
+
 func determineBestSerialization(header http.Header) commands.SerializationType {
-	res := header.Get(shared.SupportedCommandSerializationsHeaderName)
+	res := header.Get(commands.SupportedCommandSerializationsHeaderName)
 	if res == "" {
 		return commands.SerializationTypeJson
 	}
@@ -33,4 +38,9 @@ func determineBestSerialization(header http.Header) commands.SerializationType {
 	}
 
 	return bestSerializationType
+}
+
+func addSerializationHeader(headers http.Header, serializationType commands.SerializationType) {
+	headers.Del(commands.CommandSerializationHeaderName)
+	headers.Add(commands.CommandSerializationHeaderName, commands.SerializationTypeToString(serializationType))
 }

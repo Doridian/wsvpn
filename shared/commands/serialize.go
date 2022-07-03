@@ -20,6 +20,9 @@ var serializationTypeReverseMap map[SerializationType]string
 var serializationTypePriorityMap map[SerializationType]int
 var serializationInit = &sync.Once{}
 
+const SupportedCommandSerializationsHeaderName = "Supported-Command-Serializations"
+const CommandSerializationHeaderName = "Command-Serialization"
+
 func addSerializationType(stype SerializationType, name string, priority int) {
 	serializationTypeMap[name] = stype
 	serializationTypeReverseMap[stype] = name

@@ -131,6 +131,8 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	clientLogger.Printf("Command serialization: %s", commands.SerializationTypeToString(adapter.GetCommandSerializationType()))
+
 	socket := sockets.MakeSocket(clientLogger, adapter, iface, s.Mode == shared.VPN_MODE_TUN)
 	defer socket.Close()
 

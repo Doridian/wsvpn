@@ -9,6 +9,7 @@ import (
 
 	"github.com/Doridian/wsvpn/client/connectors"
 	"github.com/Doridian/wsvpn/shared"
+	"github.com/Doridian/wsvpn/shared/commands"
 )
 
 func (c *Client) GetProxyUrl() *url.URL {
@@ -50,6 +51,8 @@ func (c *Client) connectAdapter() error {
 		return err
 	}
 	c.adapter = adapter
+
+	c.log.Printf("Command serialization: %s", commands.SerializationTypeToString(adapter.GetCommandSerializationType()))
 
 	tlsConnState, ok := c.adapter.GetTLSConnectionState()
 	if ok {

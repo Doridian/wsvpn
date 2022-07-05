@@ -31,4 +31,4 @@ server:
       cipher-preference: ""
   authenticator:
     type: allow-all # allow-all or htpasswd
-    config: {}
+    config: ""

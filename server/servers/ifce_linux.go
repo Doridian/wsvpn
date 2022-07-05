@@ -32,7 +32,7 @@ func (s *Server) getPlatformSpecifics(config *water.Config, ifaceConfig *Interfa
 		config.Name = ifaceConfig.Tap.Name
 		config.Persist = ifaceConfig.Tap.Persist
 	} else if ifaceConfig.Tun.NamePrefix != "" {
-		tunConfig.Name = shared.FindLowestNetworkInterfaceByPrefix(ifaceConfig.Tun.NamePrefix)
+		config.Name = shared.FindLowestNetworkInterfaceByPrefix(ifaceConfig.Tun.NamePrefix)
 	}
 	return nil
 }

@@ -14,7 +14,7 @@ func (s *Server) handleSocketAuth(logger *log.Logger, w http.ResponseWriter, r *
 		tlsUsername = tlsState.PeerCertificates[0].Subject.CommonName
 	}
 
-	if s.TLSConfig.ClientAuth == tls.RequireAndVerifyClientCert && tlsUsername == "" {
+	if s.TLSConfig != nil && s.TLSConfig.ClientAuth == tls.RequireAndVerifyClientCert && tlsUsername == "" {
 		http.Error(w, "Mutual TLS required but no certificate given", http.StatusUnauthorized)
 		logger.Printf("Mutual TLS required but no certificate given")
 		return false

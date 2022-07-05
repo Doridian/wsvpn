@@ -10,6 +10,7 @@ require (
 	github.com/marten-seemann/webtransport-go v0.0.0-20220609182542-114f4b62a5e8
 	github.com/songgao/water v0.0.0-20200317203138-2b4b6d7c09d8
 	github.com/tg123/go-htpasswd v1.2.0
+	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 )
 
 require (

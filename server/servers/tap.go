@@ -37,7 +37,7 @@ func (s *Server) createTAP() error {
 	tapConfig := water.Config{
 		DeviceType: water.TAP,
 	}
-	err = s.extendTAPConfig(&tapConfig)
+	err = s.getPlatformSpecifics(&tapConfig, s.InterfacesConfig)
 	if err != nil {
 		return err
 	}

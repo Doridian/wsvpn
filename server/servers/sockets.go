@@ -106,7 +106,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		tunConfig := water.Config{
 			DeviceType: water.TUN,
 		}
-		err = s.extendTUNConfig(&tunConfig)
+		err = s.getPlatformSpecifics(&tunConfig, s.InterfacesConfig)
 		if err != nil {
 			s.ifaceCreationMutex.Unlock()
 			clientLogger.Printf("Error extending TUN config: %v", err)

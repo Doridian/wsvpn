@@ -22,11 +22,11 @@ type Client struct {
 	ProxyUrl           *url.URL
 	ServerUrl          *url.URL
 	Headers            http.Header
-	InterfaceName      string
 	SetDefaultGateway  bool
 	UpScript           string
 	DownScript         string
 	SocketConfigurator sockets.SocketConfigurator
+	InterfaceConfig    *InterfaceConfig
 
 	log        *log.Logger
 	clientID   string

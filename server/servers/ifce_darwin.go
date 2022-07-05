@@ -26,11 +26,7 @@ func (s *Server) configIface(dev *water.Interface, ipClient net.IP) error {
 	return shared.ExecCmd("ifconfig", dev.Name(), s.VPNNet.GetServerIP().String(), ipClient.String(), "up")
 }
 
-func (s *Server) extendTAPConfig(config *water.Config) error {
-	return nil
-}
-
-func (s *Server) extendTUNConfig(tunConfig *water.Config) error {
+func (s *Server) getPlatformSpecifics(config *water.Config, ifaceConfig *InterfacesConfig) error {
 	return nil
 }
 

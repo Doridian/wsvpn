@@ -24,6 +24,7 @@ type Server struct {
 	Authenticator      authenticators.Authenticator
 	Mode               shared.VPNMode
 	SocketConfigurator sockets.SocketConfigurator
+	InterfacesConfig   *InterfacesConfig
 
 	upgraders          []upgraders.SocketUpgrader
 	slotMutex          *sync.Mutex

@@ -3,21 +3,23 @@ package cli
 import (
 	"crypto/tls"
 	"errors"
-	"flag"
 	"strings"
 
 	"github.com/Doridian/wsvpn/shared"
 )
 
-var tlsMinVersion = flag.String("tls-min-version", "1.2", "Minimum TLS version")
-var tlsMaxVersion = flag.String("tls-max-version", "1.3", "Maximum TLS version")
-var tlsCipherPreference = flag.String("tls-cipher-preference", "", "Prefer AES ciphers (AES), or ChaCha ciphers (CHACHA), don't specify for default behaviour")
+type TlsConfig struct {
+	MinVersion       string `yaml:"min-version"`
+	MaxVersion       string `yaml:"max-version"`
+	Insecure         bool   `yaml:"insecure"`
+	CipherPreference string `yaml:"cipher-preference"`
+}
 
-func TlsUseFlags(tlsConfig *tls.Config) {
-	tlsConfig.MinVersion = shared.TlsVersionNum(*tlsMinVersion)
-	tlsConfig.MaxVersion = shared.TlsVersionNum(*tlsMaxVersion)
+func TlsUseFlags(tlsConfig *tls.Config, fileConfig *TlsConfig) {
+	tlsConfig.MinVersion = shared.TlsVersionNum(fileConfig.MinVersion)
+	tlsConfig.MaxVersion = shared.TlsVersionNum(fileConfig.MaxVersion)
 
-	switch strings.ToUpper(*tlsCipherPreference) {
+	switch strings.ToUpper(fileConfig.CipherPreference) {
 	case "AES":
 		shared.TlsSetCipherAESPreference(true)
 	case "CHACHA":

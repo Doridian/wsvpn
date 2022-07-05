@@ -57,9 +57,15 @@ func (c *Client) registerCommandHandlers() {
 
 		c.log.Printf("Network mode %s, Subnet %s, MTU %d, IPConfig %s", parameters.Mode, c.remoteNet.GetRaw(), parameters.MTU, shared.BoolToEnabled(c.doIpConfig))
 
-		ifconfig := c.getPlatformSpecifics(water.Config{
+		ifconfig := water.Config{
 			DeviceType: mode.ToWaterDeviceType(),
-		})
+		}
+
+		err = c.getPlatformSpecifics(&ifconfig, c.InterfaceConfig)
+		if err != nil {
+			return err
+		}
+
 		c.iface, err = water.New(ifconfig)
 		if err != nil {
 			return err

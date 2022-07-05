@@ -39,11 +39,13 @@ func (c *Client) configureInterface() error {
 	return nil
 }
 
-func (c *Client) getPlatformSpecifics(config water.Config) water.Config {
-	if c.InterfaceName != "" {
-		config.Name = c.InterfaceName
+func (c *Client) getPlatformSpecifics(config *water.Config, ifaceConfig *InterfaceConfig) error {
+	if config.DeviceType == water.TAP {
+		config.Name = ifaceConfig.Tap.Name
+	} else {
+		config.Name = ifaceConfig.Tun.Name
 	}
-	return config
+	return nil
 }
 
 func (c *Client) addRoute(routeNet *net.IPNet) error {

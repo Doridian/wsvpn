@@ -11,10 +11,6 @@ import (
 	"github.com/songgao/water"
 )
 
-var useTapName = flag.String("tap-name", "", "Use specific TAP name")                                                                                                         // TODO: No flag parsing in Server
-var useTapPersist = flag.Bool("tap-persist", false, "Set persist on TAP")                                                                                                     // TODO: No flag parsing in Server
-var useTunNamePrefix = flag.String("tun-naming-prefix", "", "Use specific naming prefix for TUN interfaces (e.g. wstun), automatically suffixed with a number starting at 0") // TODO: No flag parsing in Server
-
 func (s *Server) configIface(dev *water.Interface, ipClient net.IP) error {
 	err := shared.ExecCmd("ip", "link", "set", "dev", dev.Name(), "mtu", fmt.Sprintf("%d", s.mtu), "up")
 	if err != nil {
@@ -32,21 +28,16 @@ func (s *Server) configIface(dev *water.Interface, ipClient net.IP) error {
 	return shared.ExecCmd("ip", "addr", "add", "dev", dev.Name(), s.VPNNet.GetServerIP().String(), "peer", ipClient.String())
 }
 
-func (s *Server) extendTAPConfig(tapConfig *water.Config) error {
-	tapName := *useTapName
-	if tapName != "" {
-		tapConfig.Name = tapName
-	}
-	tapConfig.Persist = *useTapPersist
-	return nil
+func (s *Server) getPlatformSpecifics(config *water.Config, ifaceConfig *InterfacesConfig) error {
 }
 
-func (s *Server) extendTUNConfig(tunConfig *water.Config) error {
-	tunNamePrefix := *useTunNamePrefix
-	if tunNamePrefix != "" {
-		tunConfig.Name = shared.FindLowestNetworkInterfaceByPrefix(tunNamePrefix)
+func (s *Server) extendTAPConfig(tapConfig *water.Config, ifaceConfig *InterfacesConfig) error {
+	if config.DeviceType == water.TAP {
+		config.Name = ifaceConfig.Tap.Name
+		config.Persist = ifaceConfig.Tap.Persist
+	} else if ifaceConfig.Tun.NamePrefix != "" {
+		tunConfig.Name = shared.FindLowestNetworkInterfaceByPrefix(ifaceConfig.Tun.NamePrefix)
 	}
-
 	return nil
 }
 

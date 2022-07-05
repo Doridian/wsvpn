@@ -6,7 +6,6 @@ import (
 	"errors"
 	"flag"
 	"io/ioutil"
-	"log"
 	"net/url"
 	"strings"
 
@@ -15,44 +14,24 @@ import (
 	"github.com/Doridian/wsvpn/shared/cli"
 )
 
-var defaultGateway = flag.Bool("default-gateway", false, "Route all traffic through VPN")
-var connectAddr = flag.String("connect", "", "Server address to connect to (ex. ws://example.com:9000)")
-var authFile = flag.String("auth-file", "", "File to read authentication from in the format user:password")
-
-var proxyAddr = flag.String("proxy", "", "HTTP proxy to use for connection (ex. http://example.com:8080)")
-
-var ifaceName = flag.String("interface-name", "", "Interface name of the interface to use")
-
-var caCertFile = flag.String("ca-certificates", "", "If specified, use all PEM certs in this file as valid root certs only")
-var insecure = flag.Bool("insecure", false, "Disable all TLS verification")
-var tlsClientCert = flag.String("tls-client-cert", "", "TLS certificate file for client authentication")
-var tlsClientKey = flag.String("tls-client-key", "", "TLS key file for client authentication")
-
-var upScript = flag.String("up-script", "", "Script to run once the VPN is online")
-var downScript = flag.String("down-script", "", "Script to run when the VPN goes offline")
+var configPtr = flag.String("config", "client.yml", "Config file name")
 
 func main() {
 	flag.Usage = cli.UsageWithVersion
 	flag.Parse()
-
-	destUrlString := *connectAddr
-	if destUrlString == "" {
-		flag.Usage()
-		return
-	}
-
 	shared.PrintVersion()
 
-	dest, err := url.Parse(destUrlString)
+	config := Load(*configPtr)
+
+	dest, err := url.Parse(config.Client.Server)
 	if err != nil {
 		panic(err)
 	}
 
-	authFileString := *authFile
 	var userInfo *url.Userinfo
 
-	if authFileString != "" {
-		authData, err := ioutil.ReadFile(authFileString)
+	if config.Client.AuthFile != "" {
+		authData, err := ioutil.ReadFile(config.Client.AuthFile)
 		if err != nil {
 			panic(err)
 		}
@@ -67,19 +46,13 @@ func main() {
 		userInfo = dest.User
 	}
 
-	if dest.User != nil {
-		dest.User = nil
-		log.Printf("[C] WARNING: You have put your password on the command line! This can cause security issues!")
-	}
-
 	tlsConfig := &tls.Config{}
 
-	tlsConfig.InsecureSkipVerify = *insecure
-	cli.TlsUseFlags(tlsConfig)
+	tlsConfig.InsecureSkipVerify = config.Client.Tls.Config.Insecure
+	cli.TlsUseFlags(tlsConfig, &config.Client.Tls.Config)
 
-	caCertFileString := *caCertFile
-	if caCertFileString != "" {
-		data, err := ioutil.ReadFile(caCertFileString)
+	if config.Client.Tls.Ca != "" {
+		data, err := ioutil.ReadFile(config.Client.Tls.Ca)
 		if err != nil {
 			panic(err)
 		}
@@ -91,14 +64,12 @@ func main() {
 		tlsConfig.RootCAs = certPool
 	}
 
-	tlsClientCertStr := *tlsClientCert
-	tlsClientKeyStr := *tlsClientKey
-	if tlsClientCertStr != "" || tlsClientKeyStr != "" {
-		if tlsClientCertStr == "" || tlsClientKeyStr == "" {
-			panic(errors.New("provide either both tls-client-key and tls-client-cert or neither"))
+	if config.Client.Tls.Certificate != "" || config.Client.Tls.Key != "" {
+		if config.Client.Tls.Certificate == "" || config.Client.Tls.Key == "" {
+			panic(errors.New("provide either both tls.key and tls.certificate or neither"))
 		}
 
-		tlsClientCertX509, err := tls.LoadX509KeyPair(tlsClientCertStr, tlsClientKeyStr)
+		tlsClientCertX509, err := tls.LoadX509KeyPair(config.Client.Tls.Certificate, config.Client.Tls.Key)
 		if err != nil {
 			panic(err)
 		}
@@ -109,23 +80,24 @@ func main() {
 	defer client.Close()
 	client.RegisterDefaultConnectors()
 
-	proxyAddrString := *proxyAddr
-	if proxyAddrString != "" {
-		proxyUrl, err := url.Parse(proxyAddrString)
+	if config.Client.Proxy != "" {
+		proxyUrl, err := url.Parse(config.Client.Proxy)
 		if err != nil {
 			panic(err)
 		}
 		client.ProxyUrl = proxyUrl
 	}
 
-	client.SocketConfigurator = &cli.PingFlagsSocketConfigurator{}
-	client.SetDefaultGateway = *defaultGateway
+	client.SocketConfigurator = &cli.PingFlagsSocketConfigurator{
+		Config: &config.Tunnel.Ping,
+	}
+	client.SetDefaultGateway = config.Tunnel.DefaultGateway
 	client.ServerUrl = dest
-	client.InterfaceName = *ifaceName
 	client.SetBasicAuthFromUserInfo(userInfo)
 	client.TLSConfig = tlsConfig
-	client.UpScript = *upScript
-	client.DownScript = *downScript
+	client.UpScript = config.Scripts.Up
+	client.DownScript = config.Scripts.Down
+	client.InterfaceConfig = &config.Interface
 
 	err = client.Serve()
 	if err != nil {

@@ -3,7 +3,6 @@
 package servers
 
 import (
-	"flag"
 	"fmt"
 	"net"
 
@@ -29,9 +28,6 @@ func (s *Server) configIface(dev *water.Interface, ipClient net.IP) error {
 }
 
 func (s *Server) getPlatformSpecifics(config *water.Config, ifaceConfig *InterfacesConfig) error {
-}
-
-func (s *Server) extendTAPConfig(tapConfig *water.Config, ifaceConfig *InterfacesConfig) error {
 	if config.DeviceType == water.TAP {
 		config.Name = ifaceConfig.Tap.Name
 		config.Persist = ifaceConfig.Tap.Persist

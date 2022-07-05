@@ -12,7 +12,6 @@ type SerializationType = int
 const (
 	SerializationTypeInvalid SerializationType = iota
 	SerializationTypeJson
-	SerializationTypeProtobuf
 )
 
 var serializationTypeMap map[string]SerializationType
@@ -35,7 +34,6 @@ func initSerializationTypeMaps() {
 	serializationTypePriorityMap = make(map[SerializationType]int)
 
 	addSerializationType(SerializationTypeJson, "json", 1)
-	addSerializationType(SerializationTypeProtobuf, "protobuf", 2)
 }
 
 func initSerializationTypeMapsOnce() {

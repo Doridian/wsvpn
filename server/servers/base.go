@@ -81,6 +81,8 @@ func (s *Server) Serve() error {
 	}()
 
 	err = <-s.serveErrorChannel
+	close(s.serveErrorChannel)
+
 	for _, closer := range s.closers {
 		closer.Close()
 	}

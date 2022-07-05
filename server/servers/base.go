@@ -2,6 +2,7 @@ package servers
 
 import (
 	"crypto/tls"
+	"errors"
 	"io"
 	"log"
 	"sync"
@@ -12,6 +13,9 @@ import (
 	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/songgao/water"
 )
+
+var errNone = errors.New("none")
+var ErrNoServeWaitsLeft = errors.New("no serve waits left")
 
 type Server struct {
 	PacketHandler      sockets.PacketHandler
@@ -35,9 +39,12 @@ type Server struct {
 	tapIface           *water.Interface
 	log                *log.Logger
 	serverId           string
-	serveErrorChannel  chan error
-	serveWaitGroup     *sync.WaitGroup
-	closers            []io.Closer
+
+	closers []io.Closer
+
+	serveErrorChannel chan interface{}
+	serveError        error
+	serveWaitGroup    *sync.WaitGroup
 }
 
 func NewServer() *Server {
@@ -46,7 +53,7 @@ func NewServer() *Server {
 		ifaceCreationMutex: &sync.Mutex{},
 		usedSlots:          make(map[uint64]bool),
 		log:                shared.MakeLogger("SERVER", "UNSET"),
-		serveErrorChannel:  make(chan error),
+		serveErrorChannel:  make(chan interface{}),
 		serveWaitGroup:     &sync.WaitGroup{},
 		closers:            make([]io.Closer, 0),
 	}
@@ -55,6 +62,17 @@ func NewServer() *Server {
 func (s *Server) SetServerID(serverId string) {
 	s.serverId = serverId
 	shared.UpdateLogger(s.log, "SERVER", s.serverId)
+}
+
+func (s *Server) setServeError(err error) {
+	if err == nil {
+		return
+	}
+
+	if s.serveError == nil {
+		s.serveError = err
+	}
+	close(s.serveErrorChannel)
 }
 
 func (s *Server) Serve() error {
@@ -77,20 +95,23 @@ func (s *Server) Serve() error {
 
 	go func() {
 		s.serveWaitGroup.Wait()
-		s.serveErrorChannel <- nil
+		s.setServeError(ErrNoServeWaitsLeft)
 	}()
 
-	err = <-s.serveErrorChannel
-	close(s.serveErrorChannel)
+	<-s.serveErrorChannel
 
 	for _, closer := range s.closers {
 		closer.Close()
 	}
-	return err
+
+	if s.serveError == errNone {
+		return nil
+	}
+	return s.serveError
 }
 
 func (s *Server) Close() {
-	s.serveErrorChannel <- nil
+	s.setServeError(errNone)
 }
 
 func (s *Server) SetMTU(mtu int) {

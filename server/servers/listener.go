@@ -16,9 +16,7 @@ func (s *Server) listenUpgraders() {
 		go func(upgrader upgraders.SocketUpgrader) {
 			defer s.serveWaitGroup.Done()
 			err := upgrader.ListenAndServe()
-			if err != nil {
-				s.serveErrorChannel <- err
-			}
+			s.setServeError(err)
 		}(upgraderLoop)
 	}
 }
@@ -30,7 +28,7 @@ func (s *Server) addUpgrader(upgrader upgraders.SocketUpgrader) {
 
 func (s *Server) listenPlaintext(httpHandlerFunc http.HandlerFunc) {
 	if s.HTTP3Enabled {
-		s.serveErrorChannel <- errors.New("HTTP/3 requires TLS")
+		s.setServeError(errors.New("HTTP/3 requires TLS"))
 		return
 	}
 
@@ -47,9 +45,7 @@ func (s *Server) listenPlaintext(httpHandlerFunc http.HandlerFunc) {
 	s.serveWaitGroup.Add(1)
 	go func() {
 		err := server.ListenAndServe()
-		if err != nil {
-			s.serveErrorChannel <- err
-		}
+		s.setServeError(err)
 	}()
 }
 
@@ -92,9 +88,7 @@ func (s *Server) listenEncrypted(httpHandlerFunc http.HandlerFunc) {
 	s.serveWaitGroup.Add(1)
 	go func() {
 		err := server.ListenAndServeTLS("", "")
-		if err != nil {
-			s.serveErrorChannel <- err
-		}
+		s.setServeError(err)
 	}()
 }
 

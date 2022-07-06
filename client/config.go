@@ -1,11 +1,9 @@
 package main
 
 import (
-	"io/ioutil"
-
 	"github.com/Doridian/wsvpn/client/clients"
+	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/cli"
-	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
@@ -35,12 +33,8 @@ type Config struct {
 }
 
 func Load(file string) *Config {
-	data, err := ioutil.ReadFile(file)
-	if err != nil {
-		panic(err)
-	}
 	out := &Config{}
-	err = yaml.Unmarshal(data, out)
+	err := shared.LoadConfig(file, out)
 	if err != nil {
 		panic(err)
 	}

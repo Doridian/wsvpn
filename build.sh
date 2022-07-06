@@ -12,22 +12,12 @@ gobuild() {
 buildfor() {
 	export GOOS="$1"
 	export GOARCH="$2"
+	export GOARCHSUFFIX="$3"
 	EXESUFFIX=""
-	GOARCHSUFFIX=""
 	if [ "$GOOS" == "windows" ]
 	then
 		EXESUFFIX=".exe"
 	fi
-
-	case "$GOARCH"
-	in
-		mips|mipsle)
-			GOARCHSUFFIX="$GOMIPS"
-			;;
-		arm)
-			GOARCHSUFFIX="$GOARM"
-			;;
-	esac
 
 	if [ ! -z "$GOARCHSUFFIX" ]
 	then
@@ -42,19 +32,19 @@ buildfor() {
 
 buildmips() {
 	export GOMIPS=""
-	buildfor "$1" "$2"
+	buildfor "$1" "$2" "$GOMIPS"
 	export GOMIPS="softfloat"
-	buildfor "$1" "$2"
+	buildfor "$1" "$2" "$GOMIPS"
 	export GOMIPS=""
 }
 
 buildarm() {
 	export GOARM="5"
-	buildfor "$1" "$2"
+	buildfor "$1" "$2" "$GOARM"
 	export GOARM="6"
-	buildfor "$1" "$2"
+	buildfor "$1" "$2" "$GOARM"
 	export GOARM="7"
-	buildfor "$1" "$2"
+	buildfor "$1" "$2" "$GOARM"
 	export GOARM=""
 }
 

@@ -31,4 +31,6 @@ server:
       cipher-preference: "" # blank, AES or CHACHA
   authenticator:
     type: allow-all # allow-all or htpasswd
+    # allow-all: Just allow all clients regardless of authentication
+    # htpasswd: Set config key to filename of a htpasswd-formatted file; Authenticates clients using HTTP Basic authentication
     config: ""

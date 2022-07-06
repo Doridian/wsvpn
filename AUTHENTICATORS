@@ -1,5 +1,0 @@
-Currently the server supports two authenticators:
-
-"allow-all" (the default) which allows all incoming connections without challenge
-
-"htpasswd" which will load the file "htpasswd" (following the standard htpasswd file format) from the current working directory and use it for HTTP Basic authentication

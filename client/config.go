@@ -10,8 +10,8 @@ import (
 
 type Config struct {
 	Tunnel struct {
-		DefaultGateway bool           `yaml:"default-gateway"`
-		Ping           cli.PingConfig `yaml:"ping"`
+		SetDefaultGateway bool           `yaml:"set-default-gateway"`
+		Ping              cli.PingConfig `yaml:"ping"`
 	} `yaml:"tunnel"`
 
 	Interface clients.InterfaceConfig `yaml:"interfaces"`

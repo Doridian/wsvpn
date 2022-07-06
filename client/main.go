@@ -91,7 +91,7 @@ func main() {
 	client.SocketConfigurator = &cli.PingFlagsSocketConfigurator{
 		Config: &config.Tunnel.Ping,
 	}
-	client.SetDefaultGateway = config.Tunnel.DefaultGateway
+	client.SetDefaultGateway = config.Tunnel.SetDefaultGateway
 	client.ServerUrl = dest
 	client.SetBasicAuthFromUserInfo(userInfo)
 	client.TLSConfig = tlsConfig

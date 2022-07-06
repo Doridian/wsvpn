@@ -39,6 +39,8 @@ buildmips() {
 }
 
 buildarm() {
+	export GOARM=""
+	buildfor "$1" "$2" "$GOARM"
 	export GOARM="5"
 	buildfor "$1" "$2" "$GOARM"
 	export GOARM="6"

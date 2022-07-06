@@ -14,7 +14,7 @@ interfaces:
   tap:
     name: ""
     persist: false
-    component-id: tap0901
+    component-id: tap0901 # Some versions need root\tap0901
   tun:
     name-prefix: ""
 

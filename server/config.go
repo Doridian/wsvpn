@@ -39,6 +39,17 @@ type Config struct {
 
 func Load(file string) *Config {
 	out := &Config{}
+
+	out.Tunnel.Mtu = 1280
+	out.Tunnel.Subnet = "192.168.3.0/24"
+	out.Tunnel.Mode = "TUN"
+	out.Tunnel.IpConfig.Local = true
+	out.Tunnel.IpConfig.Remote = true
+	out.Tunnel.Ping = cli.MakeDefaultPingConfig()
+
+	out.Server.Listen = "127.0.0.1:9000"
+	out.Server.Authenticator.Type = "allow-all"
+
 	err := shared.LoadConfig(file, out)
 	if err != nil {
 		panic(err)

@@ -49,7 +49,7 @@ func main() {
 	tlsConfig := &tls.Config{}
 
 	tlsConfig.InsecureSkipVerify = config.Client.Tls.Config.Insecure
-	cli.TlsUseFlags(tlsConfig, &config.Client.Tls.Config)
+	cli.TlsUseConfig(tlsConfig, &config.Client.Tls.Config)
 
 	if config.Client.Tls.Ca != "" {
 		data, err := ioutil.ReadFile(config.Client.Tls.Ca)

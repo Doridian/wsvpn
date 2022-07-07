@@ -39,6 +39,9 @@ func (c *Client) getPlatformSpecifics(config *water.Config, ifaceConfig *Interfa
 		config.ComponentID = ifaceConfig.Tun.ComponentId
 		config.InterfaceName = ifaceConfig.Tun.Name
 	}
+	if config.ComponentID == "" {
+		config.ComponentID = "root\\tap0901"
+	}
 	config.Network = c.remoteNet.GetRaw()
 	return nil
 }

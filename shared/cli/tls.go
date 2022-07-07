@@ -15,7 +15,7 @@ type TlsConfig struct {
 	CipherPreference string `yaml:"cipher-preference"`
 }
 
-func TlsUseFlags(tlsConfig *tls.Config, fileConfig *TlsConfig) {
+func TlsUseConfig(tlsConfig *tls.Config, fileConfig *TlsConfig) {
 	tlsConfig.MinVersion = shared.TlsVersionNum(fileConfig.MinVersion)
 	tlsConfig.MaxVersion = shared.TlsVersionNum(fileConfig.MaxVersion)
 

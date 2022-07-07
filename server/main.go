@@ -104,7 +104,7 @@ func main() {
 			tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
 		}
 
-		cli.TlsUseFlags(tlsConfig, &config.Server.Tls.Config)
+		cli.TlsUseConfig(tlsConfig, &config.Server.Tls.Config)
 
 		server.TLSConfig = tlsConfig
 	}

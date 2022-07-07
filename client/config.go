@@ -34,6 +34,8 @@ type Config struct {
 
 func Load(file string) *Config {
 	out := &Config{}
+	out.Tunnel.Ping = cli.MakeDefaultPingConfig()
+
 	err := shared.LoadConfig(file, out)
 	if err != nil {
 		panic(err)

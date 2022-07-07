@@ -29,6 +29,11 @@ func (s *Server) getPlatformSpecifics(config *water.Config, ifaceConfig *Interfa
 		config.ComponentID = ifaceConfig.Tap.ComponentId
 		config.InterfaceName = ifaceConfig.Tap.Name
 	}
+
+	if config.ComponentID == "" {
+		config.ComponentID = "root\\tap0901"
+	}
+
 	return nil
 }
 

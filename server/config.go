@@ -1,10 +1,17 @@
 package main
 
 import (
+	_ "embed"
+	"log"
+	"strings"
+
 	"github.com/Doridian/wsvpn/server/servers"
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/cli"
 )
+
+//go:embed server.example.yml
+var defaultConfig string
 
 type Config struct {
 	Tunnel struct {
@@ -40,19 +47,19 @@ type Config struct {
 func Load(file string) *Config {
 	out := &Config{}
 
-	out.Tunnel.Mtu = 1280
-	out.Tunnel.Subnet = "192.168.3.0/24"
-	out.Tunnel.Mode = "TUN"
-	out.Tunnel.IpConfig.Local = true
-	out.Tunnel.IpConfig.Remote = true
-	out.Tunnel.Ping = cli.MakeDefaultPingConfig()
+	err := shared.LoadConfigReader(strings.NewReader(defaultConfig), out)
+	if err != nil {
+		log.Printf("ERROR LOADING DEFAULT CONFIG. THIS SHOULD NEVER HAPPEN!")
+		panic(err)
+	}
 
-	out.Server.Listen = "127.0.0.1:9000"
-	out.Server.Authenticator.Type = "allow-all"
-
-	err := shared.LoadConfig(file, out)
+	err = shared.LoadConfigFile(file, out)
 	if err != nil {
 		panic(err)
 	}
 	return out
+}
+
+func GetDefaultConfig() string {
+	return defaultConfig
 }

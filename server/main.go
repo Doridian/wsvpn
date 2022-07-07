@@ -17,10 +17,17 @@ import (
 )
 
 var configPtr = flag.String("config", "server.yml", "Config file name")
+var printDefaultConfigPtr = flag.Bool("print-default-config", false, "Print default config to console")
 
 func main() {
 	flag.Usage = cli.UsageWithVersion
 	flag.Parse()
+
+	if *printDefaultConfigPtr {
+		print(GetDefaultConfig())
+		return
+	}
+
 	shared.PrintVersion()
 
 	config := Load(*configPtr)

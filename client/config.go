@@ -1,10 +1,17 @@
 package main
 
 import (
+	_ "embed"
+	"log"
+	"strings"
+
 	"github.com/Doridian/wsvpn/client/clients"
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/cli"
 )
+
+//go:embed client.example.yml
+var defaultConfig string
 
 type Config struct {
 	Tunnel struct {
@@ -12,7 +19,7 @@ type Config struct {
 		Ping              cli.PingConfig `yaml:"ping"`
 	} `yaml:"tunnel"`
 
-	Interface clients.InterfaceConfig `yaml:"interfaces"`
+	Interface clients.InterfaceConfig `yaml:"interface"`
 
 	Scripts struct {
 		Up   string `yaml:"up"`
@@ -34,11 +41,21 @@ type Config struct {
 
 func Load(file string) *Config {
 	out := &Config{}
-	out.Tunnel.Ping = cli.MakeDefaultPingConfig()
 
-	err := shared.LoadConfig(file, out)
+	err := shared.LoadConfigReader(strings.NewReader(defaultConfig), out)
+	if err != nil {
+		log.Printf("ERROR LOADING DEFAULT CONFIG. THIS SHOULD NEVER HAPPEN!")
+		panic(err)
+	}
+
+	err = shared.LoadConfigFile(file, out)
 	if err != nil {
 		panic(err)
 	}
+
 	return out
+}
+
+func GetDefaultConfig() string {
+	return defaultConfig
 }

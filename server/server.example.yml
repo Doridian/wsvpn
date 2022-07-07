@@ -1,11 +1,11 @@
 tunnel:
   mtu: 1280
-  subnet: 192.168.3.0/24
+  subnet: 192.168.3.0/24 # Server will pick the first host from this, and assign others to clients in order
   mode: TUN # TUN or TAP
-  allow-client-to-client: false
+  allow-client-to-client: false # TAP only: Allow clients to talk to other clients on the same server
   ip-config:
-    local: true
-    remote: true
+    local: true # Configure local interfaces automatically
+    remote: true # Send configuration data to clients for their interfaces
   ping:
     interval: 30s
     timeout: 5s
@@ -14,17 +14,18 @@ interfaces:
   tap:
     name: ""
     persist: false
-    component-id: tap0901 # Some versions need root\tap0901
+    component-id: root\tap0901 # Defaults: root\tap0901 or tap0901
   tun:
     name-prefix: ""
+    component-id: root\tap0901 # Defaults: root\tap0901 or tap0901
 
 server:
   listen: 127.0.0.1:9000
   enable-http3: false
   tls:
-    client-ca: ca.crt
-    certificate: tls.crt
-    key: tls.key
+    client-ca: "" # Filename of CA for mTLS
+    certificate: "" # Filename of certificate for TLS
+    key: "" # Filename of private key for TLS
     config:
       min-version: 1.2
       max-version: 1.3

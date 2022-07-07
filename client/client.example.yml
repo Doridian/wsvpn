@@ -1,0 +1,33 @@
+tunnel:
+  set-default-gateway: false
+  ping:
+    interval: 30s
+    timeout: 5s
+
+interface:
+  tap:
+    name: ""
+    persist: false
+    component-id: root\tap0901 # Defaults: root\tap0901 or tap0901
+  tun:
+    name: ""
+    component-id: root\tap0901 # Defaults: root\tap0901 or tap0901
+
+scripts:
+  # These scripts get run as "script operation subnet interface"
+  # Example: "./handler.sh up 192.168.3.2/24 tun0"
+  up: ""
+  down: ""
+
+client:
+  server: "" # Examples: ws://example.com:9000 wss://secure.example.com:9000
+  proxy: "" # Example: http://user:password@proxy.example.com:8080
+  tls:
+    ca: "" # Filename of CA bundle for verifying server cert
+    certificate: "" # Filename of certificate for mTLS
+    key: "" # Filename of private key for mTLS
+    config:
+      insecure: false
+      min-version: 1.2
+      max-version: 1.3
+      cipher-preference: "" # blank, AES or CHACHA

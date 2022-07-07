@@ -7,6 +7,7 @@ type InterfacesConfig struct {
 		ComponentId string `yaml:"component-id"`
 	} `yaml:"tap"`
 	Tun struct {
-		NamePrefix string `yaml:"name-prefix"`
+		NamePrefix  string `yaml:"name-prefix"`
+		ComponentId string `yaml:"component-id"`
 	} `yaml:"tun"`
 }

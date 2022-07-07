@@ -70,8 +70,6 @@ buildfor linux mips64le
 buildfor darwin amd64
 buildfor darwin arm64
 
-cp *.example.yml dist/
-
 cd dist
 sha256sum * > sha256sums.txt
 cd ..

@@ -14,10 +14,10 @@ interfaces:
   tap:
     name: ""
     persist: false
-    component-id: root\tap0901 # Defaults: root\tap0901 or tap0901
+    component-id: root\tap0901 # Windows only. Defaults: root\tap0901 or tap0901
   tun:
     name-prefix: ""
-    component-id: root\tap0901 # Defaults: root\tap0901 or tap0901
+    component-id: root\tap0901 # Windows only. Defaults: root\tap0901 or tap0901
 
 server:
   listen: 127.0.0.1:9000

@@ -8,10 +8,10 @@ interface:
   tap:
     name: ""
     persist: false
-    component-id: root\tap0901 # Defaults: root\tap0901 or tap0901
+    component-id: root\tap0901 # Windows only. Defaults: root\tap0901 or tap0901
   tun:
     name: ""
-    component-id: root\tap0901 # Defaults: root\tap0901 or tap0901
+    component-id: root\tap0901 # Windows only. Defaults: root\tap0901 or tap0901
 
 scripts:
   # These scripts get run as "script operation subnet interface"
@@ -22,6 +22,7 @@ scripts:
 client:
   server: "" # Examples: ws://example.com:9000 wss://secure.example.com:9000
   proxy: "" # Example: http://user:password@proxy.example.com:8080
+  auth-file:  "" # Filename of file containing user:password for HTTP Basic authentication
   tls:
     ca: "" # Filename of CA bundle for verifying server cert
     certificate: "" # Filename of certificate for mTLS

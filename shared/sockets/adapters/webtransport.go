@@ -92,6 +92,11 @@ func (s *WebTransportAdapter) GetTLSConnectionState() (tls.ConnectionState, bool
 	return s.qconn.ConnectionState().TLS.ConnectionState, true
 }
 
+func (s *WebTransportAdapter) setReady() {
+	s.isReady = true
+	s.readyWait.Broadcast()
+}
+
 func (s *WebTransportAdapter) Serve() (error, bool) {
 	var err error
 
@@ -102,6 +107,7 @@ func (s *WebTransportAdapter) Serve() (error, bool) {
 	}
 
 	if err != nil {
+		s.setReady()
 		return err, true
 	}
 
@@ -113,8 +119,7 @@ func (s *WebTransportAdapter) Serve() (error, bool) {
 	s.wg.Add(1)
 	go s.serveData()
 
-	s.isReady = true
-	s.readyWait.Broadcast()
+	s.setReady()
 
 	s.wg.Wait()
 
@@ -212,9 +217,11 @@ func (s *WebTransportAdapter) serveData() {
 }
 
 func (s *WebTransportAdapter) WaitReady() {
-	s.readyWait.L.Lock()
-	defer s.readyWait.L.Unlock()
-	s.readyWait.Wait()
+	for !s.isReady {
+		s.readyWait.L.Lock()
+		s.readyWait.Wait()
+		s.readyWait.L.Unlock()
+	}
 }
 
 func (s *WebTransportAdapter) WriteControlMessage(message []byte) error {

@@ -79,6 +79,11 @@ func (s *Socket) CloseError(err error) {
 	s.Close()
 }
 
+func (s *Socket) setReady() {
+	s.isReady = true
+	s.readyWait.Broadcast()
+}
+
 func (s *Socket) Close() {
 	s.adapter.Close()
 	if s.iface != nil && s.ifaceManaged {
@@ -94,8 +99,7 @@ func (s *Socket) Close() {
 		s.packetHandler.UnregisterSocket(s)
 	}
 
-	s.isReady = true
-	s.readyWait.Broadcast()
+	s.setReady()
 }
 
 func (s *Socket) Serve() {

@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"sync"
 )
 
 type MacAddr [6]byte
@@ -76,4 +77,8 @@ func BoolToEnabled(val bool) string {
 
 func GetPacketBufferSizeByMTU(mtu int) int {
 	return mtu + 18
+}
+
+func MakeSimpleCond() *sync.Cond {
+	return sync.NewCond(&sync.Mutex{})
 }

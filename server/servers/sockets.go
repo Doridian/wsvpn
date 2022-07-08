@@ -140,7 +140,10 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		err := s.SocketConfigurator.ConfigureSocket(socket)
 		if err != nil {
 			clientLogger.Printf("Error configuring socket: %v", err)
-			http.Error(w, "Error configuring socket", http.StatusInternalServerError)
+			socket.MakeAndSendCommand(&commands.ReplyParameters{
+				Ok:      false,
+				Message: "Error configuring socket",
+			})
 			return
 		}
 	}
@@ -153,8 +156,9 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	defer clientLogger.Println("Disconnected")
 
 	socket.Serve()
-	socket.WaitHandshakeComplete()
-	socket.MakeAndSendCommand(&commands.InitParameters{
+	socket.WaitReady()
+
+	err = socket.MakeAndSendCommand(&commands.InitParameters{
 		ClientID:   clientId,
 		ServerID:   s.serverId,
 		Mode:       s.Mode.ToString(),
@@ -162,5 +166,14 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		IpAddress:  fmt.Sprintf("%s/%d", ipClient.String(), s.VPNNet.GetSize()),
 		MTU:        s.mtu,
 	})
+	if err != nil {
+		clientLogger.Printf("Error sending init command: %v", err)
+		socket.MakeAndSendCommand(&commands.ReplyParameters{
+			Ok:      false,
+			Message: "Error sending init command",
+		})
+		return
+	}
+
 	socket.Wait()
 }

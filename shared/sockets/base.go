@@ -16,7 +16,7 @@ type Socket struct {
 	iface                 *water.Interface
 	ifaceManaged          bool
 	wg                    *sync.WaitGroup
-	handshakeWg           *sync.WaitGroup
+	readyWait             *sync.Cond
 	handlers              map[string]CommandHandler
 	closechan             chan bool
 	closechanopen         bool
@@ -27,6 +27,7 @@ type Socket struct {
 	log                   *log.Logger
 	pingInterval          time.Duration
 	pingTimeout           time.Duration
+	isReady               bool
 }
 
 func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *water.Interface, ifaceManaged bool) *Socket {
@@ -35,7 +36,7 @@ func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *water
 		iface:                 iface,
 		ifaceManaged:          ifaceManaged,
 		wg:                    &sync.WaitGroup{},
-		handshakeWg:           &sync.WaitGroup{},
+		readyWait:             shared.MakeSimpleCond(),
 		handlers:              make(map[commands.CommandName]CommandHandler),
 		closechan:             make(chan bool),
 		closechanopen:         true,
@@ -43,6 +44,7 @@ func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *water
 		remoteProtocolVersion: 0,
 		packetBufferSize:      2000,
 		log:                   logger,
+		isReady:               false,
 	}
 }
 
@@ -59,8 +61,12 @@ func (s *Socket) Wait() {
 	s.wg.Wait()
 }
 
-func (s *Socket) WaitHandshakeComplete() {
-	s.handshakeWg.Wait()
+func (s *Socket) WaitReady() {
+	for !s.isReady {
+		s.readyWait.L.Lock()
+		s.readyWait.Wait()
+		s.readyWait.L.Unlock()
+	}
 }
 
 func (s *Socket) closeDone() {
@@ -87,6 +93,9 @@ func (s *Socket) Close() {
 	if s.packetHandler != nil {
 		s.packetHandler.UnregisterSocket(s)
 	}
+
+	s.isReady = true
+	s.readyWait.Broadcast()
 }
 
 func (s *Socket) Serve() {

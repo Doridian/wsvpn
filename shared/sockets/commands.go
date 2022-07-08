@@ -50,7 +50,6 @@ func (s *Socket) registerControlMessageHandler() {
 }
 
 func (s *Socket) registerDefaultCommandHandlers() {
-	s.handshakeWg.Add(1)
 	s.AddCommandHandler(commands.VersionCommandName, func(command *commands.IncomingCommand) error {
 		var parameters commands.VersionParameters
 		err := command.DeserializeParameters(&parameters)
@@ -59,7 +58,10 @@ func (s *Socket) registerDefaultCommandHandlers() {
 		}
 		s.remoteProtocolVersion = shared.ProtocolVersion
 		s.log.Printf("Remote version is: %s (protocol %d)", parameters.Version, parameters.ProtocolVersion)
-		s.handshakeWg.Done()
+
+		s.isReady = true
+		s.readyWait.Broadcast()
+
 		return nil
 	})
 

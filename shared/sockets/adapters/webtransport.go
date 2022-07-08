@@ -11,6 +11,7 @@ import (
 	"sync"
 	"unsafe"
 
+	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
 	"github.com/lucas-clemente/quic-go"
 	"github.com/lucas-clemente/quic-go/http3"
@@ -34,7 +35,7 @@ type WebTransportAdapter struct {
 	stream            webtransport.Stream
 	isServer          bool
 	wg                *sync.WaitGroup
-	readyWait         *sync.WaitGroup
+	readyWait         *sync.Cond
 	isReady           bool
 	serializationType commands.SerializationType
 
@@ -64,12 +65,11 @@ func NewWebTransportAdapter(conn *webtransport.Conn, serializationType commands.
 		conn:              conn,
 		qconn:             getQuicConnection(conn),
 		isServer:          isServer,
-		readyWait:         &sync.WaitGroup{},
+		readyWait:         shared.MakeSimpleCond(),
 		wg:                &sync.WaitGroup{},
 		isReady:           false,
 		serializationType: serializationType,
 	}
-	adapter.readyWait.Add(1)
 	return adapter
 }
 
@@ -114,7 +114,7 @@ func (s *WebTransportAdapter) Serve() (error, bool) {
 	go s.serveData()
 
 	s.isReady = true
-	s.readyWait.Done()
+	s.readyWait.Broadcast()
 
 	s.wg.Wait()
 
@@ -212,6 +212,8 @@ func (s *WebTransportAdapter) serveData() {
 }
 
 func (s *WebTransportAdapter) WaitReady() {
+	s.readyWait.L.Lock()
+	defer s.readyWait.L.Unlock()
 	s.readyWait.Wait()
 }
 

@@ -153,6 +153,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	defer clientLogger.Println("Disconnected")
 
 	socket.Serve()
+	socket.WaitHandshakeComplete()
 	socket.MakeAndSendCommand(&commands.InitParameters{
 		ClientID:   clientId,
 		ServerID:   s.serverId,

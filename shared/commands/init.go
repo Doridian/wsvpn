@@ -14,3 +14,15 @@ type InitParameters struct {
 func (c *InitParameters) MakeCommand(id string) (*OutgoingCommand, error) {
 	return makeCommand(InitCommandName, id, c)
 }
+
+func (c *InitParameters) MinProtocolVersion() int {
+	return 1
+}
+
+func (c *InitParameters) ServerCanIssue() bool {
+	return true
+}
+
+func (c *InitParameters) ClientCanIssue() bool {
+	return false
+}

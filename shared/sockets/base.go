@@ -16,6 +16,7 @@ type Socket struct {
 	iface                 *water.Interface
 	ifaceManaged          bool
 	wg                    *sync.WaitGroup
+	handshakeWg           *sync.WaitGroup
 	handlers              map[string]CommandHandler
 	closechan             chan bool
 	closechanopen         bool
@@ -34,6 +35,7 @@ func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *water
 		iface:                 iface,
 		ifaceManaged:          ifaceManaged,
 		wg:                    &sync.WaitGroup{},
+		handshakeWg:           &sync.WaitGroup{},
 		handlers:              make(map[commands.CommandName]CommandHandler),
 		closechan:             make(chan bool),
 		closechanopen:         true,
@@ -55,6 +57,10 @@ func (s *Socket) SetPacketHandler(packetHandler PacketHandler) {
 
 func (s *Socket) Wait() {
 	s.wg.Wait()
+}
+
+func (s *Socket) WaitHandshakeComplete() {
+	s.handshakeWg.Wait()
 }
 
 func (s *Socket) closeDone() {

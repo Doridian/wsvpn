@@ -14,16 +14,26 @@ type WebSocketAdapter struct {
 	conn              *websocket.Conn
 	writeLock         *sync.Mutex
 	serializationType commands.SerializationType
+	isServer          bool
 }
 
 var _ SocketAdapter = &WebSocketAdapter{}
 
-func NewWebSocketAdapter(conn *websocket.Conn, serializationType commands.SerializationType) *WebSocketAdapter {
+func NewWebSocketAdapter(conn *websocket.Conn, serializationType commands.SerializationType, isServer bool) *WebSocketAdapter {
 	return &WebSocketAdapter{
 		conn:              conn,
 		writeLock:         &sync.Mutex{},
 		serializationType: serializationType,
+		isServer:          isServer,
 	}
+}
+
+func (s *WebSocketAdapter) IsServer() bool {
+	return s.isServer
+}
+
+func (s *WebSocketAdapter) IsClient() bool {
+	return !s.isServer
 }
 
 func (s *WebSocketAdapter) GetTLSConnectionState() (tls.ConnectionState, bool) {

@@ -14,6 +14,9 @@ type CommandName = string
 
 type CommandParameters interface {
 	MakeCommand(id string) (*OutgoingCommand, error)
+	MinProtocolVersion() int
+	ServerCanIssue() bool
+	ClientCanIssue() bool
 }
 
 type IncomingCommand struct {

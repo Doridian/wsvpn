@@ -94,4 +94,16 @@ func (c *Client) registerCommandHandlers() {
 
 		return nil
 	})
+
+	c.socket.AddCommandHandler(commands.SetMtuCommandName, func(command *commands.IncomingCommand) error {
+		var err error
+		var parameters commands.SetMtuParameters
+		err = command.DeserializeParameters(&parameters)
+		if err != nil {
+			return err
+		}
+
+		c.log.Printf("Server requested MTU change to %d", parameters.MTU)
+		return c.SetMTU(parameters.MTU)
+	})
 }

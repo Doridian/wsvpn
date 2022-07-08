@@ -73,6 +73,14 @@ func NewWebTransportAdapter(conn *webtransport.Conn, serializationType commands.
 	return adapter
 }
 
+func (s *WebTransportAdapter) IsServer() bool {
+	return s.isServer
+}
+
+func (s *WebTransportAdapter) IsClient() bool {
+	return !s.isServer
+}
+
 func (s *WebTransportAdapter) Close() error {
 	if s.stream != nil {
 		s.stream.Close()

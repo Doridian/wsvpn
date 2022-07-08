@@ -6,7 +6,7 @@ import (
 
 var (
 	Version         = "dev"
-	ProtocolVersion = 6
+	ProtocolVersion = 7
 )
 
 func PrintVersion() {

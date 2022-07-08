@@ -29,6 +29,9 @@ type SocketAdapter interface {
 	GetTLSConnectionState() (tls.ConnectionState, bool)
 
 	GetCommandSerializationType() commands.SerializationType
+
+	IsServer() bool
+	IsClient() bool
 }
 
 type socketBase struct {

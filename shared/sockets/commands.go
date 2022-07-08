@@ -8,6 +8,8 @@ import (
 	"github.com/Doridian/wsvpn/shared/commands"
 )
 
+var ErrCommandNotSupported = errors.New("command not supported by peer")
+
 type CommandHandler func(command *commands.IncomingCommand) error
 
 func (s *Socket) AddCommandHandler(command string, handler CommandHandler) {
@@ -48,13 +50,16 @@ func (s *Socket) registerControlMessageHandler() {
 }
 
 func (s *Socket) registerDefaultCommandHandlers() {
+	s.handshakeWg.Add(1)
 	s.AddCommandHandler(commands.VersionCommandName, func(command *commands.IncomingCommand) error {
 		var parameters commands.VersionParameters
 		err := command.DeserializeParameters(&parameters)
 		if err != nil {
 			return err
 		}
+		s.remoteProtocolVersion = shared.ProtocolVersion
 		s.log.Printf("Remote version is: %s (protocol %d)", parameters.Version, parameters.ProtocolVersion)
+		s.handshakeWg.Done()
 		return nil
 	})
 
@@ -78,6 +83,20 @@ func (s *Socket) MakeAndSendCommand(parameters commands.CommandParameters) error
 }
 
 func (s *Socket) rawMakeAndSendCommand(parameters commands.CommandParameters, id string) error {
+	if s.adapter.IsServer() {
+		if !parameters.ServerCanIssue() {
+			return ErrCommandNotSupported
+		}
+	} else {
+		if !parameters.ClientCanIssue() {
+			return ErrCommandNotSupported
+		}
+	}
+
+	if s.remoteProtocolVersion < parameters.MinProtocolVersion() {
+		return ErrCommandNotSupported
+	}
+
 	cmd, err := parameters.MakeCommand(id)
 	if err != nil {
 		s.CloseError(fmt.Errorf("error preparing command: %v", err))

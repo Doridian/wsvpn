@@ -24,8 +24,7 @@ func (s *Socket) registerDataHandler() {
 func (s *Socket) WriteDataMessage(data []byte) error {
 	err := s.adapter.WriteDataMessage(data)
 	if err != nil {
-		s.log.Printf("Error sending data message: %v", err)
-		s.Close()
+		s.CloseError(err)
 	}
 	return err
 }

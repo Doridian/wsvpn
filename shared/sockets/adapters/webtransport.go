@@ -83,6 +83,8 @@ func (s *WebTransportAdapter) IsClient() bool {
 
 func (s *WebTransportAdapter) Close() error {
 	if s.stream != nil {
+		s.stream.CancelRead(1)
+		s.stream.CancelWrite(1)
 		s.stream.Close()
 	}
 	return s.conn.Close()

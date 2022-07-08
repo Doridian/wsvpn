@@ -21,6 +21,8 @@ import (
 
 type StreamMessageType = byte
 
+const ErrorCodeClosed = 1
+
 const (
 	messageTypeControl StreamMessageType = iota
 	messageTypePing
@@ -83,9 +85,12 @@ func (s *WebTransportAdapter) IsClient() bool {
 
 func (s *WebTransportAdapter) Close() error {
 	if s.stream != nil {
-		s.stream.CancelRead(1)
-		s.stream.CancelWrite(1)
+		s.stream.CancelRead(ErrorCodeClosed)
+		s.stream.CancelWrite(ErrorCodeClosed)
 		s.stream.Close()
+	}
+	if s.qconn != nil {
+		s.qconn.CloseWithError(ErrorCodeClosed, "Close called")
 	}
 	return s.conn.Close()
 }

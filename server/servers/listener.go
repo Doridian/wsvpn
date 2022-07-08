@@ -23,7 +23,7 @@ func (s *Server) listenUpgraders() {
 
 func (s *Server) addUpgrader(upgrader upgraders.SocketUpgrader) {
 	s.upgraders = append(s.upgraders, upgrader)
-	s.closers = append(s.closers, upgrader)
+	s.addCloser(upgrader)
 }
 
 func (s *Server) listenPlaintext(httpHandlerFunc http.HandlerFunc) {
@@ -40,7 +40,7 @@ func (s *Server) listenPlaintext(httpHandlerFunc http.HandlerFunc) {
 		Addr:    s.ListenAddr,
 		Handler: httpHandlerFunc,
 	}
-	s.closers = append(s.closers, server)
+	s.addCloser(server)
 
 	s.serveWaitGroup.Add(1)
 	go func() {
@@ -56,7 +56,7 @@ func (s *Server) listenEncrypted(httpHandlerFunc http.HandlerFunc) {
 			TLSConfig: s.TLSConfig,
 			Handler:   httpHandlerFunc,
 		}
-		// s.closers = append(s.closers, quicServer)
+		// s.addCloser(quicServer)
 
 		s.addUpgrader(upgraders.NewWebTransportUpgrader(quicServer))
 
@@ -80,7 +80,7 @@ func (s *Server) listenEncrypted(httpHandlerFunc http.HandlerFunc) {
 		TLSConfig: s.TLSConfig,
 		Handler:   httpHandlerFunc,
 	}
-	s.closers = append(s.closers, server)
+	s.addCloser(server)
 
 	s.addUpgrader(upgraders.NewWebSocketUpgrader())
 	s.listenUpgraders()

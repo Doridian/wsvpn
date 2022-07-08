@@ -89,6 +89,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	defer adapter.Close()
+	s.addCloser(adapter)
 
 	clientLogger.Printf("Upgraded connection to %s", adapter.Name())
 

@@ -40,7 +40,8 @@ type Server struct {
 	log                *log.Logger
 	serverId           string
 
-	closers []io.Closer
+	closers    []io.Closer
+	closerLock *sync.Mutex
 
 	serveErrorChannel chan interface{}
 	serveError        error
@@ -56,12 +57,19 @@ func NewServer() *Server {
 		serveErrorChannel:  make(chan interface{}),
 		serveWaitGroup:     &sync.WaitGroup{},
 		closers:            make([]io.Closer, 0),
+		closerLock:         &sync.Mutex{},
 	}
 }
 
 func (s *Server) SetServerID(serverId string) {
 	s.serverId = serverId
 	shared.UpdateLogger(s.log, "SERVER", s.serverId)
+}
+
+func (s *Server) addCloser(closer io.Closer) {
+	s.closerLock.Lock()
+	defer s.closerLock.Unlock()
+	s.closers = append(s.closers, closer)
 }
 
 func (s *Server) setServeError(err error) {
@@ -87,7 +95,7 @@ func (s *Server) Serve() error {
 			return err
 		}
 		s.serveWaitGroup.Add(1)
-		s.closers = append(s.closers, s.tapIface)
+		s.addCloser(s.tapIface)
 		go s.serveTAP()
 	}
 
@@ -100,9 +108,12 @@ func (s *Server) Serve() error {
 
 	<-s.serveErrorChannel
 
+	s.closerLock.Lock()
 	for _, closer := range s.closers {
 		closer.Close()
 	}
+	s.closers = make([]io.Closer, 0)
+	s.closerLock.Unlock()
 
 	if s.serveError == errNone {
 		return nil

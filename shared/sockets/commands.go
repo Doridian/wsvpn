@@ -73,10 +73,24 @@ func (s *Socket) registerDefaultCommandHandlers() {
 		s.log.Printf("Got reply to command ID %s (%s): %s", command.ID, shared.BoolToString(parameters.Ok, "ok", "error"), parameters.Message)
 		return nil
 	})
+
+	s.AddCommandHandler(commands.MessageCommandName, func(command *commands.IncomingCommand) error {
+		var parameters commands.MessageParameters
+		err := command.DeserializeParameters(&parameters)
+		if err != nil {
+			return err
+		}
+		s.log.Printf("Got %s message from remote: %s", parameters.Type, parameters.Message)
+		return nil
+	})
 }
 
-func (s *Socket) sendDefaultWelcome() {
-	s.MakeAndSendCommand(&commands.VersionParameters{Version: shared.Version, ProtocolVersion: shared.ProtocolVersion})
+func (s *Socket) sendDefaultWelcome() error {
+	return s.MakeAndSendCommand(&commands.VersionParameters{Version: shared.Version, ProtocolVersion: shared.ProtocolVersion})
+}
+
+func (s *Socket) SendMessage(msgType string, message string) error {
+	return s.MakeAndSendCommand(&commands.MessageParameters{Type: msgType, Message: message})
 }
 
 func (s *Socket) MakeAndSendCommand(parameters commands.CommandParameters) error {

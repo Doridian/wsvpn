@@ -140,11 +140,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	if s.SocketConfigurator != nil {
 		err := s.SocketConfigurator.ConfigureSocket(socket)
 		if err != nil {
-			clientLogger.Printf("Error configuring socket: %v", err)
-			socket.MakeAndSendCommand(&commands.ReplyParameters{
-				Ok:      false,
-				Message: "Error configuring socket",
-			})
+			socket.CloseError(fmt.Errorf("error configuring socket: %v", err))
 			return
 		}
 	}
@@ -168,11 +164,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		MTU:        s.mtu,
 	})
 	if err != nil {
-		clientLogger.Printf("Error sending init command: %v", err)
-		socket.MakeAndSendCommand(&commands.ReplyParameters{
-			Ok:      false,
-			Message: "Error sending init command",
-		})
+		socket.CloseError(fmt.Errorf("error sending init command: %v", err))
 		return
 	}
 

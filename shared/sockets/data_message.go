@@ -1,5 +1,7 @@
 package sockets
 
+import "fmt"
+
 func (s *Socket) registerDataHandler() {
 	s.adapter.SetDataMessageHandler(func(message []byte) bool {
 		if s.packetHandler != nil {
@@ -24,7 +26,7 @@ func (s *Socket) registerDataHandler() {
 func (s *Socket) WriteDataMessage(data []byte) error {
 	err := s.adapter.WriteDataMessage(data)
 	if err != nil {
-		s.CloseError(err)
+		s.CloseError(fmt.Errorf("error sending data message: %v", err))
 	}
 	return err
 }

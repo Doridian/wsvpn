@@ -75,7 +75,7 @@ func (s *Socket) closeDone() {
 }
 
 func (s *Socket) CloseError(err error) {
-	s.log.Printf("Closing because: %v", err)
+	s.log.Printf("Closing socket: %v", err)
 	s.SendMessage("error", err.Error())
 	s.Close()
 }

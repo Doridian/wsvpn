@@ -28,6 +28,7 @@ type Socket struct {
 	pingInterval          time.Duration
 	pingTimeout           time.Duration
 	isReady               bool
+	isClosing             bool
 }
 
 func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *water.Interface, ifaceManaged bool) *Socket {
@@ -45,6 +46,7 @@ func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *water
 		packetBufferSize:      2000,
 		log:                   logger,
 		isReady:               false,
+		isClosing:             false,
 	}
 }
 
@@ -75,8 +77,11 @@ func (s *Socket) closeDone() {
 }
 
 func (s *Socket) CloseError(err error) {
-	s.log.Printf("Closing socket: %v", err)
-	s.SendMessage("error", err.Error())
+	if !s.isClosing {
+		s.isClosing = true
+		s.log.Printf("Closing socket: %v", err)
+		s.SendMessage("error", err.Error())
+	}
 	s.Close()
 }
 

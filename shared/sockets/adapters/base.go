@@ -2,11 +2,14 @@ package adapters
 
 import (
 	"crypto/tls"
+	"errors"
 
 	"github.com/Doridian/wsvpn/shared/commands"
 )
 
 type MessageHandler = func(message []byte) bool
+
+var ErrDataPayloadTooLarge = errors.New("data payload too large")
 
 type SocketAdapter interface {
 	Close() error
@@ -32,6 +35,8 @@ type SocketAdapter interface {
 
 	IsServer() bool
 	IsClient() bool
+
+	MaxDataPayloadLen() uint16
 }
 
 type socketBase struct {

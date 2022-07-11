@@ -86,6 +86,10 @@ func (s *WebSocketAdapter) Close() error {
 	return s.conn.Close()
 }
 
+func (s *WebSocketAdapter) MaxDataPayloadLen() uint16 {
+	return 0xFFFF
+}
+
 func (s *WebSocketAdapter) WriteControlMessage(message []byte) error {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()

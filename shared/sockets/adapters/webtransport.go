@@ -33,7 +33,6 @@ type WebTransportAdapter struct {
 	socketBase
 	qconn             quic.Connection
 	conn              *webtransport.Conn
-	streamId          uint64
 	stream            webtransport.Stream
 	isServer          bool
 	wg                *sync.WaitGroup
@@ -43,6 +42,11 @@ type WebTransportAdapter struct {
 
 	lastServeError           error
 	lastServeErrorUnexpected bool
+
+	streamId              uint64
+	quarterStreamId       uint64
+	quarterStreamIdVarint []byte
+	maxPayloadLen         uint16
 }
 
 var _ SocketAdapter = &WebTransportAdapter{}
@@ -119,6 +123,11 @@ func (s *WebTransportAdapter) Serve() (error, bool) {
 	}
 
 	s.streamId = getStreamID(s.stream)
+	s.quarterStreamId = s.streamId / 4
+	buf := &bytes.Buffer{}
+	quicvarint.Write(buf, s.quarterStreamId)
+	s.quarterStreamIdVarint = buf.Bytes()
+	s.maxPayloadLen = uint16(1220 - (len(s.quarterStreamIdVarint) + 2))
 
 	s.wg.Add(1)
 	go s.serveStream()
@@ -215,7 +224,7 @@ func (s *WebTransportAdapter) serveData() {
 			s.handleServeError(err, true)
 			break
 		}
-		if quarterStreamId*4 != s.streamId {
+		if quarterStreamId != s.quarterStreamId {
 			s.handleServeError(errors.New("wrong quarterStreamId"), true)
 			break
 		}
@@ -257,15 +266,23 @@ func (s *WebTransportAdapter) WriteControlMessage(message []byte) error {
 	return err
 }
 
+func (s *WebTransportAdapter) MaxDataPayloadLen() uint16 {
+	return s.maxPayloadLen
+}
+
 func (s *WebTransportAdapter) WriteDataMessage(message []byte) error {
 	if !s.isReady {
 		return errors.New("not ready")
 	}
 
 	buf := &bytes.Buffer{}
-	quicvarint.Write(buf, s.streamId/4)
+	buf.Write(s.quarterStreamIdVarint)
 	buf.Write(message)
-	return s.qconn.SendMessage(buf.Bytes())
+	err := s.qconn.SendMessage(buf.Bytes())
+	if err.Error() == "message too large" {
+		return ErrDataPayloadTooLarge
+	}
+	return err
 }
 
 func (s *WebTransportAdapter) WritePingMessage() error {

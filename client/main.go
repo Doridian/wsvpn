@@ -56,6 +56,7 @@ func main() {
 	tlsConfig := &tls.Config{}
 
 	tlsConfig.InsecureSkipVerify = config.Client.Tls.Config.Insecure
+	tlsConfig.ServerName = config.Client.Tls.ServerName
 	cli.TlsUseConfig(tlsConfig, &config.Client.Tls.Config)
 
 	if config.Client.Tls.Ca != "" {

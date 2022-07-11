@@ -27,6 +27,7 @@ client:
     ca: "" # Filename of CA bundle for verifying server cert
     certificate: "" # Filename of certificate for mTLS
     key: "" # Filename of private key for mTLS
+    server-name: "" # If not blank, the hostname to check for in the SSL certificate. If blank, uses hostname from server URL
     config:
       insecure: false
       min-version: 1.2

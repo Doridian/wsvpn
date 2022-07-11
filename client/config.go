@@ -34,6 +34,7 @@ type Config struct {
 			Ca          string        `yaml:"ca"`
 			Certificate string        `yaml:"certificate"`
 			Key         string        `yaml:"key"`
+			ServerName  string        `yaml:"server-name"`
 			Config      cli.TlsConfig `yaml:"config"`
 		} `yaml:"tls"`
 	}

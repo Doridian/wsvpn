@@ -38,7 +38,7 @@ func (s *Socket) tryServeIfaceRead() {
 				return
 			}
 
-			err = s.WriteDataMessage(packet[:n])
+			err = s.WritePacket(packet[:n])
 			if err != nil {
 				return
 			}

@@ -18,9 +18,9 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 		dest := shared.GetDestMAC(packet)
 
 		if shared.MACIsUnicast(dest) {
-			sd := g.findSocketByMAC(dest)
-			if sd != nil {
-				sd.WriteDataMessage(packet)
+			socket_dest := g.findSocketByMAC(dest)
+			if socket_dest != nil {
+				socket_dest.WritePacket(packet)
 			} else {
 				return false, nil
 			}

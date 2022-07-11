@@ -23,7 +23,7 @@ func (s *Socket) registerDataHandler() {
 	})
 }
 
-func (s *Socket) WriteDataMessage(data []byte) error {
+func (s *Socket) WritePacket(data []byte) error {
 	err := s.adapter.WriteDataMessage(data)
 	if err != nil {
 		s.CloseError(fmt.Errorf("error sending data message: %v", err))

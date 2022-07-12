@@ -279,7 +279,7 @@ func (s *WebTransportAdapter) WriteDataMessage(message []byte) error {
 	buf.Write(s.quarterStreamIdVarint)
 	buf.Write(message)
 	err := s.qconn.SendMessage(buf.Bytes())
-	if err.Error() == "message too large" {
+	if err != nil && err.Error() == "message too large" {
 		return ErrDataPayloadTooLarge
 	}
 	return err

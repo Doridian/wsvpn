@@ -40,7 +40,11 @@ func (s *Socket) processPacket(packet []byte) bool {
 	if s.iface == nil {
 		return true
 	}
-	s.iface.Write(packet)
+	_, err := s.iface.Write(packet)
+	if err != nil {
+		s.log.Printf("Error in interface write: %v", err)
+		return false
+	}
 	return true
 }
 

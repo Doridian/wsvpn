@@ -12,9 +12,11 @@ import (
 )
 
 type Socket struct {
-	lastFragmentId uint32
-	defragBuffer   map[uint16]*fragmentsInfo
-	defragLock     *sync.Mutex
+	lastFragmentId        uint32
+	lastFragmentCleanup   time.Time
+	defragBuffer          map[uint32]*fragmentsInfo
+	defragLock            *sync.Mutex
+	fragmentCleanupTicker *time.Ticker
 
 	adapter               adapters.SocketAdapter
 	iface                 *water.Interface
@@ -52,9 +54,11 @@ func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *water
 		isReady:               false,
 		isClosing:             false,
 
-		lastFragmentId: 0,
-		defragBuffer:   make(map[uint16]*fragmentsInfo),
-		defragLock:     &sync.Mutex{},
+		lastFragmentId:        0,
+		defragBuffer:          make(map[uint32]*fragmentsInfo),
+		defragLock:            &sync.Mutex{},
+		lastFragmentCleanup:   time.Now(),
+		fragmentCleanupTicker: time.NewTicker(fragmentExpiryTime),
 	}
 }
 
@@ -139,6 +143,8 @@ func (s *Socket) Serve() {
 	}()
 
 	s.adapter.WaitReady()
+
+	go s.cleanupFragmentsLoop()
 
 	s.tryServeIfaceRead()
 

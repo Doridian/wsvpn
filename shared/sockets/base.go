@@ -19,25 +19,27 @@ type Socket struct {
 	defragBuffer          map[uint32]*fragmentsInfo
 	defragLock            *sync.Mutex
 	fragmentCleanupTicker *time.Ticker
-	fragmentationEnabled  bool
 
-	adapter               adapters.SocketAdapter
-	iface                 *water.Interface
-	ifaceManaged          bool
-	wg                    *sync.WaitGroup
-	readyWait             *sync.Cond
-	handlers              map[string]CommandHandler
-	closechan             chan bool
-	closechanopen         bool
-	mac                   shared.MacAddr
-	remoteProtocolVersion int
-	packetBufferSize      int
-	packetHandler         PacketHandler
-	log                   *log.Logger
-	pingInterval          time.Duration
-	pingTimeout           time.Duration
-	isReady               bool
-	isClosing             bool
+	fragmentationEnabled       bool
+	fragmentationEnableAllowed *bool
+	remoteProtocolVersion      int
+
+	adapter          adapters.SocketAdapter
+	iface            *water.Interface
+	ifaceManaged     bool
+	wg               *sync.WaitGroup
+	readyWait        *sync.Cond
+	handlers         map[string]CommandHandler
+	closechan        chan bool
+	closechanopen    bool
+	mac              shared.MacAddr
+	packetBufferSize int
+	packetHandler    PacketHandler
+	log              *log.Logger
+	pingInterval     time.Duration
+	pingTimeout      time.Duration
+	isReady          bool
+	isClosing        bool
 }
 
 func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *water.Interface, ifaceManaged bool) *Socket {
@@ -57,11 +59,13 @@ func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *water
 		isReady:               false,
 		isClosing:             false,
 
-		lastFragmentId:        0,
-		defragBuffer:          make(map[uint32]*fragmentsInfo),
-		defragLock:            &sync.Mutex{},
-		lastFragmentCleanup:   time.Now(),
-		fragmentCleanupTicker: time.NewTicker(fragmentExpiryTime),
+		lastFragmentId:             0,
+		defragBuffer:               make(map[uint32]*fragmentsInfo),
+		defragLock:                 &sync.Mutex{},
+		lastFragmentCleanup:        time.Now(),
+		fragmentCleanupTicker:      time.NewTicker(fragmentExpiryTime),
+		fragmentationEnabled:       false,
+		fragmentationEnableAllowed: nil,
 	}
 }
 
@@ -74,16 +78,29 @@ func (s *Socket) SetPacketHandler(packetHandler PacketHandler) {
 	s.packetHandler = packetHandler
 }
 
-func (s *Socket) SetEnableFragmentationAlways(enabled bool) {
-	s.fragmentationEnabled = enabled
-	s.log.Printf("Setting fragmentation: %s", shared.BoolToEnabled(s.fragmentationEnabled))
+func (s *Socket) SetAllowEnableFragmentation(allowEnable bool) {
+	s.fragmentationEnableAllowed = &allowEnable
+	s.translateAllowEnableToEnableFramgnetation()
 }
 
-func (s *Socket) SetEnableFragmentationIfSupported(enabled bool) {
-	if s.remoteProtocolVersion < fragmentationNegotiatedMinProtocol {
+func (s *Socket) translateAllowEnableToEnableFramgnetation() {
+	if s.remoteProtocolVersion == UndeterminedProtocolVersion || s.fragmentationEnableAllowed == nil {
 		return
 	}
-	s.SetEnableFragmentationAlways(enabled)
+
+	switch {
+	case s.remoteProtocolVersion == UndeterminedProtocolVersion:
+		return
+	case s.remoteProtocolVersion < fragmentationMinProtocol:
+		s.fragmentationEnabled = false
+	case s.remoteProtocolVersion < fragmentationNegotiatedMinProtocol:
+		s.fragmentationEnabled = true
+	default:
+		s.fragmentationEnabled = *s.fragmentationEnableAllowed
+	}
+
+	s.log.Printf("Setting fragmentation: %s", shared.BoolToEnabled(s.fragmentationEnabled))
+
 }
 
 func (s *Socket) Wait() {

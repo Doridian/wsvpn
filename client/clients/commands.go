@@ -46,7 +46,7 @@ func (c *Client) registerCommandHandlers() {
 			c.serverID = parameters.ServerID
 		}
 
-		c.socket.SetEnableFragmentationIfSupported(parameters.EnableFragmentation)
+		c.socket.SetAllowEnableFragmentation(parameters.EnableFragmentation)
 
 		mode := shared.VPNModeFromString(parameters.Mode)
 

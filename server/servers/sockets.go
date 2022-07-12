@@ -144,7 +144,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	socket.SetEnableFragmentationAlways(s.EnableFragmentation)
+	socket.SetAllowEnableFragmentation(s.EnableFragmentation)
 	if s.PacketHandler != nil {
 		socket.SetPacketHandler(s.PacketHandler)
 	}

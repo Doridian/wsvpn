@@ -127,7 +127,7 @@ func (s *WebTransportAdapter) Serve() (error, bool) {
 	buf := &bytes.Buffer{}
 	quicvarint.Write(buf, s.quarterStreamId)
 	s.quarterStreamIdVarint = buf.Bytes()
-	s.maxPayloadLen = uint16(1220 - (len(s.quarterStreamIdVarint) + 2))
+	s.maxPayloadLen = uint16(1220 - (len(s.quarterStreamIdVarint) + 3))
 
 	s.wg.Add(1)
 	go s.serveStream()
@@ -279,7 +279,7 @@ func (s *WebTransportAdapter) WriteDataMessage(message []byte) error {
 	buf.Write(s.quarterStreamIdVarint)
 	buf.Write(message)
 	err := s.qconn.SendMessage(buf.Bytes())
-	if err.Error() == "message too large" {
+	if err != nil && err.Error() == "message too large" {
 		return ErrDataPayloadTooLarge
 	}
 	return err

@@ -12,6 +12,10 @@ import (
 )
 
 type Socket struct {
+	lastFragmentId uint32
+	defragBuffer   map[uint16]*fragmentsInfo
+	defragLock     *sync.Mutex
+
 	adapter               adapters.SocketAdapter
 	iface                 *water.Interface
 	ifaceManaged          bool
@@ -47,6 +51,10 @@ func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *water
 		log:                   logger,
 		isReady:               false,
 		isClosing:             false,
+
+		lastFragmentId: 0,
+		defragBuffer:   make(map[uint16]*fragmentsInfo),
+		defragLock:     &sync.Mutex{},
 	}
 }
 
@@ -115,7 +123,7 @@ func (s *Socket) Serve() {
 		s.packetHandler.RegisterSocket(s)
 	}
 
-	s.registerDataHandler()
+	s.adapter.SetDataMessageHandler(s.dataMessageHandler)
 
 	s.registerControlMessageHandler()
 

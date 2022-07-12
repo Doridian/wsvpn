@@ -45,6 +45,11 @@ func (s *Socket) processPacket(packet []byte) bool {
 }
 
 func (s *Socket) dataMessageHandler(message []byte) bool {
+	// Ignore all packets before version negotiation
+	if s.remoteProtocolVersion == UndeterminedProtocolVersion {
+		return true
+	}
+
 	if s.remoteProtocolVersion < fragmentationMinProtocol {
 		return s.processPacket(message)
 	}
@@ -91,10 +96,11 @@ func (s *Socket) dataMessageHandler(message []byte) bool {
 
 func (s *Socket) cleanupFragmentsLoop() {
 	for {
-		t := <-s.fragmentCleanupTicker.C
-		s.cleanupFragments()
-		if t.IsZero() {
-			break
+		select {
+		case <-s.fragmentCleanupTicker.C:
+			s.cleanupFragments()
+		case <-s.closechan:
+			return
 		}
 	}
 }
@@ -125,6 +131,11 @@ func (s *Socket) sendDataWithError(data []byte) error {
 }
 
 func (s *Socket) WritePacket(data []byte) error {
+	// Ignore all packets before version negotiation
+	if s.remoteProtocolVersion == UndeterminedProtocolVersion {
+		return nil
+	}
+
 	if s.remoteProtocolVersion < fragmentationMinProtocol {
 		return s.sendDataWithError(data)
 	}

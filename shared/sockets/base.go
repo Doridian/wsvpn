@@ -11,6 +11,8 @@ import (
 	"github.com/songgao/water"
 )
 
+const UndeterminedProtocolVersion = 0
+
 type Socket struct {
 	lastFragmentId        uint32
 	lastFragmentCleanup   time.Time
@@ -48,7 +50,7 @@ func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *water
 		closechan:             make(chan bool),
 		closechanopen:         true,
 		mac:                   shared.DefaultMac,
-		remoteProtocolVersion: 0,
+		remoteProtocolVersion: UndeterminedProtocolVersion,
 		packetBufferSize:      2000,
 		log:                   logger,
 		isReady:               false,
@@ -118,6 +120,8 @@ func (s *Socket) Close() {
 	}
 
 	s.setReady()
+
+	s.fragmentCleanupTicker.Stop()
 }
 
 func (s *Socket) Serve() {

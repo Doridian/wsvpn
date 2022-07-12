@@ -56,7 +56,7 @@ func (s *Socket) registerDefaultCommandHandlers() {
 		if err != nil {
 			return err
 		}
-		s.remoteProtocolVersion = shared.ProtocolVersion
+		s.remoteProtocolVersion = parameters.ProtocolVersion
 		s.log.Printf("Remote version is: %s (protocol %d)", parameters.Version, parameters.ProtocolVersion)
 
 		s.setReady()

@@ -19,6 +19,7 @@ type Config struct {
 		Subnet              string `yaml:"subnet"`
 		Mode                string `yaml:"mode"`
 		AllowClientToClient bool   `yaml:"allow-client-to-client"`
+		EnableFragmentation bool   `yaml:"enable-fragmentation"`
 		IpConfig            struct {
 			Local  bool `yaml:"local"`
 			Remote bool `yaml:"remote"`

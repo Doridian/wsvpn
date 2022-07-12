@@ -144,6 +144,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	socket.SetEnableFragmentationAlways(s.EnableFragmentation)
 	if s.PacketHandler != nil {
 		socket.SetPacketHandler(s.PacketHandler)
 	}
@@ -156,12 +157,13 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	socket.WaitReady()
 
 	err = socket.MakeAndSendCommand(&commands.InitParameters{
-		ClientID:   clientId,
-		ServerID:   s.serverId,
-		Mode:       s.Mode.ToString(),
-		DoIpConfig: s.DoRemoteIpConfig,
-		IpAddress:  fmt.Sprintf("%s/%d", ipClient.String(), s.VPNNet.GetSize()),
-		MTU:        s.mtu,
+		ClientID:            clientId,
+		ServerID:            s.serverId,
+		Mode:                s.Mode.ToString(),
+		DoIpConfig:          s.DoRemoteIpConfig,
+		IpAddress:           fmt.Sprintf("%s/%d", ipClient.String(), s.VPNNet.GetSize()),
+		MTU:                 s.mtu,
+		EnableFragmentation: s.EnableFragmentation,
 	})
 	if err != nil {
 		socket.CloseError(fmt.Errorf("error sending init command: %v", err))

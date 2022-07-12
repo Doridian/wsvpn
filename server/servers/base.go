@@ -18,17 +18,18 @@ var errNone = errors.New("none")
 var ErrNoServeWaitsLeft = errors.New("no serve waits left")
 
 type Server struct {
-	PacketHandler      sockets.PacketHandler
-	VPNNet             *shared.VPNNet
-	DoLocalIpConfig    bool
-	DoRemoteIpConfig   bool
-	TLSConfig          *tls.Config
-	ListenAddr         string
-	HTTP3Enabled       bool
-	Authenticator      authenticators.Authenticator
-	Mode               shared.VPNMode
-	SocketConfigurator sockets.SocketConfigurator
-	InterfacesConfig   *InterfacesConfig
+	PacketHandler       sockets.PacketHandler
+	VPNNet              *shared.VPNNet
+	DoLocalIpConfig     bool
+	DoRemoteIpConfig    bool
+	TLSConfig           *tls.Config
+	ListenAddr          string
+	HTTP3Enabled        bool
+	Authenticator       authenticators.Authenticator
+	Mode                shared.VPNMode
+	SocketConfigurator  sockets.SocketConfigurator
+	InterfacesConfig    *InterfacesConfig
+	EnableFragmentation bool
 
 	upgraders          []upgraders.SocketUpgrader
 	slotMutex          *sync.Mutex

@@ -1,5 +1,6 @@
 tunnel:
   mtu: 1420
+  enable-fragmentation: true # Enable packet fragmentation (default enabled), required for MTU > 1216 in WebTransport
   subnet: 192.168.3.0/24 # Server will pick the first host from this, and assign others to clients in order
   mode: TUN # TUN or TAP
   allow-client-to-client: false # TAP only: Allow clients to talk to other clients on the same server

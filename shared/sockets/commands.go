@@ -59,6 +59,10 @@ func (s *Socket) registerDefaultCommandHandlers() {
 		s.remoteProtocolVersion = parameters.ProtocolVersion
 		s.log.Printf("Remote version is: %s (protocol %d)", parameters.Version, parameters.ProtocolVersion)
 
+		if s.remoteProtocolVersion >= fragmentationMinProtocol && s.remoteProtocolVersion < fragmentationNegotiatedMinProtocol {
+			s.fragmentationEnabled = true
+		}
+
 		s.setReady()
 
 		return nil

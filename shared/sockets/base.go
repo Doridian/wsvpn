@@ -19,6 +19,7 @@ type Socket struct {
 	defragBuffer          map[uint32]*fragmentsInfo
 	defragLock            *sync.Mutex
 	fragmentCleanupTicker *time.Ticker
+	fragmentationEnabled  bool
 
 	adapter               adapters.SocketAdapter
 	iface                 *water.Interface
@@ -71,6 +72,17 @@ func (s *Socket) ConfigurePing(pingInterval time.Duration, pingTimeout time.Dura
 
 func (s *Socket) SetPacketHandler(packetHandler PacketHandler) {
 	s.packetHandler = packetHandler
+}
+
+func (s *Socket) SetEnableFragmentationAlways(enabled bool) {
+	s.fragmentationEnabled = enabled
+}
+
+func (s *Socket) SetEnableFragmentationIfSupported(enabled bool) {
+	if s.remoteProtocolVersion < fragmentationNegotiatedMinProtocol {
+		return
+	}
+	s.fragmentationEnabled = enabled
 }
 
 func (s *Socket) Wait() {

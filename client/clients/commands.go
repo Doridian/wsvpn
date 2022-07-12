@@ -46,6 +46,8 @@ func (c *Client) registerCommandHandlers() {
 			c.serverID = parameters.ServerID
 		}
 
+		c.socket.SetEnableFragmentationIfSupported(parameters.EnableFragmentation)
+
 		mode := shared.VPNModeFromString(parameters.Mode)
 
 		c.remoteNet, err = shared.ParseVPNNet(parameters.IpAddress)

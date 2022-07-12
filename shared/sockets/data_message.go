@@ -55,7 +55,7 @@ func (s *Socket) dataMessageHandler(message []byte) bool {
 		return true
 	}
 
-	if s.remoteProtocolVersion < fragmentationMinProtocol {
+	if !s.fragmentationEnabled {
 		return s.processPacket(message)
 	}
 
@@ -141,7 +141,7 @@ func (s *Socket) WritePacket(data []byte) error {
 		return nil
 	}
 
-	if s.remoteProtocolVersion < fragmentationMinProtocol {
+	if !s.fragmentationEnabled {
 		return s.sendDataWithError(data)
 	}
 

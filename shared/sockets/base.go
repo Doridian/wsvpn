@@ -76,13 +76,14 @@ func (s *Socket) SetPacketHandler(packetHandler PacketHandler) {
 
 func (s *Socket) SetEnableFragmentationAlways(enabled bool) {
 	s.fragmentationEnabled = enabled
+	s.log.Printf("Setting fragmentation: %s", shared.BoolToEnabled(s.fragmentationEnabled))
 }
 
 func (s *Socket) SetEnableFragmentationIfSupported(enabled bool) {
 	if s.remoteProtocolVersion < fragmentationNegotiatedMinProtocol {
 		return
 	}
-	s.fragmentationEnabled = enabled
+	s.SetEnableFragmentationAlways(enabled)
 }
 
 func (s *Socket) Wait() {

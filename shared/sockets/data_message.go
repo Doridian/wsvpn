@@ -116,11 +116,16 @@ func (s *Socket) WritePacket(data []byte) error {
 		fragmentCount++
 	}
 
-	packetIdLow := byte(packetId % 0xFF)
-	packetIdHigh := byte((packetId >> 8) % 0xFF)
+	packetIdLow := uint8(packetId % 0xFF)
+	packetIdHigh := uint8((packetId >> 8) % 0xFF)
 	for frag := uint16(0); frag < fragmentCount; frag++ {
 		buf.Reset()
-		buf.WriteByte(0b10000000 | uint8(frag))
+
+		fragFlag := uint8(frag)
+		if frag == fragmentCount-1 {
+			fragFlag |= 0b10000000
+		}
+		buf.WriteByte(fragFlag)
 		buf.WriteByte(packetIdHigh)
 		buf.WriteByte(packetIdLow)
 

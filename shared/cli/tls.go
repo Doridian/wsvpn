@@ -15,7 +15,7 @@ type TlsConfig struct {
 	CipherPreference string `yaml:"cipher-preference"`
 }
 
-func TlsUseConfig(tlsConfig *tls.Config, fileConfig *TlsConfig) {
+func TlsUseConfig(tlsConfig *tls.Config, fileConfig *TlsConfig) error {
 	tlsConfig.MinVersion = shared.TlsVersionNum(fileConfig.MinVersion)
 	tlsConfig.MaxVersion = shared.TlsVersionNum(fileConfig.MaxVersion)
 
@@ -27,6 +27,8 @@ func TlsUseConfig(tlsConfig *tls.Config, fileConfig *TlsConfig) {
 	case "":
 		break
 	default:
-		panic(errors.New("invalid TLS preference. Must be blank, AES or CHACHA"))
+		return errors.New("invalid TLS preference. Must be blank, AES or CHACHA")
 	}
+
+	return nil
 }

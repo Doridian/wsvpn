@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/Doridian/wsvpn/client/clients"
 	"github.com/Doridian/wsvpn/shared"
@@ -27,10 +28,11 @@ type Config struct {
 	} `yaml:"scripts"`
 
 	Client struct {
-		Server   string `yaml:"server"`
-		Proxy    string `yaml:"proxy"`
-		AuthFile string `yaml:"auth-file"`
-		Tls      struct {
+		Server             string        `yaml:"server"`
+		Proxy              string        `yaml:"proxy"`
+		AuthFile           string        `yaml:"auth-file"`
+		AutoReconnectDelay time.Duration `yaml:"auto-reconnect-delay"`
+		Tls                struct {
 			Ca          string        `yaml:"ca"`
 			Certificate string        `yaml:"certificate"`
 			Key         string        `yaml:"key"`

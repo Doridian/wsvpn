@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/Doridian/wsvpn/client/connectors"
 	"github.com/Doridian/wsvpn/shared"
@@ -27,6 +28,7 @@ type Client struct {
 	DownScript         string
 	SocketConfigurator sockets.SocketConfigurator
 	InterfaceConfig    *InterfaceConfig
+	AutoReconnectDelay time.Duration
 
 	log        *log.Logger
 	clientID   string
@@ -43,10 +45,27 @@ type Client struct {
 func NewClient() *Client {
 	return &Client{
 		Headers:    make(http.Header),
-		clientID:   "UNSET",
-		serverID:   "UNSET",
-		log:        shared.MakeLogger("CLIENT", "UNSET"),
+		log:        shared.MakeLogger("CLIENT", ""),
 		connectors: make(map[string]connectors.SocketConnector),
+	}
+}
+
+func (c *Client) ServeLoop() {
+	for {
+		c.Close()
+		err := c.Serve()
+		if err != nil {
+			c.log.Printf("Client error: %v", err)
+		}
+		c.Wait()
+
+		if c.AutoReconnectDelay == time.Duration(0) {
+			c.log.Printf("Automatic reconnection disabled, exiting!")
+			break
+		}
+		c.log.Printf("Waiting %s to reconnect...", c.AutoReconnectDelay)
+		time.Sleep(c.AutoReconnectDelay)
+		c.log.Printf("Reconnecting now!")
 	}
 }
 
@@ -95,6 +114,9 @@ func (c *Client) Serve() error {
 }
 
 func (c *Client) Wait() {
+	if c.socket == nil {
+		return
+	}
 	c.socket.Wait()
 }
 

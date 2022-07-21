@@ -57,7 +57,10 @@ func main() {
 
 	tlsConfig.InsecureSkipVerify = config.Client.Tls.Config.Insecure
 	tlsConfig.ServerName = config.Client.Tls.ServerName
-	cli.TlsUseConfig(tlsConfig, &config.Client.Tls.Config)
+	err = cli.TlsUseConfig(tlsConfig, &config.Client.Tls.Config)
+	if err != nil {
+		panic(err)
+	}
 
 	if config.Client.Tls.Ca != "" {
 		data, err := ioutil.ReadFile(config.Client.Tls.Ca)
@@ -106,10 +109,7 @@ func main() {
 	client.UpScript = config.Scripts.Up
 	client.DownScript = config.Scripts.Down
 	client.InterfaceConfig = &config.Interface
+	client.AutoReconnectDelay = config.Client.AutoReconnectDelay
 
-	err = client.Serve()
-	if err != nil {
-		panic(err)
-	}
-	client.Wait()
+	client.ServeLoop()
 }

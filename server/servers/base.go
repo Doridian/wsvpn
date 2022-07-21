@@ -54,7 +54,7 @@ func NewServer() *Server {
 		slotMutex:          &sync.Mutex{},
 		ifaceCreationMutex: &sync.Mutex{},
 		usedSlots:          make(map[uint64]bool),
-		log:                shared.MakeLogger("SERVER", "UNSET"),
+		log:                shared.MakeLogger("SERVER", ""),
 		serveErrorChannel:  make(chan interface{}),
 		serveWaitGroup:     &sync.WaitGroup{},
 		closers:            make([]io.Closer, 0),

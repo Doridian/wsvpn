@@ -11,6 +11,9 @@ func makeLoggerPrefix(logType string, prefix string) string {
 }
 
 func MakeLogger(logType string, prefix string) *log.Logger {
+	if prefix == "" {
+		prefix = "UNSET"
+	}
 	return log.New(os.Stderr, makeLoggerPrefix(logType, prefix), log.Lmsgprefix|log.Ldate|log.Ltime|log.Lshortfile)
 }
 

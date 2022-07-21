@@ -1,9 +1,3 @@
-*.exe
-*.pem
-*.crt
-*.key
 *.*~
 .DS_Store
 /dist
-/htpasswd
-/*.yml

@@ -92,7 +92,8 @@ func (c *Client) registerCommandHandlers() {
 			return err
 		}
 
-		go c.runEventScript(clientEventUp)
+		c.doRunEventScript(shared.EventUp)
+		c.sentUpEvent = true
 
 		return nil
 	})

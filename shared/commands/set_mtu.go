@@ -7,7 +7,7 @@ type SetMtuParameters struct {
 }
 
 func (c *SetMtuParameters) MakeCommand(id string) (*OutgoingCommand, error) {
-	return makeCommand(InitCommandName, id, c)
+	return makeCommand(SetMtuCommandName, id, c)
 }
 
 func (c *SetMtuParameters) MinProtocolVersion() int {

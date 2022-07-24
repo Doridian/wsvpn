@@ -106,10 +106,9 @@ func main() {
 	client.ServerUrl = dest
 	client.SetBasicAuthFromUserInfo(userInfo)
 	client.TLSConfig = tlsConfig
-	client.UpScript = config.Scripts.Up
-	client.DownScript = config.Scripts.Down
 	client.InterfaceConfig = &config.Interface
 	client.AutoReconnectDelay = config.Client.AutoReconnectDelay
+	client.LoadEventConfig(&config.Scripts)
 
 	client.ServeLoop()
 }

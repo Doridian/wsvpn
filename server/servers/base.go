@@ -18,6 +18,8 @@ var errNone = errors.New("none")
 var ErrNoServeWaitsLeft = errors.New("no serve waits left")
 
 type Server struct {
+	shared.EventConfigHolder
+
 	PacketHandler       sockets.PacketHandler
 	VPNNet              *shared.VPNNet
 	DoLocalIpConfig     bool

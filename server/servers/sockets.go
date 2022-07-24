@@ -156,12 +156,15 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	socket.Serve()
 	socket.WaitReady()
 
+	remoteNetStr := fmt.Sprintf("%s/%d", ipClient.String(), s.VPNNet.GetSize())
+	ifaceName := iface.Name()
+
 	err = socket.MakeAndSendCommand(&commands.InitParameters{
 		ClientID:            clientId,
 		ServerID:            s.serverId,
 		Mode:                s.Mode.ToString(),
 		DoIpConfig:          s.DoRemoteIpConfig,
-		IpAddress:           fmt.Sprintf("%s/%d", ipClient.String(), s.VPNNet.GetSize()),
+		IpAddress:           remoteNetStr,
 		MTU:                 s.mtu,
 		EnableFragmentation: s.EnableFragmentation,
 	})
@@ -170,5 +173,14 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	doRunEventScript := func(event string) {
+		err := s.RunEventScript(event, remoteNetStr, ifaceName)
+		if err != nil {
+			s.log.Printf("Error in %s script: %v", event, err)
+		}
+	}
+
+	go doRunEventScript(shared.EventUp)
 	socket.Wait()
+	go doRunEventScript(shared.EventDown)
 }

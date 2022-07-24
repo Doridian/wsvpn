@@ -29,6 +29,8 @@ type Config struct {
 
 	Interfaces servers.InterfacesConfig `yaml:"interfaces"`
 
+	Scripts shared.EventConfig `yaml:"scripts"`
+
 	Server struct {
 		Listen      string `yaml:"listen"`
 		EnableHTTP3 bool   `yaml:"enable-http3"`

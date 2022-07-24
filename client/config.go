@@ -22,10 +22,7 @@ type Config struct {
 
 	Interface clients.InterfaceConfig `yaml:"interface"`
 
-	Scripts struct {
-		Up   string `yaml:"up"`
-		Down string `yaml:"down"`
-	} `yaml:"scripts"`
+	Scripts shared.EventConfig `yaml:"scripts"`
 
 	Client struct {
 		Server             string        `yaml:"server"`

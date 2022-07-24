@@ -56,6 +56,7 @@ func main() {
 	server.SetMTU(config.Tunnel.Mtu)
 	server.HTTP3Enabled = config.Server.EnableHTTP3
 	server.EnableFragmentation = config.Tunnel.EnableFragmentation
+	server.LoadEventConfig(&config.Scripts)
 
 	if strings.ToUpper(config.Tunnel.Mode) == "TAP" {
 		macSwitch := macswitch.MakeMACSwitch()

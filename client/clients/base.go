@@ -15,17 +15,14 @@ import (
 	"github.com/songgao/water"
 )
 
-const clientEventUp = "up"
-const clientEventDown = "down"
-
 type Client struct {
+	shared.EventConfigHolder
+
 	TLSConfig          *tls.Config
 	ProxyUrl           *url.URL
 	ServerUrl          *url.URL
 	Headers            http.Header
 	SetDefaultGateway  bool
-	UpScript           string
-	DownScript         string
 	SocketConfigurator sockets.SocketConfigurator
 	InterfaceConfig    *InterfaceConfig
 	AutoReconnectDelay time.Duration
@@ -40,6 +37,8 @@ type Client struct {
 	socket     *sockets.Socket
 	adapter    adapters.SocketAdapter
 	connectors map[string]connectors.SocketConnector
+
+	sentUpEvent bool
 }
 
 func NewClient() *Client {
@@ -121,7 +120,11 @@ func (c *Client) Wait() {
 }
 
 func (c *Client) Close() {
-	c.runEventScript(clientEventDown)
+	if c.sentUpEvent {
+		c.doRunEventScript(shared.EventDown)
+		c.sentUpEvent = false
+	}
+
 	if c.iface != nil {
 		c.iface.Close()
 	}
@@ -131,4 +134,22 @@ func (c *Client) Close() {
 	if c.adapter != nil {
 		c.adapter.Close()
 	}
+}
+
+func (c *Client) doRunEventScript(event string) {
+	ifaceName := ""
+	if c.iface != nil {
+		ifaceName = c.iface.Name()
+	}
+	remoteNetStr := ""
+	if c.remoteNet != nil {
+		remoteNetStr = c.remoteNet.GetRaw()
+	}
+
+	go func() {
+		err := c.RunEventScript(event, remoteNetStr, ifaceName)
+		if err != nil {
+			c.log.Printf("Error running %s script: %v", event, err)
+		}
+	}()
 }

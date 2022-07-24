@@ -20,6 +20,12 @@ interfaces:
     name-prefix: ""
     component-id: root\tap0901 # Windows only. Defaults: root\tap0901 or tap0901
 
+scripts:
+  # These scripts get run as "script operation subnet interface"
+  # Example: "./handler.sh up 192.168.3.2/24 tun0"
+  up: ""
+  down: ""
+
 server:
   listen: 127.0.0.1:9000
   enable-http3: false

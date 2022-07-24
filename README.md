@@ -23,6 +23,12 @@ Some common CPU types and what their architecture is called:
 - Apple Silicon, such as M1: `arm64`
 - Raspberry Pi and most other SBCs: `arm64` on a 64-bit OS, `arm` on a 32-bit OS
 
+## Building
+
+WSVPN currently requires Golang at least version 1.18 to build successfully. You can use `build.sh` locally if you wish.
+
+Alternatively, the normal go build commands (`go build -o sv ./server`, `go build -o cl ./client`, etc) will work just fine.
+
 ## Configuration
 
 You can run the server or client binary with `--print-default-config` and it will give you a commented YAML config file with default options.

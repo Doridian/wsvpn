@@ -8,8 +8,8 @@ then
 fi
 
 LDFLAGS="-X 'github.com/Doridian/wsvpn/shared.Version=${VERSION}'"
-DO_DEPLOY="$1"
-DO_USE_LATEST="$2"
+DO_DOCKER_PUSH="$1"
+DO_DOCKER_TAG_LATEST="$2"
 
 gobuild() {
 	MOD="$1"
@@ -96,15 +96,15 @@ dockerbuild() {
 
 	TAG="ghcr.io/doridian/wsvpn/server:$VERSION"
 	docker build --platform="$PLATFORM" -t "$TAG" -f Dockerfile.server .
-	if [ ! -z "$DO_TAG_LATEST" ]
+	if [ ! -z "$DO_DOCKER_TAG_LATEST" ]
 	then
 		docker tag "$TAG" "ghcr.io/doridian/wsvpn/server:latest"
-		if [ ! -z "$DO_PUSH" ]
+		if [ ! -z "$DO_DOCKER_PUSH" ]
 		then
 			docker push "ghcr.io/doridian/wsvpn/server:latest"
 		fi
 	fi
-	if [ ! -z "$DO_PUSH" ]
+	if [ ! -z "$DO_DOCKER_PUSH" ]
 	then
 		docker push "$TAG"
 	fi
@@ -114,12 +114,12 @@ dockerbuild() {
 	if [ ! -z "$DO_TAG_LATEST" ]
 	then
 		docker tag "$TAG" "ghcr.io/doridian/wsvpn/client:latest"
-		if [ ! -z "$DO_PUSH" ]
+		if [ ! -z "$DO_DOCKER_PUSH" ]
 		then
 			docker push "ghcr.io/doridian/wsvpn/client:latest"
 		fi
 	fi
-	if [ ! -z "$DO_PUSH" ]
+	if [ ! -z "$DO_DOCKER_PUSH" ]
 	then
 		docker push "$TAG"
 	fi

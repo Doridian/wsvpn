@@ -111,7 +111,7 @@ dockerbuild() {
 
 	TAG="ghcr.io/doridian/wsvpn/client:$VERSION"
 	docker buildx build --platform="$PLATFORM" -t "$TAG" -f Dockerfile.client .
-	if [ ! -z "$DO_TAG_LATEST" ]
+	if [ ! -z "$DO_DOCKER_TAG_LATEST" ]
 	then
 		docker tag "$TAG" "ghcr.io/doridian/wsvpn/client:latest"
 		if [ ! -z "$DO_DOCKER_PUSH" ]

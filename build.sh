@@ -95,7 +95,7 @@ dockerbuild() {
 	PLATFORM="linux/$1"
 
 	TAG="ghcr.io/doridian/wsvpn/server:$VERSION"
-	docker build --platform="$PLATFORM" -t "$TAG" -f Dockerfile.server .
+	docker buildx build --platform="$PLATFORM" -t "$TAG" -f Dockerfile.server .
 	if [ ! -z "$DO_DOCKER_TAG_LATEST" ]
 	then
 		docker tag "$TAG" "ghcr.io/doridian/wsvpn/server:latest"
@@ -110,7 +110,7 @@ dockerbuild() {
 	fi
 
 	TAG="ghcr.io/doridian/wsvpn/client:$VERSION"
-	docker build --platform="$PLATFORM" -t "$TAG" -f Dockerfile.client .
+	docker buildx build --platform="$PLATFORM" -t "$TAG" -f Dockerfile.client .
 	if [ ! -z "$DO_TAG_LATEST" ]
 	then
 		docker tag "$TAG" "ghcr.io/doridian/wsvpn/client:latest"

@@ -9,7 +9,10 @@ jobs:
           go-version-file: 'go.mod'
           check-latest: true
           cache: true
-      - run: ./build.sh
+      - run: ./build.sh 1 1
+        if: startsWith(github.ref, 'refs/tags/')
+      - run: ./build.sh 1 0
+        if: not startsWith(github.ref, 'refs/tags/')
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')

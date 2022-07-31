@@ -1,8 +1,9 @@
 FROM scratch
 
 ARG TARGETARCH
+ARG TARGETVARIANT
 
-COPY --chown=0:0 --chmod=755 dist/server-linux-$TARGETARCH /server
+COPY --chown=0:0 --chmod=755 dist/server-linux-$TARGETARCH$TARGETVARIANT /server
 VOLUME /config
 
 ENTRYPOINT [ "/server" ]

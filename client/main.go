@@ -7,6 +7,7 @@ import (
 	"flag"
 	"io/ioutil"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/Doridian/wsvpn/client/clients"
@@ -90,6 +91,11 @@ func main() {
 	client := clients.NewClient()
 	defer client.Close()
 	client.RegisterDefaultConnectors()
+
+	cli.RegisterShutdownSignals(func() {
+		client.Close()
+		os.Exit(0)
+	})
 
 	if config.Client.Proxy != "" {
 		proxyUrl, err := url.Parse(config.Client.Proxy)

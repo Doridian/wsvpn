@@ -1,0 +1,9 @@
+FROM scratch
+
+ARG TARGETARCH
+
+COPY --chown=0:0 --chmod=755 dist/server-linux-$TARGETARCH /server
+VOLUME /config
+
+ENTRYPOINT [ "/server" ]
+CMD [ "-config=/config/server.yml" ]

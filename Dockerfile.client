@@ -1,0 +1,10 @@
+FROM scratch
+
+ARG TARGETARCH
+ARG TARGETVARIANT
+
+COPY --chown=0:0 --chmod=755 dist/client-linux-$TARGETARCH$TARGETVARIANT /client
+VOLUME /config
+
+ENTRYPOINT [ "/client" ]
+CMD [ "-config=/config/client.yml" ]

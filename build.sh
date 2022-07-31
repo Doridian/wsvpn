@@ -6,7 +6,7 @@ LDFLAGS="-X 'github.com/Doridian/wsvpn/shared.Version=${VERSION}'"
 
 gobuild() {
 	MOD="$1"
-	go build -ldflags="$LDFLAGS" -o "dist/$MOD-$GOOS-$GOARCH$GOARCHSUFFIX$EXESUFFIX" "./$MOD"
+	go build -ldflags="$LDFLAGS" -o "dist/$MOD-$GOOS-$ARCHNAME$EXESUFFIX" "./$MOD"
 }
 
 buildfor() {
@@ -24,7 +24,17 @@ buildfor() {
 		GOARCHSUFFIX="-$GOARCHSUFFIX"
 	fi
 
-	echo "Building for: $GOOS / $GOARCH$GOARCHSUFFIX"
+	export ARCHNAME="$GOARCH$GOARCHSUFFIX"
+	case "$ARCHNAME" in
+		arm)
+			if [ ! -z "$GOARM" ]
+			then
+				export ARCHNAME="arm32v$GOARM"
+			fi
+			;;
+	esac
+
+	echo "Building for: $GOOS / $GOARCH$GOARCHSUFFIX / $ARCHNAME"
 
 	gobuild client
 	gobuild server
@@ -40,13 +50,13 @@ buildmips() {
 
 buildarm() {
 	export GOARM=""
-	buildfor "$1" "$2" "$GOARM"
+	buildfor "$1" "$2"
 	export GOARM="5"
-	buildfor "$1" "$2" "$GOARM"
+	buildfor "$1" "$2"
 	export GOARM="6"
-	buildfor "$1" "$2" "$GOARM"
+	buildfor "$1" "$2"
 	export GOARM="7"
-	buildfor "$1" "$2" "$GOARM"
+	buildfor "$1" "$2"
 	export GOARM=""
 }
 
@@ -73,3 +83,18 @@ buildfor darwin arm64
 cd dist
 sha256sum * > sha256sums.txt
 cd ..
+
+dockerbuild() {
+	PLATFORM="linux/$1"
+	TAG="ghcr.io/doridian/wsvpn/server:$VERSION"
+	docker build --platform="$PLATFORM" -t "$TAG" -f Dockerfile.server .
+	TAG="ghcr.io/doridian/wsvpn/client:$VERSION"
+	docker build --platform="$PLATFORM" -t "$TAG" -f Dockerfile.client .
+}
+
+dockerbuild i386
+dockerbuild amd64
+dockerbuild arm32/v5
+dockerbuild arm32/v6
+dockerbuild arm32/v7
+dockerbuild arm64

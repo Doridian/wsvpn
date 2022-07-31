@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/Doridian/wsvpn/server/authenticators"
@@ -34,6 +35,11 @@ func main() {
 
 	var err error
 	server := servers.NewServer()
+
+	cli.RegisterShutdownSignals(func() {
+		server.Close()
+		os.Exit(0)
+	})
 
 	serverUUID, err := uuid.NewRandom()
 	if err != nil {

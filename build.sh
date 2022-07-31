@@ -2,6 +2,11 @@
 #set -euo pipefail
 
 VERSION="$(git describe --tags 2> /dev/null)"
+if [ -z "$VERSION" ]
+then
+	VERSION="dev"
+fi
+
 LDFLAGS="-X 'github.com/Doridian/wsvpn/shared.Version=${VERSION}'"
 DO_DEPLOY="$1"
 DO_USE_LATEST="$2"

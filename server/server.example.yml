@@ -37,6 +37,7 @@ server:
       min-version: 1.2
       max-version: 1.3
       cipher-preference: "" # blank, AES or CHACHA
+      key-log-file: "" # This will log TLS secret keys to a file. DO NOT USE IN PRODUCTION!
   authenticator:
     type: allow-all # allow-all or htpasswd
     # allow-all: Just allow all clients regardless of authentication

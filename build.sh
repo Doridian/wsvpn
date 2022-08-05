@@ -7,13 +7,13 @@ then
 	VERSION="dev"
 fi
 
-LDFLAGS="-X 'github.com/Doridian/wsvpn/shared.Version=${VERSION}'"
+LDFLAGS="-w -s -X 'github.com/Doridian/wsvpn/shared.Version=${VERSION}'"
 DO_DOCKER_PUSH="$1"
 DO_DOCKER_TAG_LATEST="$2"
 
 gobuild() {
 	MOD="$1"
-	go build -ldflags="$LDFLAGS" -o "dist/$MOD-$GOOS-$ARCHNAME$EXESUFFIX" "./$MOD"
+	CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o "dist/$MOD-$GOOS-$ARCHNAME$EXESUFFIX" "./$MOD"
 }
 
 buildfor() {

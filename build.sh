@@ -13,7 +13,7 @@ DO_DOCKER_TAG_LATEST="$2"
 
 gobuild() {
 	MOD="$1"
-	go build -ldflags="$LDFLAGS" -o "dist/$MOD-$GOOS-$ARCHNAME$EXESUFFIX" "./$MOD"
+	CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o "dist/$MOD-$GOOS-$ARCHNAME$EXESUFFIX" "./$MOD"
 }
 
 buildfor() {

@@ -92,42 +92,22 @@ sha256sum * > sha256sums.txt
 cd ..
 
 dockerbuild() {
-	PLATFORM="linux/$1"
-
-	TAG="ghcr.io/doridian/wsvpn/server:$VERSION"
-	docker buildx build --platform="$PLATFORM" -t "$TAG" -f Dockerfile.server .
+	SIDE="$1"
+	DOCKERCMD="docker buildx build --platform linux/i386,linux/amd64,linux/arm32/v5,linux/arm32/v6,linux/arm32/v7,linux/arm64"
+	DOCKERCMD="$DOCKERCMD -t ghcr.io/doridian/wsvpn/$SIDE:$VERSION"
 	if [ ! -z "$DO_DOCKER_TAG_LATEST" ]
 	then
-		docker tag "$TAG" "ghcr.io/doridian/wsvpn/server:latest"
-		if [ ! -z "$DO_DOCKER_PUSH" ]
-		then
-			docker push "ghcr.io/doridian/wsvpn/server:latest"
-		fi
+		DOCKERCMD="$DOCKERCMD -t ghcr.io/doridian/wsvpn/$SIDE:latest"
 	fi
 	if [ ! -z "$DO_DOCKER_PUSH" ]
 	then
-		docker push "$TAG"
+		DOCKERCMD="$DOCKERCMD --push"
 	fi
+	DOCKERCMD="$DOCKERCMD -f Dockerfile.$SIDE ."
 
-	TAG="ghcr.io/doridian/wsvpn/client:$VERSION"
-	docker buildx build --platform="$PLATFORM" -t "$TAG" -f Dockerfile.client .
-	if [ ! -z "$DO_DOCKER_TAG_LATEST" ]
-	then
-		docker tag "$TAG" "ghcr.io/doridian/wsvpn/client:latest"
-		if [ ! -z "$DO_DOCKER_PUSH" ]
-		then
-			docker push "ghcr.io/doridian/wsvpn/client:latest"
-		fi
-	fi
-	if [ ! -z "$DO_DOCKER_PUSH" ]
-	then
-		docker push "$TAG"
-	fi
+	$DOCKERCMD
 }
 
-dockerbuild i386
-dockerbuild amd64
-dockerbuild arm32/v5
-dockerbuild arm32/v6
-dockerbuild arm32/v7
-dockerbuild arm64
+docker buildx create --use --name multiarch || true
+dockerbuild server
+dockerbuild client

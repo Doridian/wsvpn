@@ -7,7 +7,7 @@ then
 	VERSION="dev"
 fi
 
-LDFLAGS="-X 'github.com/Doridian/wsvpn/shared.Version=${VERSION}'"
+LDFLAGS="-w -s -X 'github.com/Doridian/wsvpn/shared.Version=${VERSION}'"
 DO_DOCKER_PUSH="$1"
 DO_DOCKER_TAG_LATEST="$2"
 

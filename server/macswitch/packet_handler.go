@@ -1,8 +1,6 @@
 package macswitch
 
 import (
-	"log"
-
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/sockets"
 )
@@ -16,7 +14,6 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 
 	etherType := shared.GetEtherType(packet)
 	if !g.AllowUnknownEtherTypes && etherType != shared.ETHTYPE_ARP && etherType != shared.ETHTYPE_IPV4 {
-		log.Printf("Unknown EtherType: %d", etherType)
 		return true, nil
 	}
 
@@ -25,13 +22,11 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 
 		if !g.AllowIpSpoofing && etherType == shared.ETHTYPE_IPV4 {
 			if len(packet) < ETH_LEN+20 {
-				log.Printf("TooShort v4: %d", len(packet))
 				return !g.AllowUnknownEtherTypes, nil
 			}
 
 			srcIp := shared.GetSrcIPv4(packet, ETH_LEN)
 			if srcIp != socket.AssignedIP {
-				log.Printf("WrongIP: %v vs %v", srcIp, socket.AssignedIP)
 				return true, nil
 			}
 		}

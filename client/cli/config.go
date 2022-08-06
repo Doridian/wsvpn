@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	_ "embed"
@@ -8,7 +8,7 @@ import (
 
 	"github.com/Doridian/wsvpn/client/clients"
 	"github.com/Doridian/wsvpn/shared"
-	"github.com/Doridian/wsvpn/shared/cli"
+	shared_cli "github.com/Doridian/wsvpn/shared/cli"
 )
 
 //go:embed client.example.yml
@@ -16,8 +16,8 @@ var defaultConfig string
 
 type Config struct {
 	Tunnel struct {
-		SetDefaultGateway bool           `yaml:"set-default-gateway"`
-		Ping              cli.PingConfig `yaml:"ping"`
+		SetDefaultGateway bool                  `yaml:"set-default-gateway"`
+		Ping              shared_cli.PingConfig `yaml:"ping"`
 	} `yaml:"tunnel"`
 
 	Interface clients.InterfaceConfig `yaml:"interface"`
@@ -30,11 +30,11 @@ type Config struct {
 		AuthFile           string        `yaml:"auth-file"`
 		AutoReconnectDelay time.Duration `yaml:"auto-reconnect-delay"`
 		Tls                struct {
-			Ca          string        `yaml:"ca"`
-			Certificate string        `yaml:"certificate"`
-			Key         string        `yaml:"key"`
-			ServerName  string        `yaml:"server-name"`
-			Config      cli.TlsConfig `yaml:"config"`
+			Ca          string               `yaml:"ca"`
+			Certificate string               `yaml:"certificate"`
+			Key         string               `yaml:"key"`
+			ServerName  string               `yaml:"server-name"`
+			Config      shared_cli.TlsConfig `yaml:"config"`
 		} `yaml:"tls"`
 	}
 }

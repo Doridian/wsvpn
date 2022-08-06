@@ -45,6 +45,7 @@ buildfor() {
 
 	gobuild client
 	gobuild server
+	gobuild dual
 }
 
 buildmips() {
@@ -111,3 +112,4 @@ dockerbuild() {
 docker buildx create --use --name multiarch || true
 dockerbuild server
 dockerbuild client
+dockerbuild dual

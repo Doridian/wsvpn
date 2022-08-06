@@ -34,6 +34,11 @@ def find_executable(name: str, candidates: list) -> Optional[str]:
     _exec_cache[name] = found
     return found
 
+def must_find_executable(name: str, candidates: list) -> str:
+    res = find_executable(name=name, candidates=candidates)
+    if not res:
+        raise ValueError(f"Could not find binary for {name}")
+    return res
 
 # Based on : https://groups.google.com/d/msg/sage-devel/1lIJ961gV_w/y-2uqPCyzUMJ
 def ncpus():
@@ -212,7 +217,7 @@ class LipoTask(BuildTask):
                 raise ValueError("Only supply archs to LipoTask that have a valid Darwin arch associated!")
     
     def _run(self) -> None:
-        args = [find_executable("lipo", ["lipo", "llvm-lipo"]), "-create"]
+        args = [must_find_executable("lipo", ["lipo", "llvm-lipo"]), "-create"]
 
         for gobin in self.gobins:
             darwin_name = gobin.arch.darwin_name

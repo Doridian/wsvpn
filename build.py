@@ -2,7 +2,6 @@
 
 import argparse
 from dataclasses import dataclass
-from email.mime import base
 from os.path import join, exists
 from threading import Condition, Thread
 from subprocess import call, check_call, check_output

@@ -302,7 +302,7 @@ def main():
             if platform == "linux" and res.docker:
                 tasks.append(DockerBuildTask([task for task in platform_tasks if task.arch.docker_name], tag_latest=res.docker_tag_latest, push=res.docker_push))
 
-            if platform == "darwin":
+            if platform == "darwin" and res.lipo:
                 tasks.append(LipoTask([task for task in platform_tasks if task.arch.darwin_name]))
 
     def pick_task() -> Optional[BuildTask]:

@@ -273,8 +273,9 @@ def main():
         remove(join("dist", distfile))
 
     check_call(["go", "mod", "download"])
-    call(["docker", "buildx", "create", "--name", "multiarch"])
-    check_call(["docker", "buildx", "use", "multiarch"])
+    if res.docker:
+        call(["docker", "buildx", "create", "--name", "multiarch"])
+        check_call(["docker", "buildx", "use", "multiarch"])
 
     tasks: list = []
     for proj in projects:

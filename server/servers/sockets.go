@@ -13,7 +13,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/lucas-clemente/quic-go"
 	"github.com/lucas-clemente/quic-go/http3"
-	"github.com/songgao/water"
 )
 
 func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
@@ -99,43 +98,12 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var iface *water.Interface
-	if s.Mode == shared.VPN_MODE_TAP {
-		iface = s.tapIface
-	} else {
-		s.ifaceCreationMutex.Lock()
-		tunConfig := water.Config{
-			DeviceType: water.TUN,
-		}
-		err = s.getPlatformSpecifics(&tunConfig, s.InterfacesConfig)
-		if err != nil {
-			s.ifaceCreationMutex.Unlock()
-			clientLogger.Printf("Error extending TUN config: %v", err)
-			return
-		}
-
-		iface, err = water.New(tunConfig)
-		s.ifaceCreationMutex.Unlock()
-		if err != nil {
-			clientLogger.Printf("Error creating new TUN: %v", err)
-			return
-		}
-
-		defer iface.Close()
-
-		clientLogger.Printf("Assigned interface %s", iface.Name())
-
-		err = s.configIface(iface, ipClient)
-		if err != nil {
-			clientLogger.Printf("Error configuring interface: %v", err)
-			return
-		}
-	}
-
 	clientLogger.Printf("Command serialization: %s", commands.SerializationTypeToString(adapter.GetCommandSerializationType()))
 
-	socket := sockets.MakeSocket(clientLogger, adapter, iface, s.Mode == shared.VPN_MODE_TUN)
+	socket := sockets.MakeSocket(clientLogger, adapter, s.mainIface, false)
 	defer socket.Close()
+
+	socket.AssignedIP = shared.NetIPToIPv4(ipClient)
 
 	if s.SocketConfigurator != nil {
 		err := s.SocketConfigurator.ConfigureSocket(socket)
@@ -157,7 +125,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	socket.WaitReady()
 
 	remoteNetStr := fmt.Sprintf("%s/%d", ipClient.String(), s.VPNNet.GetSize())
-	ifaceName := iface.Name()
+	ifaceName := s.mainIface.Name()
 
 	err = socket.MakeAndSendCommand(&commands.InitParameters{
 		ClientID:            clientId,

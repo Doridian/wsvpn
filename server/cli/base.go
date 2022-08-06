@@ -4,11 +4,11 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
-	"io/ioutil"
 	"os"
 	"strings"
 
 	"github.com/Doridian/wsvpn/server/authenticators"
+	"github.com/Doridian/wsvpn/server/ipswitch"
 	"github.com/Doridian/wsvpn/server/macswitch"
 	"github.com/Doridian/wsvpn/server/servers"
 	"github.com/Doridian/wsvpn/shared"
@@ -60,10 +60,15 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 	if strings.ToUpper(config.Tunnel.Mode) == "TAP" {
 		macSwitch := macswitch.MakeMACSwitch()
 		macSwitch.AllowClientToClient = config.Tunnel.AllowClientToClient
+		macSwitch.AllowIpSpoofing = config.Tunnel.AllowIpSpoofing
+		macSwitch.AllowUnknownEtherTypes = config.Tunnel.AllowUnknownEtherTypes
 		server.Mode = shared.VPN_MODE_TAP
 		server.PacketHandler = macSwitch
 	} else {
+		ipSwitch := ipswitch.MakeIPSwitch()
+		ipSwitch.AllowClientToClient = config.Tunnel.AllowClientToClient
 		server.Mode = shared.VPN_MODE_TUN
+		server.PacketHandler = ipSwitch
 	}
 
 	if config.Server.Authenticator.Type == "allow-all" {
@@ -97,7 +102,7 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 		tlsConfig.Certificates = []tls.Certificate{cert}
 
 		if config.Server.Tls.ClientCa != "" {
-			tlsClientCAPEM, err := ioutil.ReadFile(config.Server.Tls.ClientCa)
+			tlsClientCAPEM, err := os.ReadFile(config.Server.Tls.ClientCa)
 			if err != nil {
 				panic(err)
 			}

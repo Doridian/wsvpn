@@ -3,7 +3,9 @@ tunnel:
   enable-fragmentation: true # Enable packet fragmentation (default enabled), required for MTU > 1216 in WebTransport
   subnet: 192.168.3.0/24 # Server will pick the first host from this, and assign others to clients in order
   mode: TUN # TUN or TAP
-  allow-client-to-client: false # TAP only: Allow clients to talk to other clients on the same server
+  allow-client-to-client: false # Allow clients to talk to other clients on the same server
+  allow-ip-spoofing: false # TAP only: Allow clients to use any IP address and not just the assigned one (on TUN IPs are always enforced)
+  allow-unknown-ether-types: false # TAP only: allow unknown ether types (Anything other than ARP, IPv4)
   ip-config:
     local: true # Configure local interfaces automatically
     remote: true # Send configuration data to clients for their interfaces
@@ -12,13 +14,9 @@ tunnel:
     timeout: 5s
 
 interfaces:
-  tap:
-    name: ""
-    persist: false
-    component-id: root\tap0901 # Windows only. Defaults: root\tap0901 or tap0901
-  tun:
-    name-prefix: ""
-    component-id: root\tap0901 # Windows only. Defaults: root\tap0901 or tap0901
+  name: ""
+  persist: false
+  component-id: root\tap0901 # Windows only. Defaults: root\tap0901 or tap0901
 
 scripts:
   # These scripts get run as "script operation subnet interface"

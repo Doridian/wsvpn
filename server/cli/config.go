@@ -15,12 +15,14 @@ var defaultConfig string
 
 type Config struct {
 	Tunnel struct {
-		Mtu                 int    `yaml:"mtu"`
-		Subnet              string `yaml:"subnet"`
-		Mode                string `yaml:"mode"`
-		AllowClientToClient bool   `yaml:"allow-client-to-client"`
-		EnableFragmentation bool   `yaml:"enable-fragmentation"`
-		IpConfig            struct {
+		Mtu                    int    `yaml:"mtu"`
+		Subnet                 string `yaml:"subnet"`
+		Mode                   string `yaml:"mode"`
+		AllowClientToClient    bool   `yaml:"allow-client-to-client"`
+		AllowIpSpoofing        bool   `yaml:"allow-ip-spoofing"`
+		AllowUnknownEtherTypes bool   `yaml:"allow-unknown-ether-types"`
+		EnableFragmentation    bool   `yaml:"enable-fragmentation"`
+		IpConfig               struct {
 			Local  bool `yaml:"local"`
 			Remote bool `yaml:"remote"`
 		} `yaml:"ip-config"`

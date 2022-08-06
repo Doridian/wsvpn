@@ -57,6 +57,8 @@ func (c *Client) registerCommandHandlers() {
 
 		c.doIpConfig = parameters.DoIpConfig
 
+		c.socket.AssignedIP = shared.NetIPToIPv4(c.remoteNet.GetRawIP())
+
 		c.log.Printf("Network mode %s, Subnet %s, MTU %d, IPConfig %s", parameters.Mode, c.remoteNet.GetRaw(), parameters.MTU, shared.BoolToEnabled(c.doIpConfig))
 
 		ifconfig := water.Config{

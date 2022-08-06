@@ -32,14 +32,8 @@ func (c *Client) configureInterface() error {
 }
 
 func (c *Client) getPlatformSpecifics(config *water.Config, ifaceConfig *InterfaceConfig) error {
-	if config.DeviceType == water.TAP {
-		config.ComponentID = ifaceConfig.Tap.ComponentId
-		config.InterfaceName = ifaceConfig.Tap.Name
-	} else {
-		config.ComponentID = ifaceConfig.Tun.ComponentId
-		config.InterfaceName = ifaceConfig.Tun.Name
-	}
-
+	config.ComponentID = ifaceConfig.ComponentId
+	config.InterfaceName = ifaceConfig.Name
 	config.Network = c.remoteNet.GetRaw()
 
 	return nil

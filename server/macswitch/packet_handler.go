@@ -5,13 +5,31 @@ import (
 	"github.com/Doridian/wsvpn/shared/sockets"
 )
 
+const ETH_LEN = 14
+
 func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, error) {
-	if len(packet) < 14 {
-		return false, nil
+	if len(packet) < ETH_LEN {
+		return !g.AllowUnknownEtherTypes, nil
+	}
+
+	etherType := shared.GetEtherType(packet)
+	if !g.AllowUnknownEtherTypes && etherType != shared.ETHTYPE_ARP && etherType != shared.ETHTYPE_IPV4 {
+		return true, nil
 	}
 
 	if socket != nil {
 		g.setMACFrom(socket, packet)
+	}
+
+	if !g.AllowIpSpoofing && etherType == shared.ETHTYPE_IPV4 {
+		if len(packet) < ETH_LEN+20 {
+			return !g.AllowUnknownEtherTypes, nil
+		}
+
+		srcIp := shared.GetSrcIPv4(packet, ETH_LEN)
+		if srcIp != socket.AssignedIP {
+			return true, nil
+		}
 	}
 
 	if socket == nil || g.AllowClientToClient {

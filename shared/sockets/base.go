@@ -14,6 +14,8 @@ import (
 const UndeterminedProtocolVersion = 0
 
 type Socket struct {
+	AssignedIP shared.IPv4
+
 	lastFragmentId        uint32
 	lastFragmentCleanup   time.Time
 	defragBuffer          map[uint32]*fragmentsInfo
@@ -179,8 +181,6 @@ func (s *Socket) Serve() {
 	s.adapter.WaitReady()
 
 	go s.cleanupFragmentsLoop()
-
-	s.tryServeIfaceRead()
 
 	go s.sendDefaultWelcome()
 }

@@ -20,20 +20,13 @@ func (s *Server) configIface(dev *water.Interface, ipClient net.IP) error {
 		return nil
 	}
 
-	if dev.IsTAP() {
-		return shared.ExecCmd("ip", "addr", "add", "dev", dev.Name(), fmt.Sprintf("%s/%d", s.VPNNet.GetServerIP().String(), s.VPNNet.GetSize()))
-	}
-
-	return shared.ExecCmd("ip", "addr", "add", "dev", dev.Name(), s.VPNNet.GetServerIP().String(), "peer", ipClient.String())
+	return shared.ExecCmd("ip", "addr", "add", "dev", dev.Name(), fmt.Sprintf("%s/%d", s.VPNNet.GetServerIP().String(), s.VPNNet.GetSize()))
 }
 
 func (s *Server) getPlatformSpecifics(config *water.Config, ifaceConfig *InterfacesConfig) error {
-	if config.DeviceType == water.TAP {
-		config.Name = ifaceConfig.Tap.Name
-		config.Persist = ifaceConfig.Tap.Persist
-	} else if ifaceConfig.Tun.NamePrefix != "" {
-		config.Name = shared.FindLowestNetworkInterfaceByPrefix(ifaceConfig.Tun.NamePrefix)
-	}
+	config.Name = ifaceConfig.Name
+	config.Persist = ifaceConfig.Persist
+
 	return nil
 }
 

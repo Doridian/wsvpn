@@ -40,11 +40,8 @@ func (c *Client) configureInterface() error {
 }
 
 func (c *Client) getPlatformSpecifics(config *water.Config, ifaceConfig *InterfaceConfig) error {
-	if config.DeviceType == water.TAP {
-		config.Name = ifaceConfig.Tap.Name
-	} else {
-		config.Name = ifaceConfig.Tun.Name
-	}
+	config.Name = ifaceConfig.Name
+	config.Persist = ifaceConfig.Persist
 	return nil
 }
 

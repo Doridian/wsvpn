@@ -20,10 +20,7 @@ func (s *Server) configIface(dev *water.Interface, ipClient net.IP) error {
 		return shared.ExecCmd("ifconfig", dev.Name(), "up")
 	}
 
-	if dev.IsTAP() {
-		return shared.ExecCmd("ifconfig", dev.Name(), fmt.Sprintf("%s/%d", s.VPNNet.GetServerIP().String(), s.VPNNet.GetSize()), "up")
-	}
-	return shared.ExecCmd("ifconfig", dev.Name(), s.VPNNet.GetServerIP().String(), ipClient.String(), "up")
+	return shared.ExecCmd("ifconfig", dev.Name(), fmt.Sprintf("%s/%d", s.VPNNet.GetServerIP().String(), s.VPNNet.GetSize()), "up")
 }
 
 func (s *Server) getPlatformSpecifics(config *water.Config, ifaceConfig *InterfacesConfig) error {

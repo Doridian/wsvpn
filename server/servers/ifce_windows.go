@@ -3,7 +3,6 @@
 package servers
 
 import (
-	"errors"
 	"fmt"
 	"net"
 
@@ -25,17 +24,12 @@ func (s *Server) configIface(dev *water.Interface, ipClient net.IP) error {
 }
 
 func (s *Server) getPlatformSpecifics(config *water.Config, ifaceConfig *InterfacesConfig) error {
-	if config.DeviceType == water.TAP {
-		config.ComponentID = ifaceConfig.Tap.ComponentId
-		config.InterfaceName = ifaceConfig.Tap.Name
-	}
+	config.ComponentID = ifaceConfig.ComponentId
+	config.InterfaceName = ifaceConfig.Name
 
 	return nil
 }
 
 func (s *Server) verifyPlatformFlags() error {
-	if s.Mode != shared.VPN_MODE_TAP {
-		return errors.New("running the server on Windows requires using TAP mode")
-	}
 	return nil
 }

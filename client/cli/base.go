@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"strings"
@@ -32,7 +31,7 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 	var userInfo *url.Userinfo
 
 	if config.Client.AuthFile != "" {
-		authData, err := ioutil.ReadFile(config.Client.AuthFile)
+		authData, err := os.ReadFile(config.Client.AuthFile)
 		if err != nil {
 			panic(err)
 		}
@@ -57,7 +56,7 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 	}
 
 	if config.Client.Tls.Ca != "" {
-		data, err := ioutil.ReadFile(config.Client.Tls.Ca)
+		data, err := os.ReadFile(config.Client.Tls.Ca)
 		if err != nil {
 			panic(err)
 		}

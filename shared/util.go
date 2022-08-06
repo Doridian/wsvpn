@@ -9,8 +9,18 @@ import (
 )
 
 type MacAddr [6]byte
+type IPv4 = [4]byte
 
 var DefaultMac = MacAddr{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+var DefaultIPv4 = IPv4{255, 255, 255, 255}
+
+type EtherType = uint16
+
+const (
+	ETHTYPE_IPV4 = 0x0800
+	ETHTYPE_ARP  = 0x0806
+	ETHTYPE_IPV6 = 0x86DD
+)
 
 func ExecCmd(cmd string, arg ...string) error {
 	cmdO := exec.Command(cmd, arg...)
@@ -33,6 +43,38 @@ func GetDestMAC(packet []byte) MacAddr {
 
 func MACIsUnicast(mac MacAddr) bool {
 	return (mac[0] & 1) == 0
+}
+
+func GetEtherType(packet []byte) EtherType {
+	return uint16(packet[12])>>8 | uint16(packet[13])
+}
+
+func GetSrcIPv4(packet []byte, offset int) IPv4 {
+	var ip IPv4
+	copy(ip[:], packet[12+offset:16+offset])
+	return ip
+}
+
+func GetDestIPv4(packet []byte, offset int) IPv4 {
+	var ip IPv4
+	copy(ip[:], packet[16+offset:20+offset])
+	return ip
+}
+
+func NetIPToIPv4(ip net.IP) IPv4 {
+	var res IPv4
+	copy(res[:], ip[0:4])
+	return res
+}
+
+func IPv4IsUnicast(ip IPv4) bool {
+	if ip == DefaultIPv4 {
+		return false
+	}
+	if ip[0]&0xf0 == 0xe0 {
+		return false
+	}
+	return true
 }
 
 func NetworkInterfaceExists(name string) bool {

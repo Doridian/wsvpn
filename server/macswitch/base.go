@@ -8,7 +8,9 @@ import (
 )
 
 type MACSwitch struct {
-	AllowClientToClient bool
+	AllowClientToClient    bool
+	AllowIpSpoofing        bool
+	AllowUnknownEtherTypes bool
 
 	macTable    map[shared.MacAddr]*sockets.Socket
 	socketTable map[*sockets.Socket]shared.MacAddr
@@ -17,9 +19,11 @@ type MACSwitch struct {
 
 func MakeMACSwitch() *MACSwitch {
 	return &MACSwitch{
-		AllowClientToClient: false,
-		macTable:            make(map[shared.MacAddr]*sockets.Socket),
-		socketTable:         make(map[*sockets.Socket]shared.MacAddr),
-		macLock:             &sync.RWMutex{},
+		AllowClientToClient:    false,
+		AllowIpSpoofing:        false,
+		AllowUnknownEtherTypes: false,
+		macTable:               make(map[shared.MacAddr]*sockets.Socket),
+		socketTable:            make(map[*sockets.Socket]shared.MacAddr),
+		macLock:                &sync.RWMutex{},
 	}
 }

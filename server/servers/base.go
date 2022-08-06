@@ -39,7 +39,7 @@ type Server struct {
 	usedSlots          map[uint64]bool
 	packetBufferSize   int
 	mtu                int
-	tapIface           *water.Interface
+	mainIface          *water.Interface
 	log                *log.Logger
 	serverId           string
 
@@ -92,15 +92,14 @@ func (s *Server) Serve() error {
 		return err
 	}
 
-	if s.Mode == shared.VPN_MODE_TAP {
-		err := s.createTAP()
-		if err != nil {
-			return err
-		}
-		s.serveWaitGroup.Add(1)
-		s.addCloser(s.tapIface)
-		go s.serveTAP()
+	err = s.createMainIface()
+	if err != nil {
+		return err
 	}
+
+	s.serveWaitGroup.Add(1)
+	s.addCloser(s.mainIface)
+	go s.serveMainIface()
 
 	s.listen()
 

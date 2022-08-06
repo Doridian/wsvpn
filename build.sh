@@ -7,7 +7,8 @@ then
 	VERSION="dev"
 fi
 
-LIPO="$(which llvm-lipo || which lipo)"
+LIPO="$(which llvm-lipo || which lipo || true)"
+UPX="$(which upx || true)"
 
 LDFLAGS="-w -s -X 'github.com/Doridian/wsvpn/shared.Version=${VERSION}'"
 DO_DOCKER_PUSH="$1"
@@ -91,6 +92,18 @@ buildmips linux mips
 buildmips linux mipsle
 buildfor linux mips64
 buildfor linux mips64le
+
+if [ ! -z "$UPX" ]
+then
+	echo "Found UPX as $UPX. Compressing Linux binaries..."
+	for LINBIN in dist/*-linux-*
+	do
+		"$UPX" -o"$LINBIN-compressed" -9 "$LINBIN" &
+	done
+	wait
+else
+	echo "Could not find UPX. No compressed Linux binaries can be  made!"
+fi
 
 buildfor darwin amd64
 buildfor darwin arm64

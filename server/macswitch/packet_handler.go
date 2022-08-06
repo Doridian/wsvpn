@@ -54,6 +54,7 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 		return true, nil
 	}
 
+	log.Printf("UNH: %d", etherType)
 	return false, nil
 }
 

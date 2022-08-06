@@ -8,6 +8,7 @@ from threading import Condition, Thread
 from subprocess import call, check_call, check_output
 from os import execvp, fork, listdir, mkdir, putenv, remove, waitpid, WEXITSTATUS, WIFEXITED
 import os
+from time import time
 from typing import Optional
 from shutil import which
 
@@ -116,6 +117,7 @@ class BuildTask(Thread):
         self.dependencies = dependencies
         self.outputs = outputs
         self.name = name
+        self.exc = None
 
     def can_run(self) -> bool:
         for dep in self.dependencies:
@@ -130,11 +132,18 @@ class BuildTask(Thread):
         print(f"Starting: {self.name}")
         try:
             self._run()
+        except Exception as e:
+            self.exc = e
         finally:
             print(f"Done: {self.name}")
             build_task_cond.acquire()
             build_task_cond.notify_all()
             build_task_cond.release()
+
+    def join(self, timeout=None):
+        super().join(timeout=timeout)
+        if self.exc:
+            raise self.exc
 
 class GoBuildTask(BuildTask):
     def __init__(self, proj: str, arch: Arch, goos: str, exesuffix: str) -> None:
@@ -224,7 +233,6 @@ class LipoTask(BuildTask):
 
         args.append("-output")
         args.append(self.outputs[0])
-        
         check_call(args)
 
 def main():
@@ -301,6 +309,8 @@ def main():
 
         return None
 
+    all_tasks: list = tasks.copy()
+
     num_jobs = res.jobs
     running_tasks: list = []
     while len(tasks) > 0:
@@ -320,7 +330,7 @@ def main():
 
         running_tasks = [task for task in running_tasks if task.is_alive()]
 
-    for task in running_tasks:
+    for task in all_tasks:
         task.join()
 
     if len(tasks) > 0:

@@ -184,5 +184,7 @@ func (s *Socket) Serve() {
 
 	go s.cleanupFragmentsLoop()
 
+	s.tryServeIfaceRead()
+
 	go s.sendDefaultWelcome()
 }

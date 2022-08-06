@@ -17,10 +17,9 @@ import (
 	"github.com/google/uuid"
 )
 
-var configPtr = flag.String("config", "server.yml", "Config file name")
-var printDefaultConfigPtr = flag.Bool("print-default-config", false, "Print default config to console")
-
 func main() {
+	configPtr := flag.String("config", "server.yml", "Config file name")
+	printDefaultConfigPtr := flag.Bool("print-default-config", false, "Print default config to console")
 	flag.Usage = cli.UsageWithVersion
 	flag.Parse()
 

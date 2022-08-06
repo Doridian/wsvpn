@@ -15,10 +15,9 @@ import (
 	"github.com/Doridian/wsvpn/shared/cli"
 )
 
-var configPtr = flag.String("config", "client.yml", "Config file name")
-var printDefaultConfigPtr = flag.Bool("print-default-config", false, "Print default config to console")
-
 func main() {
+	configPtr := flag.String("config", "client.yml", "Config file name")
+	printDefaultConfigPtr := flag.Bool("print-default-config", false, "Print default config to console")
 	flag.Usage = cli.UsageWithVersion
 	flag.Parse()
 

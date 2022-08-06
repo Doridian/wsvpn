@@ -9,6 +9,7 @@ from subprocess import call, check_call, check_output
 from os import execvp, fork, listdir, mkdir, putenv, remove, waitpid, WEXITSTATUS, WIFEXITED
 import os
 from typing import Optional
+from shutil import which
 
 #VERSION="$(git describe --tags 2> /dev/null)"
 #if [ -z "$VERSION" ]
@@ -27,6 +28,20 @@ if not VERSION:
     VERSION = "dev"
 
 LDFLAGS = f"-w -s -X 'github.com/Doridian/wsvpn/shared.Version={VERSION}'"
+
+_exec_cache: map = {}
+def find_executable(name: str, candidates: list) -> Optional[str]:
+    if name in _exec_cache:
+        return _exec_cache[name]
+
+    found = None
+    for candidate in candidates:
+        if which(candidate):
+            found = candidate
+            break
+    _exec_cache[name] = found
+    return found
+
 
 # Based on : https://groups.google.com/d/msg/sage-devel/1lIJ961gV_w/y-2uqPCyzUMJ
 def ncpus():
@@ -197,9 +212,7 @@ class LipoTask(BuildTask):
                 raise ValueError("Only supply archs to LipoTask that have a valid Darwin arch associated!")
     
     def _run(self) -> None:
-        lipo_bin = "lipo"
-
-        args = [lipo_bin, "-create"]
+        args = [find_executable("lipo", ["lipo", "llvm-lipo"]), "-create"]
 
         for gobin in self.gobins:
             darwin_name = gobin.arch.darwin_name

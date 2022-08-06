@@ -253,6 +253,11 @@ def main():
     architectures = None
     if res.architectures == "*":
         architectures = [arch for arch in KNOWN_ARCHITECTURES]
+    elif res.architectures == "list":
+        print("Supported architectures:")
+        for _, arch in KNOWN_ARCHITECTURES.items():
+            print(f"\t- {arch.name} (on {', '.join(arch.platforms)})")
+        return
     else:
         architectures = res.architectures.split(",")
 

@@ -3,6 +3,7 @@
 import argparse
 from dataclasses import dataclass
 from os.path import join, exists
+from platform import machine, system
 from threading import Condition, Thread
 from subprocess import DEVNULL, call, check_call, check_output
 from os import environ, listdir, mkdir, remove
@@ -79,9 +80,14 @@ class Arch():
     platforms: list
 
 KNOWN_ARCHITECTURES: map = {}
+KNOWN_ARCHITECTURE_ALIASES: map = {}
 
 def add_arch(arch: Arch):
     KNOWN_ARCHITECTURES[arch.name] = arch
+    if arch.docker_name:
+        KNOWN_ARCHITECTURE_ALIASES[arch.docker_name] = arch.name
+    if arch.darwin_name:
+        KNOWN_ARCHITECTURE_ALIASES[arch.darwin_name] = arch.name
 
 add_arch(Arch(name="amd64", docker_name="amd64", darwin_name="x86_64", goarch="amd64", upx_supported=True, goenv={}, platforms=["windows", "linux", "darwin"]))
 add_arch(Arch(name="386", docker_name="i386", darwin_name="", goarch="386", upx_supported=True, goenv={}, platforms=["windows", "linux"]))
@@ -98,6 +104,13 @@ add_arch(Arch(name="mipsle", docker_name="", darwin_name="", goarch="mipsle", up
 add_arch(Arch(name="mipsle-softfloat", docker_name="", darwin_name="", goarch="mipsle", upx_supported=True, goenv={"GOMIPS": "softfloat"}, platforms=["linux"]))
 add_arch(Arch(name="mips64", docker_name="", darwin_name="", goarch="mips64", upx_supported=False, goenv={}, platforms=["linux"]))
 add_arch(Arch(name="mips64le", docker_name="", darwin_name="", goarch="mips64le", upx_supported=False, goenv={}, platforms=["linux"]))
+
+def try_resolve_arch(name: str) -> Optional[str]:
+    if name in KNOWN_ARCHITECTURES:
+        return name
+    if name in KNOWN_ARCHITECTURE_ALIASES:
+        return KNOWN_ARCHITECTURE_ALIASES[name]
+    return None
 
 def check_call_addenv(args: list, env: map) -> int:
     for k, v in environ.items():
@@ -235,8 +248,8 @@ class LipoTask(BuildTask):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--platforms", "-p", default="*", required=False, type=str, help="Which platforms to build for (* for all, comma separated). Accepted: linux, darwin, windows")
-    parser.add_argument("--architectures", "-a", default="*", required=False, type=str, help="Which architectures to build for (* for all, comma separated). Use \"list\" to get a list")
+    parser.add_argument("--platforms", "-p", default="*", required=False, type=str, help="Which platforms to build for (* for all, local for host machine, comma separated). Accepted: linux, darwin, windows")
+    parser.add_argument("--architectures", "-a", default="*", required=False, type=str, help="Which architectures to build for (* for all, local for host machine, comma separated). Use \"list\" to get a list")
     parser.add_argument("--projects", "-i", default="*", required=False, type=str, help="Which projects to build (* for all, comma separated). Accepted: client, server, dual")
     parser.add_argument("--compress", "-c", default=False, action="store_true", help="Output UPX compressed binaries for Linux")
     parser.add_argument("--lipo", default=False, action="store_true", help="Produce universal binaries using lipo or llvm-lipo")
@@ -250,6 +263,11 @@ def main():
     platforms = None
     if flags.platforms == "*":
         platforms = ["linux", "darwin", "windows"]
+    elif flags.platforms == "local":
+        system_res = system().lower()
+        if not system_res:
+            raise ValueError("Could not determine local platform!")
+        platforms = [system_res]
     else:
         platforms = flags.platforms.split(",")
 
@@ -262,13 +280,21 @@ def main():
     architectures = None
     if flags.architectures == "*":
         architectures = [arch for arch in KNOWN_ARCHITECTURES]
+    elif flags.architectures == "local":
+        machine_res = machine().lower()
+        if not machine_res:
+            raise ValueError("Could not determine local architecture!")
+        arch_name = try_resolve_arch(machine_res)
+        if not arch_name:
+            raise ValueError(f"Could not find a supported architecture for: {machine_res}")
+        architectures = [arch_name]
     elif flags.architectures == "list":
         print("Supported architectures:")
         for _, arch in KNOWN_ARCHITECTURES.items():
             print(f"\t- {arch.name} (on {', '.join(arch.platforms)})")
         return
     else:
-        architectures = flags.architectures.split(",")
+        architectures = [try_resolve_arch(arch) for arch in flags.architectures.split(",")]
 
     print(f"Building version: {get_version()}")
 

@@ -13,6 +13,7 @@ from shutil import which
 
 _version_cache = None
 def get_version():
+    global _version_cache
     if _version_cache:
         return _version_cache
 

@@ -2,6 +2,7 @@
 
 import argparse
 from dataclasses import dataclass
+from functools import cache
 from os.path import join, exists
 from threading import Condition, Thread
 from subprocess import call, check_call, check_output
@@ -11,16 +12,18 @@ from traceback import print_exc
 from typing import Optional
 from shutil import which
 
-VERSION = None
-try:
-    VERSION = check_output(["git", "describe", "--tags"], encoding="utf-8").strip()
-except:
-    pass
+@cache
+def get_version():
+    ver = None
+    try:
+        ver = check_output(["git", "describe", "--tags"], encoding="utf-8").strip()
+        print("RUNNING!!!!")
+    except:
+        pass
 
-if not VERSION:
-    VERSION = "dev"
-
-LDFLAGS = f"-w -s -X 'github.com/Doridian/wsvpn/shared.Version={VERSION}'"
+    if not ver:
+        return "dev"
+    return ver
 
 _exec_cache: map = {}
 def find_executable(name: str, candidates: list) -> Optional[str]:
@@ -151,7 +154,8 @@ class GoBuildTask(BuildTask):
         for k, v in self.arch.goenv.items():
             env[k] = v
 
-        check_call_addenv(["go", "build", "-ldflags", LDFLAGS, "-o", self.outputs[0], f"./{self.proj}"], env=env)
+        ldflags = f"-w -s -X 'github.com/Doridian/wsvpn/shared.Version={get_version()}'"
+        check_call_addenv(["go", "build", "-ldflags", ldflags, "-o", self.outputs[0], f"./{self.proj}"], env=env)
 
 class CompressTask(BuildTask):
     def __init__(self, input: str) -> None:
@@ -162,7 +166,7 @@ class CompressTask(BuildTask):
 
 class DockerBuildTask(BuildTask):
     def __init__(self, gobins: list, tag_latest: bool, push: bool) -> None:
-        super().__init__(dependencies=[gobin.outputs[0] for gobin in gobins], outputs=[], name="Docker buildx")
+        super().__init__(dependencies=[gobin.outputs[0] for gobin in gobins], outputs=[], name=f"Docker buildx {gobins[0].proj}")
         
         self.gobins = gobins
         self.push = push
@@ -177,7 +181,7 @@ class DockerBuildTask(BuildTask):
                 raise ValueError("Only supply archs to DockerBuildTask that have a valid Docker arch associated!")
 
         tag_base = f"ghcr.io/doridian/wsvpn/{self.proj}"
-        self.tags = [f"{tag_base}:{VERSION}"]
+        self.tags = [f"{tag_base}:{get_version()}"]
         if tag_latest:
             self.tags.append(f"{tag_base}:latest")
 
@@ -197,7 +201,7 @@ class DockerBuildTask(BuildTask):
 
 class LipoTask(BuildTask):
     def __init__(self, gobins: list) -> None:
-        super().__init__(dependencies=[gobin.outputs[0] for gobin in gobins], outputs=[f"dist/{gobins[0].proj}-{gobins[0].goos}-universal"], name="Lipo")
+        super().__init__(dependencies=[gobin.outputs[0] for gobin in gobins], outputs=[f"dist/{gobins[0].proj}-darwin-universal"], name=f"Lipo {gobins[0].proj}")
 
         self.gobins = gobins
         self.proj = gobins[0].proj
@@ -261,6 +265,8 @@ def main():
         return
     else:
         architectures = flags.architectures.split(",")
+
+    print(f"Building version: {get_version()}")
 
     try:
         mkdir("dist")

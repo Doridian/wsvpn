@@ -15,9 +15,10 @@ tunnel:
     timeout: 5s
 
 interface:
-  name: ""
+  name: "" # Name of the interface to use, will be used as a prefix is one-interface-per-connection is chosen
   persist: false
   component-id: root\tap0901 # Windows only. Defaults: root\tap0901 or tap0901
+  one-interface-per-connection: false # Set to true to use separate interface per connection
 
 scripts:
   # These scripts get run as "script operation subnet interface"

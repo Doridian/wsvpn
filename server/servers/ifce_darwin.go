@@ -20,6 +20,9 @@ func (s *Server) configIface(dev *water.Interface, ipClient net.IP) error {
 		return shared.ExecCmd("ifconfig", dev.Name(), "up")
 	}
 
+	if s.InterfaceConfig.OneInterfacePerConnection {
+		return shared.ExecCmd("ifconfig", dev.Name(), s.VPNNet.GetServerIP().String(), ipClient.String(), "up")
+	}
 	return shared.ExecCmd("ifconfig", dev.Name(), fmt.Sprintf("%s/%d", s.VPNNet.GetServerIP().String(), s.VPNNet.GetSize()), "up")
 }
 

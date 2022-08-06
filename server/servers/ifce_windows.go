@@ -3,6 +3,7 @@
 package servers
 
 import (
+	"errors"
 	"fmt"
 	"net"
 
@@ -31,5 +32,8 @@ func (s *Server) getPlatformSpecifics(config *water.Config, ifaceConfig *shared.
 }
 
 func (s *Server) verifyPlatformFlags() error {
+	if !s.InterfaceConfig.OneInterfacePerConnection {
+		return errors.New("windows can not enable one-interface-per-connection")
+	}
 	return nil
 }

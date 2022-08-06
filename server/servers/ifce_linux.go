@@ -20,10 +20,21 @@ func (s *Server) configIface(dev *water.Interface, ipClient net.IP) error {
 		return nil
 	}
 
+	if s.InterfaceConfig.OneInterfacePerConnection {
+		return shared.ExecCmd("ip", "addr", "add", "dev", dev.Name(), s.VPNNet.GetServerIP().String(), "peer", ipClient.String())
+	}
 	return shared.ExecCmd("ip", "addr", "add", "dev", dev.Name(), fmt.Sprintf("%s/%d", s.VPNNet.GetServerIP().String(), s.VPNNet.GetSize()))
 }
 
 func (s *Server) getPlatformSpecifics(config *water.Config, ifaceConfig *shared.InterfaceConfig) error {
+	if s.InterfaceConfig.OneInterfacePerConnection {
+		if ifaceConfig.Name != "" {
+			config.Name = shared.FindLowestNetworkInterfaceByPrefix(ifaceConfig.Name)
+		}
+		config.Persist = false
+		return nil
+	}
+
 	config.Name = ifaceConfig.Name
 	config.Persist = ifaceConfig.Persist
 

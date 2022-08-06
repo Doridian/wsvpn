@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/lucas-clemente/quic-go"
 	"github.com/lucas-clemente/quic-go/http3"
+	"github.com/songgao/water"
 )
 
 func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
@@ -100,7 +101,42 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 
 	clientLogger.Printf("Command serialization: %s", commands.SerializationTypeToString(adapter.GetCommandSerializationType()))
 
-	socket := sockets.MakeSocket(clientLogger, adapter, s.mainIface, false)
+	iface := s.mainIface
+	ifaceManaged := false
+
+	if s.InterfaceConfig.OneInterfacePerConnection {
+		ifaceManaged = true
+
+		s.ifaceCreationMutex.Lock()
+		ifaceConfig := water.Config{
+			DeviceType: s.Mode.ToWaterDeviceType(),
+		}
+		err = s.getPlatformSpecifics(&ifaceConfig, s.InterfaceConfig)
+		if err != nil {
+			s.ifaceCreationMutex.Unlock()
+			clientLogger.Printf("Error extending iface config: %v", err)
+			return
+		}
+
+		iface, err = water.New(ifaceConfig)
+		s.ifaceCreationMutex.Unlock()
+		if err != nil {
+			clientLogger.Printf("Error creating new iface: %v", err)
+			return
+		}
+
+		defer iface.Close()
+
+		clientLogger.Printf("Assigned interface %s", iface.Name())
+
+		err = s.configIface(iface, ipClient)
+		if err != nil {
+			clientLogger.Printf("Error configuring interface: %v", err)
+			return
+		}
+	}
+
+	socket := sockets.MakeSocket(clientLogger, adapter, iface, ifaceManaged)
 	defer socket.Close()
 
 	socket.AssignedIP = shared.NetIPToIPv4(ipClient)
@@ -125,7 +161,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	socket.WaitReady()
 
 	remoteNetStr := fmt.Sprintf("%s/%d", ipClient.String(), s.VPNNet.GetSize())
-	ifaceName := s.mainIface.Name()
+	ifaceName := iface.Name()
 
 	err = socket.MakeAndSendCommand(&commands.InitParameters{
 		ClientID:            clientId,

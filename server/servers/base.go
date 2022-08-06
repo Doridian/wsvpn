@@ -92,14 +92,16 @@ func (s *Server) Serve() error {
 		return err
 	}
 
-	err = s.createMainIface()
-	if err != nil {
-		return err
-	}
+	if !s.InterfaceConfig.OneInterfacePerConnection {
+		err = s.createMainIface()
+		if err != nil {
+			return err
+		}
 
-	s.serveWaitGroup.Add(1)
-	s.addCloser(s.mainIface)
-	go s.serveMainIface()
+		s.serveWaitGroup.Add(1)
+		s.addCloser(s.mainIface)
+		go s.serveMainIface()
+	}
 
 	s.listen()
 

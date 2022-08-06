@@ -26,7 +26,7 @@ func (s *Server) configIface(dev *water.Interface, ipClient net.IP) error {
 	return shared.ExecCmd("ifconfig", dev.Name(), fmt.Sprintf("%s/%d", s.VPNNet.GetServerIP().String(), s.VPNNet.GetSize()), "up")
 }
 
-func (s *Server) getPlatformSpecifics(config *water.Config, ifaceConfig *shared.InterfaceConfig) error {
+func (s *Server) getPlatformSpecifics(config *water.Config) error {
 	return nil
 }
 

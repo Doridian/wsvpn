@@ -111,7 +111,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		ifaceConfig := water.Config{
 			DeviceType: s.Mode.ToWaterDeviceType(),
 		}
-		err = s.getPlatformSpecifics(&ifaceConfig, s.InterfaceConfig)
+		err = s.getPlatformSpecifics(&ifaceConfig)
 		if err != nil {
 			s.ifaceCreationMutex.Unlock()
 			clientLogger.Printf("Error extending iface config: %v", err)

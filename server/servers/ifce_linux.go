@@ -26,17 +26,17 @@ func (s *Server) configIface(dev *water.Interface, ipClient net.IP) error {
 	return shared.ExecCmd("ip", "addr", "add", "dev", dev.Name(), fmt.Sprintf("%s/%d", s.VPNNet.GetServerIP().String(), s.VPNNet.GetSize()))
 }
 
-func (s *Server) getPlatformSpecifics(config *water.Config, ifaceConfig *shared.InterfaceConfig) error {
+func (s *Server) getPlatformSpecifics(config *water.Config) error {
 	if s.InterfaceConfig.OneInterfacePerConnection {
-		if ifaceConfig.Name != "" {
-			config.Name = shared.FindLowestNetworkInterfaceByPrefix(ifaceConfig.Name)
+		if s.InterfaceConfig.Name != "" {
+			config.Name = shared.FindLowestNetworkInterfaceByPrefix(s.InterfaceConfig.Name)
 		}
 		config.Persist = false
 		return nil
 	}
 
-	config.Name = ifaceConfig.Name
-	config.Persist = ifaceConfig.Persist
+	config.Name = s.InterfaceConfig.Name
+	config.Persist = s.InterfaceConfig.Persist
 
 	return nil
 }

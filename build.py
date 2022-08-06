@@ -285,7 +285,7 @@ def main():
                 platform_tasks.append(task)
 
                 tasks.append(task)
-                if res.compress and task.arch.upx_supported:
+                if res.compress and platform == "linux" and task.arch.upx_supported:
                     tasks.append(CompressTask(input=task.outputs[0]))
 
             if platform == "linux" and res.docker:

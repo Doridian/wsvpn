@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from os.path import join, exists
 from threading import Condition, Thread
 from subprocess import call, check_call, check_output
-from os import execvp, fork, listdir, mkdir, putenv, remove, waitpid, waitstatus_to_exitcode
+from os import execvp, fork, listdir, mkdir, putenv, remove, waitpid, WEXITSTATUS, WIFEXITED
 import os
 from typing import Optional
 
@@ -86,7 +86,9 @@ def exec_add_env(args: list[str], env: map):
         execvp(args[0], args)
     else:
         _, waitstatus = waitpid(subpid, 0)
-        exitcode = waitstatus_to_exitcode(waitstatus)
+        if not WIFEXITED(waitstatus):
+            raise ValueError("Process did not exit normally")
+        exitcode = WEXITSTATUS(waitstatus)
         if exitcode != 0:
             raise ValueError(f"Exit status non-zero: {exitcode}")
 

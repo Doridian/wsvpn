@@ -27,6 +27,11 @@ const fragmentationMinProtocol = 10
 const fragmentationNegotiatedMinProtocol = 11
 
 func (s *Socket) processPacket(packet []byte) bool {
+	if len(packet) < 1 {
+		s.log.Printf("Packet too short for processing")
+		return false
+	}
+
 	if s.packetHandler != nil {
 		res, err := s.packetHandler.HandlePacket(s, packet)
 		if err != nil {

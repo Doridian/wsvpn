@@ -43,15 +43,18 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 		if shared.MACIsUnicast(dest) {
 			socket_dest := g.findSocketByMAC(dest)
 			if socket_dest != nil {
+				log.Printf("HHU: %d", etherType)
 				socket_dest.WritePacket(packet)
 			} else {
 				log.Printf("UNH: %d", etherType)
 				return false, nil
 			}
 		} else {
+			log.Printf("BCM: %d", etherType)
 			g.broadcastDataMessage(packet, socket)
 		}
 
+		log.Printf("HHM: %d", etherType)
 		return true, nil
 	}
 

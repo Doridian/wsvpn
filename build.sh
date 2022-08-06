@@ -7,6 +7,9 @@ then
 	VERSION="dev"
 fi
 
+which llvm-lipo
+llvm-lipo --help
+
 LDFLAGS="-w -s -X 'github.com/Doridian/wsvpn/shared.Version=${VERSION}'"
 DO_DOCKER_PUSH="$1"
 DO_DOCKER_TAG_LATEST="$2"

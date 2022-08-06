@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Doridian/wsvpn/client/clients"
 	"github.com/Doridian/wsvpn/shared"
 	shared_cli "github.com/Doridian/wsvpn/shared/cli"
 )
@@ -20,7 +19,7 @@ type Config struct {
 		Ping              shared_cli.PingConfig `yaml:"ping"`
 	} `yaml:"tunnel"`
 
-	Interface clients.InterfaceConfig `yaml:"interface"`
+	Interface shared.InterfaceConfig `yaml:"interface"`
 
 	Scripts shared.EventConfig `yaml:"scripts"`
 

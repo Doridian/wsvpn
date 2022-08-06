@@ -24,7 +24,7 @@ type Client struct {
 	Headers            http.Header
 	SetDefaultGateway  bool
 	SocketConfigurator sockets.SocketConfigurator
-	InterfaceConfig    *InterfaceConfig
+	InterfaceConfig    *shared.InterfaceConfig
 	AutoReconnectDelay time.Duration
 
 	log        *log.Logger

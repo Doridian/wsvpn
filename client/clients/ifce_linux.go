@@ -39,7 +39,7 @@ func (c *Client) configureInterface() error {
 	return nil
 }
 
-func (c *Client) getPlatformSpecifics(config *water.Config, ifaceConfig *InterfaceConfig) error {
+func (c *Client) getPlatformSpecifics(config *water.Config, ifaceConfig *shared.InterfaceConfig) error {
 	config.Name = ifaceConfig.Name
 	config.Persist = ifaceConfig.Persist
 	return nil

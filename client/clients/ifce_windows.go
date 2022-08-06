@@ -31,7 +31,7 @@ func (c *Client) configureInterface() error {
 	return shared.ExecCmd("netsh", "interface", "ip", "set", "address", "source=static", fmt.Sprintf("addr=%s", c.remoteNet.GetRaw()), fmt.Sprintf("name=%s", c.iface.Name()), fmt.Sprintf("mask=%s", c.remoteNet.GetNetmask()), gw)
 }
 
-func (c *Client) getPlatformSpecifics(config *water.Config, ifaceConfig *InterfaceConfig) error {
+func (c *Client) getPlatformSpecifics(config *water.Config, ifaceConfig *shared.InterfaceConfig) error {
 	config.ComponentID = ifaceConfig.ComponentId
 	config.InterfaceName = ifaceConfig.Name
 	config.Network = c.remoteNet.GetRaw()

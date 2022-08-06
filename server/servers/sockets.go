@@ -101,8 +101,8 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 
 	clientLogger.Printf("Command serialization: %s", commands.SerializationTypeToString(adapter.GetCommandSerializationType()))
 
-	iface := s.mainIface
-	ifaceManaged := false
+	var ifaceManaged bool
+	var iface *water.Interface
 
 	if s.InterfaceConfig.OneInterfacePerConnection {
 		ifaceManaged = true
@@ -134,6 +134,9 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 			clientLogger.Printf("Error configuring interface: %v", err)
 			return
 		}
+	} else {
+		ifaceManaged = false
+		iface = s.mainIface
 	}
 
 	socket := sockets.MakeSocket(clientLogger, adapter, iface, ifaceManaged)

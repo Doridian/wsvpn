@@ -5,13 +5,9 @@ tunnel:
     timeout: 5s
 
 interface:
-  tap:
-    name: ""
-    persist: false
-    component-id: root\tap0901 # Windows only. Defaults: root\tap0901 or tap0901
-  tun:
-    name: ""
-    component-id: root\tap0901 # Windows only. Defaults: root\tap0901 or tap0901
+  name: ""
+  persist: false
+  component-id: root\tap0901 # Windows only. Defaults: root\tap0901 or tap0901
 
 scripts:
   # These scripts get run as "script operation subnet interface"

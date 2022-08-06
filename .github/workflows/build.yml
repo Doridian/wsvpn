@@ -13,7 +13,6 @@ jobs:
         uses: KyleMayes/install-llvm-action@v1
         with:
           version: "10"
-          cache: true
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:

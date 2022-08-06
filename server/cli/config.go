@@ -20,6 +20,7 @@ type Config struct {
 		AllowClientToClient    bool   `yaml:"allow-client-to-client"`
 		AllowIpSpoofing        bool   `yaml:"allow-ip-spoofing"`
 		AllowUnknownEtherTypes bool   `yaml:"allow-unknown-ether-types"`
+		AllowMacChanging       bool   `yaml:"allow-mac-changing"`
 		EnableFragmentation    bool   `yaml:"enable-fragmentation"`
 		IpConfig               struct {
 			Local  bool `yaml:"local"`

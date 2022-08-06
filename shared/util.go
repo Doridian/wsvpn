@@ -46,7 +46,7 @@ func MACIsUnicast(mac MacAddr) bool {
 }
 
 func GetEtherType(packet []byte) EtherType {
-	return uint16(packet[12])>>8 | uint16(packet[13])
+	return uint16(packet[12])<<8 | uint16(packet[13])
 }
 
 func GetSrcIPv4(packet []byte, offset int) IPv4 {

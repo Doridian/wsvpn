@@ -2,10 +2,11 @@
 
 import argparse
 from dataclasses import dataclass
+from email.mime import base
 from os.path import join, exists
 from threading import Condition, Thread
 from subprocess import call, check_call, check_output
-from os import execvp, fork, listdir, mkdir, putenv, remove, waitpid, WEXITSTATUS, WIFEXITED
+from os import environ, listdir, mkdir, remove
 import os
 from typing import Optional
 from shutil import which
@@ -91,19 +92,11 @@ add_arch(Arch(name="mipsle-softfloat", docker_name="", darwin_name="", goarch="m
 add_arch(Arch(name="mips64", docker_name="", darwin_name="", goarch="mips64", upx_supported=False, goenv={}, platforms=["linux"]))
 add_arch(Arch(name="mips64le", docker_name="", darwin_name="", goarch="mips64le", upx_supported=False, goenv={}, platforms=["linux"]))
 
-def exec_add_env(args: list, env: map):
-    subpid = fork()
-    if subpid == 0:
-        for k, v in env.items():
-            putenv(k, v)
-        execvp(args[0], args)
-    else:
-        _, waitstatus = waitpid(subpid, 0)
-        if not WIFEXITED(waitstatus):
-            raise ValueError("Process did not exit normally")
-        exitcode = WEXITSTATUS(waitstatus)
-        if exitcode != 0:
-            raise ValueError(f"Exit status non-zero: {exitcode}")
+def check_call_addenv(args: list, env: map) -> int:
+    for k, v in environ.items():
+        if k not in env:
+            env[k] = v
+    return check_call(args, env=env)
 
 build_task_cond = Condition()
 
@@ -142,22 +135,23 @@ class BuildTask(Thread):
             raise self.exc
 
 class GoBuildTask(BuildTask):
-    def __init__(self, proj: str, arch: Arch, goos: str, exesuffix: str) -> None:
+    def __init__(self, proj: str, arch: Arch, goos: str, exesuffix: str, cgo: bool) -> None:
         super().__init__(dependencies=[proj], outputs=[f"dist/{proj}-{goos}-{arch.name}{exesuffix}"], name=f"Go build {proj}-{goos}-{arch.name}{exesuffix}")
         self.arch = arch
         self.goos = goos
         self.proj = proj
+        self.cgo = cgo
 
     def _run(self) -> None:
         env = {
-            "CGO_ENABLED": "0",
+            "CGO_ENABLED": "1" if self.cgo else "0",
             "GOOS": self.goos,
             "GOARCH": self.arch.goarch,
         }
         for k, v in self.arch.goenv.items():
             env[k] = v
 
-        exec_add_env(["go", "build", "-ldflags", LDFLAGS, "-o", self.outputs[0], f"./{self.proj}"], env=env)
+        check_call_addenv(["go", "build", "-ldflags", LDFLAGS, "-o", self.outputs[0], f"./{self.proj}"], env=env)
 
 class CompressTask(BuildTask):
     def __init__(self, input: str) -> None:
@@ -242,30 +236,31 @@ def main():
     parser.add_argument("--docker-tag-latest", default=False, action="store_true", help="Whether to tag latest on built Docker images")
     parser.add_argument("--docker-push", default=False, action="store_true", help="Whether to push Docker images to the registry")
     parser.add_argument("--jobs", "-j", default=ncpus(), type=int, help="How many jobs to run in parallel")
-    res = parser.parse_args()
+    parser.add_argument("--cgo", default=False, action="store_true", help="Will enable CGO in all builds")
+    flags = parser.parse_args()
     
     platforms = None
-    if res.platforms == "*":
+    if flags.platforms == "*":
         platforms = ["linux", "darwin", "windows"]
     else:
-        platforms = res.platforms.split(",")
+        platforms = flags.platforms.split(",")
 
     projects = None
-    if res.projects == "*":
+    if flags.projects == "*":
         projects = ["client", "server", "dual"]
     else:
-        projects = res.projects.split(",")
+        projects = flags.projects.split(",")
 
     architectures = None
-    if res.architectures == "*":
+    if flags.architectures == "*":
         architectures = [arch for arch in KNOWN_ARCHITECTURES]
-    elif res.architectures == "list":
+    elif flags.architectures == "list":
         print("Supported architectures:")
         for _, arch in KNOWN_ARCHITECTURES.items():
             print(f"\t- {arch.name} (on {', '.join(arch.platforms)})")
         return
     else:
-        architectures = res.architectures.split(",")
+        architectures = flags.architectures.split(",")
 
     try:
         mkdir("dist")
@@ -275,7 +270,7 @@ def main():
         remove(join("dist", distfile))
 
     check_call(["go", "mod", "download"])
-    if res.docker:
+    if flags.docker:
         call(["docker", "buildx", "create", "--name", "multiarch"])
         check_call(["docker", "buildx", "use", "multiarch"])
 
@@ -292,17 +287,17 @@ def main():
                 if platform not in arch.platforms:
                     continue
 
-                task = GoBuildTask(proj=proj, arch=arch, goos=platform, exesuffix=exesuffix)
+                task = GoBuildTask(proj=proj, arch=arch, goos=platform, exesuffix=exesuffix, cgo=flags.cgo)
                 platform_tasks.append(task)
 
                 tasks.append(task)
-                if res.compress and platform == "linux" and task.arch.upx_supported:
+                if flags.compress and platform == "linux" and task.arch.upx_supported:
                     tasks.append(CompressTask(input=task.outputs[0]))
 
-            if platform == "linux" and res.docker:
-                tasks.append(DockerBuildTask([task for task in platform_tasks if task.arch.docker_name], tag_latest=res.docker_tag_latest, push=res.docker_push))
+            if platform == "linux" and flags.docker:
+                tasks.append(DockerBuildTask([task for task in platform_tasks if task.arch.docker_name], tag_latest=flags.docker_tag_latest, push=flags.docker_push))
 
-            if platform == "darwin" and res.lipo:
+            if platform == "darwin" and flags.lipo:
                 tasks.append(LipoTask([task for task in platform_tasks if task.arch.darwin_name]))
 
     def pick_task() -> Optional[BuildTask]:
@@ -314,7 +309,7 @@ def main():
 
     all_tasks: list = tasks.copy()
 
-    num_jobs = res.jobs
+    num_jobs = flags.jobs
     running_tasks: list = []
     while len(tasks) > 0:
         while len(running_tasks) < num_jobs:

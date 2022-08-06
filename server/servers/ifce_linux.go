@@ -37,7 +37,6 @@ func (s *Server) getPlatformSpecifics(config *water.Config) error {
 
 	config.Name = s.InterfaceConfig.Name
 	config.Persist = s.InterfaceConfig.Persist
-
 	return nil
 }
 

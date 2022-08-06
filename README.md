@@ -81,8 +81,3 @@ Such files can be created and managed, for example, by the `htpasswd` CLI tool
 You can put in credentials using the `scheme://user:password@hostname:port` format in the `client.server` option (such as: `wss://user:pass@example.com:9000`)
 
 Alternatively, set `client.auth-file` to the name of a file with contents of the form `username:password`. This file may contain a blank line at the end, which will be stripped away.
-
-
-## Limitations
-
-- The server on Windows can currently only work in TAP mode, as the Windows OpenVPN driver does not support dynamic creation of interfaces (which is required as in TUN mode every client gets its own server-side interface)

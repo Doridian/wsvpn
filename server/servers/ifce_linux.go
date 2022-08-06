@@ -23,7 +23,7 @@ func (s *Server) configIface(dev *water.Interface, ipClient net.IP) error {
 	return shared.ExecCmd("ip", "addr", "add", "dev", dev.Name(), fmt.Sprintf("%s/%d", s.VPNNet.GetServerIP().String(), s.VPNNet.GetSize()))
 }
 
-func (s *Server) getPlatformSpecifics(config *water.Config, ifaceConfig *InterfacesConfig) error {
+func (s *Server) getPlatformSpecifics(config *water.Config, ifaceConfig *InterfaceConfig) error {
 	config.Name = ifaceConfig.Name
 	config.Persist = ifaceConfig.Persist
 

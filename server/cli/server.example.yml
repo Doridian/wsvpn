@@ -7,13 +7,13 @@ tunnel:
   allow-ip-spoofing: false # TAP only: Allow clients to use any IP address and not just the assigned one (on TUN IPs are always enforced)
   allow-unknown-ether-types: false # TAP only: allow unknown ether types (Anything other than ARP, IPv4)
   ip-config:
-    local: true # Configure local interfaces automatically
+    local: true # Configure local interface automatically
     remote: true # Send configuration data to clients for their interfaces
   ping:
     interval: 30s
     timeout: 5s
 
-interfaces:
+interface:
   name: ""
   persist: false
   component-id: root\tap0901 # Windows only. Defaults: root\tap0901 or tap0901

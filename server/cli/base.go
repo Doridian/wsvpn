@@ -45,7 +45,7 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 		panic(err)
 	}
 
-	server.InterfacesConfig = &config.Interfaces
+	server.InterfaceConfig = &config.Interface
 	server.SocketConfigurator = &cli.PingFlagsSocketConfigurator{
 		Config: &config.Tunnel.Ping,
 	}

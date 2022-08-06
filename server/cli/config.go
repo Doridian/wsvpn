@@ -29,7 +29,7 @@ type Config struct {
 		Ping shared_cli.PingConfig `yaml:"ping"`
 	} `yaml:"tunnel"`
 
-	Interfaces servers.InterfacesConfig `yaml:"interfaces"`
+	Interface servers.InterfaceConfig `yaml:"interface"`
 
 	Scripts shared.EventConfig `yaml:"scripts"`
 

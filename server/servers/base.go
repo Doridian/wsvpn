@@ -30,7 +30,7 @@ type Server struct {
 	Authenticator       authenticators.Authenticator
 	Mode                shared.VPNMode
 	SocketConfigurator  sockets.SocketConfigurator
-	InterfacesConfig    *InterfacesConfig
+	InterfaceConfig     *InterfaceConfig
 	EnableFragmentation bool
 
 	upgraders          []upgraders.SocketUpgrader

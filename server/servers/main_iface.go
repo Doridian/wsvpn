@@ -37,7 +37,7 @@ func (s *Server) createMainIface() error {
 	ifaceConfig := water.Config{
 		DeviceType: s.Mode.ToWaterDeviceType(),
 	}
-	err = s.getPlatformSpecifics(&ifaceConfig, s.InterfacesConfig)
+	err = s.getPlatformSpecifics(&ifaceConfig, s.InterfaceConfig)
 	if err != nil {
 		return err
 	}

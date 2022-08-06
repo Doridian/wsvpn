@@ -23,7 +23,7 @@ func (s *Server) configIface(dev *water.Interface, ipClient net.IP) error {
 	return shared.ExecCmd("netsh", "interface", "ip", "set", "address", "source=static", "gateway=none", fmt.Sprintf("addr=%s", s.VPNNet.GetServerIP().String()), fmt.Sprintf("name=%s", dev.Name()), fmt.Sprintf("mask=%s", shared.IPNetGetNetMask(s.VPNNet.GetSubnet())))
 }
 
-func (s *Server) getPlatformSpecifics(config *water.Config, ifaceConfig *InterfacesConfig) error {
+func (s *Server) getPlatformSpecifics(config *water.Config, ifaceConfig *InterfaceConfig) error {
 	config.ComponentID = ifaceConfig.ComponentId
 	config.InterfaceName = ifaceConfig.Name
 

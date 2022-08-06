@@ -179,7 +179,7 @@ class DockerBuildTask(BuildTask):
         tag_base = f"ghcr.io/doridian/wsvpn/{self.proj}"
         self.tags = [f"{tag_base}:{VERSION}"]
         if tag_latest:
-            self.tags.append(f"{tag_base}:{VERSION}")
+            self.tags.append(f"{tag_base}:latest")
 
     def _run(self) -> None:
         args = ["docker", "buildx", "build", "--build-arg", f"SIDE={self.proj}", "--platform", ",".join([f"{gobin.goos}/{gobin.arch.docker_name}" for gobin in self.gobins])]

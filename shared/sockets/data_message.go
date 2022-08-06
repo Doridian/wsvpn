@@ -55,6 +55,11 @@ func (s *Socket) dataMessageHandler(message []byte) bool {
 		return true
 	}
 
+	if len(message) < 2 { // At least a single byte actual body is needed
+		s.log.Printf("Data message too short for processing")
+		return false
+	}
+
 	if !s.fragmentationEnabled {
 		return s.processPacket(message)
 	}
@@ -62,6 +67,11 @@ func (s *Socket) dataMessageHandler(message []byte) bool {
 	fragHeader := message[0]
 	if fragHeader == 0b10000000 { // Last fragment at index 0 => unfragmented packet
 		return s.processPacket(message[1:])
+	}
+
+	if len(message) < 6 { // At least a single byte actual body is needed
+		s.log.Printf("Data message too short for defragmenting")
+		return false
 	}
 
 	fragIndex := fragHeader & 0b01111111

@@ -104,7 +104,7 @@ dockerbuild() {
 	then
 		DOCKERCMD="$DOCKERCMD --push"
 	fi
-	DOCKERCMD="$DOCKERCMD -f Dockerfile.$SIDE ."
+	DOCKERCMD="$DOCKERCMD --build-arg SIDE=$SIDE ."
 
 	$DOCKERCMD
 }

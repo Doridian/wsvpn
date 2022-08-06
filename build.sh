@@ -7,8 +7,7 @@ then
 	VERSION="dev"
 fi
 
-which llvm-lipo
-llvm-lipo --help
+LIPO="$(which llvm-lipo || which lipo)"
 
 LDFLAGS="-w -s -X 'github.com/Doridian/wsvpn/shared.Version=${VERSION}'"
 DO_DOCKER_PUSH="$1"
@@ -51,6 +50,11 @@ buildfor() {
 	gobuild dual
 }
 
+makefat() {
+	SIDE="$1"
+	"$LIPO" -create -arch x86_64 "dist/$SIDE-darwin-amd64" -arch arm64 "dist/$SIDE-darwin-arm64" -output "dist/$SIDE-darwin-universal"
+}
+
 buildmips() {
 	export GOMIPS=""
 	buildfor "$1" "$2" "$GOMIPS"
@@ -90,6 +94,15 @@ buildfor linux mips64le
 
 buildfor darwin amd64
 buildfor darwin arm64
+if [ ! -z "$LIPO" ]
+then
+	echo "Found lipo as $LIPO. Creating universal binaries..."
+	makefat client
+	makefat server
+	makefat dual
+else
+	echo "Could not find lipo. No universal binaries can be made!"
+fi
 
 cd dist
 sha256sum * > sha256sums.txt

@@ -46,6 +46,8 @@ type Socket struct {
 
 func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *water.Interface, ifaceManaged bool) *Socket {
 	return &Socket{
+		AssignedIP: shared.DefaultIPv4,
+
 		adapter:               adapter,
 		iface:                 iface,
 		ifaceManaged:          ifaceManaged,

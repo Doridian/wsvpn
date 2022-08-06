@@ -14,9 +14,11 @@ func (g *IPSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, er
 		return true, nil
 	}
 
-	srcIp := shared.GetSrcIPv4(packet, 0)
-	if srcIp != socket.AssignedIP {
-		return true, nil
+	if socket != nil {
+		srcIp := shared.GetSrcIPv4(packet, 0)
+		if srcIp != socket.AssignedIP {
+			return true, nil
+		}
 	}
 
 	if socket == nil || g.AllowClientToClient {

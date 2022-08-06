@@ -2,7 +2,6 @@
 
 import argparse
 from dataclasses import dataclass
-from functools import cache
 from os.path import join, exists
 from threading import Condition, Thread
 from subprocess import call, check_call, check_output
@@ -12,17 +11,21 @@ from traceback import print_exc
 from typing import Optional
 from shutil import which
 
-@cache
+_version_cache = None
 def get_version():
+    if _version_cache:
+        return _version_cache
+
     ver = None
     try:
         ver = check_output(["git", "describe", "--tags"], encoding="utf-8").strip()
-        print("RUNNING!!!!")
     except:
         pass
 
     if not ver:
-        return "dev"
+        ver = "dev"
+
+    _version_cache = ver
     return ver
 
 _exec_cache: map = {}

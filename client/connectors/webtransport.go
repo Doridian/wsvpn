@@ -21,7 +21,7 @@ func (c *WebTransportConnector) Dial(config SocketConnectorConfig) (adapters.Soc
 	serverUrl := *config.GetServerUrl()
 	serverUrl.Scheme = "https"
 	dialer := webtransport.Dialer{}
-	dialer.TLSClientConf = config.GetTLSConfig()
+	dialer.TLSClientConfig = config.GetTLSConfig()
 
 	if config.GetProxyUrl() != nil {
 		return nil, errors.New("proxy is not support for WebTransport at the moment")

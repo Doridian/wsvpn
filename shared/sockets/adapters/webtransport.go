@@ -32,7 +32,7 @@ const (
 type WebTransportAdapter struct {
 	socketBase
 	qconn             quic.Connection
-	conn              *webtransport.Conn
+	conn              *webtransport.Session
 	stream            webtransport.Stream
 	isServer          bool
 	wg                *sync.WaitGroup
@@ -62,11 +62,11 @@ func getStreamID(stream webtransport.Stream) uint64 {
 	return uint64(quicStream.StreamID())
 }
 
-func getQuicConnection(conn *webtransport.Conn) quic.Connection {
+func getQuicConnection(conn *webtransport.Session) quic.Connection {
 	return getPrivateField(conn, "qconn").(quic.Connection)
 }
 
-func NewWebTransportAdapter(conn *webtransport.Conn, serializationType commands.SerializationType, isServer bool) *WebTransportAdapter {
+func NewWebTransportAdapter(conn *webtransport.Session, serializationType commands.SerializationType, isServer bool) *WebTransportAdapter {
 	adapter := &WebTransportAdapter{
 		conn:              conn,
 		qconn:             getQuicConnection(conn),

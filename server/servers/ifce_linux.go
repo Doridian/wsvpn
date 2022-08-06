@@ -32,11 +32,13 @@ func (s *Server) getPlatformSpecifics(config *water.Config) error {
 			config.Name = shared.FindLowestNetworkInterfaceByPrefix(s.InterfaceConfig.Name)
 		}
 		config.Persist = false
+
 		return nil
 	}
 
 	config.Name = s.InterfaceConfig.Name
 	config.Persist = s.InterfaceConfig.Persist
+
 	return nil
 }
 

@@ -35,5 +35,6 @@ func (s *Server) verifyPlatformFlags() error {
 	if !s.InterfaceConfig.OneInterfacePerConnection {
 		return errors.New("windows can not enable one-interface-per-connection")
 	}
+
 	return nil
 }

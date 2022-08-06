@@ -7,6 +7,7 @@ from threading import Condition, Thread
 from subprocess import call, check_call, check_output
 from os import environ, listdir, mkdir, remove
 import os
+from traceback import print_exc
 from typing import Optional
 from shutil import which
 
@@ -327,11 +328,22 @@ def main():
 
         running_tasks = [task for task in running_tasks if task.is_alive()]
 
+    had_errors = False
+
     for task in all_tasks:
-        task.join()
+        try:
+            task.join()
+        except Exception:
+            print(f"Error: {task.name}")
+            print_exc()
+            had_errors = True
+
+    if had_errors:
+        raise Exception("One or more tasks had errors!")
 
     if len(tasks) > 0:
-        raise ValueError("Could not complete all tasks...")
+        raise Exception("Could not start all tasks...")
+
 
 if __name__ == "__main__":
     main()

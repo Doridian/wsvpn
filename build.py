@@ -4,7 +4,7 @@ import argparse
 from dataclasses import dataclass
 from os.path import join, exists
 from threading import Condition, Thread
-from subprocess import call, check_call, check_output
+from subprocess import DEVNULL, call, check_call, check_output
 from os import environ, listdir, mkdir, remove
 import os
 from traceback import print_exc
@@ -19,7 +19,7 @@ def get_version():
 
     ver = None
     try:
-        ver = check_output(["git", "describe", "--tags"], encoding="utf-8").strip()
+        ver = check_output(["git", "describe", "--tags"], stderr=DEVNULL, encoding="utf-8").strip()
     except:
         pass
 
@@ -272,6 +272,7 @@ def main():
 
     print(f"Building version: {get_version()}")
 
+    print("Cleaning dist...")
     try:
         mkdir("dist")
     except FileExistsError:
@@ -279,11 +280,15 @@ def main():
     for distfile in listdir("dist"):
         remove(join("dist", distfile))
 
+    print("Downloading Go modules...")
     check_call(["go", "mod", "download"])
+
     if flags.docker:
-        call(["docker", "buildx", "create", "--name", "multiarch"])
+        print("Preparing Docker buildx...")
+        call(["docker", "buildx", "create", "--name", "multiarch"], stdout=DEVNULL, stderr=DEVNULL)
         check_call(["docker", "buildx", "use", "multiarch"])
 
+    print("Generating all build tasks...")
     tasks: list = []
     for proj in projects:
         for platform in platforms:
@@ -310,6 +315,7 @@ def main():
             if platform == "darwin" and flags.lipo:
                 tasks.append(LipoTask([task for task in platform_tasks if task.arch.darwin_name]))
 
+    print("Executing build tasks...")
     def pick_task() -> Optional[BuildTask]:
         for i, task in enumerate(tasks):
             if task.can_run():
@@ -353,6 +359,8 @@ def main():
 
     if len(tasks) > 0:
         raise Exception("Could not start all tasks...")
+
+    print("Build OK!")
 
 
 if __name__ == "__main__":

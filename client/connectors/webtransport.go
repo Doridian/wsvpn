@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
+	"github.com/lucas-clemente/quic-go/http3"
 	"github.com/marten-seemann/webtransport-go"
 )
 
@@ -20,7 +21,11 @@ func NewWebTransportConnector() *WebTransportConnector {
 func (c *WebTransportConnector) Dial(config SocketConnectorConfig) (adapters.SocketAdapter, error) {
 	serverUrl := *config.GetServerUrl()
 	serverUrl.Scheme = "https"
-	dialer := webtransport.Dialer{}
+
+	var dialer webtransport.Dialer
+	if dialer.RoundTripper == nil {
+		dialer.RoundTripper = &http3.RoundTripper{}
+	}
 	dialer.TLSClientConfig = config.GetTLSConfig()
 
 	if config.GetProxyUrl() != nil {

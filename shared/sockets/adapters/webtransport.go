@@ -57,7 +57,7 @@ func getPrivateField(iface interface{}, fieldName string) interface{} {
 }
 
 func getStreamID(stream webtransport.Stream) uint64 {
-	sendStream := getPrivateField(stream, "SendStream")
+	sendStream := getPrivateField(stream, "sendStream")
 	quicStream := getPrivateField(sendStream, "str").(http3.Stream)
 	return uint64(quicStream.StreamID())
 }

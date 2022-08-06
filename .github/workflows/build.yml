@@ -31,9 +31,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
         if: startsWith(github.ref, 'refs/tags/')
-      - run: ./build.sh 1 1
+      - run: ./build.py --compress --docker --docker-tag-latest --docker-push
         if: startsWith(github.ref, 'refs/tags/')
-      - run: ./build.sh
+      - run: ./build.py
         if: "!startsWith(github.ref, 'refs/tags/')"
       - name: Release
         uses: softprops/action-gh-release@v1

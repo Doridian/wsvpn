@@ -23,6 +23,8 @@ Some common CPU types and what their architecture is called:
 - Apple Silicon, such as M1: `arm64`
 - Raspberry Pi and most other SBCs: `arm64` on a 64-bit OS, `arm32` on a 32-bit OS
 
+For Linux, packed binaries are also offered for very space-constrained devices. These are the ones that end in `-compressed` and are packed using https://github.com/upx/upx
+
 ## Building
 
 WSVPN currently requires Golang at least version 1.18 to build successfully. You can use `build.sh` locally if you wish.

@@ -57,18 +57,22 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 	server.EnableFragmentation = config.Tunnel.EnableFragmentation
 	server.LoadEventConfig(&config.Scripts)
 
+	if strings.ToUpper(config.Tunnel.Mode) == "TAP" {
+		server.Mode = shared.VPN_MODE_TAP
+	} else {
+		server.Mode = shared.VPN_MODE_TUN
+	}
+
 	if !config.Interface.OneInterfacePerConnection {
-		if strings.ToUpper(config.Tunnel.Mode) == "TAP" {
+		if server.Mode == shared.VPN_MODE_TAP {
 			macSwitch := macswitch.MakeMACSwitch()
 			macSwitch.AllowClientToClient = config.Tunnel.AllowClientToClient
 			macSwitch.AllowIpSpoofing = config.Tunnel.AllowIpSpoofing
 			macSwitch.AllowUnknownEtherTypes = config.Tunnel.AllowUnknownEtherTypes
-			server.Mode = shared.VPN_MODE_TAP
 			server.PacketHandler = macSwitch
 		} else {
 			ipSwitch := ipswitch.MakeIPSwitch()
 			ipSwitch.AllowClientToClient = config.Tunnel.AllowClientToClient
-			server.Mode = shared.VPN_MODE_TUN
 			server.PacketHandler = ipSwitch
 		}
 	}

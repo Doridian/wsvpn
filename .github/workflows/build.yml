@@ -31,7 +31,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
         if: startsWith(github.ref, 'refs/tags/')
-      - run: ./build.py --compress --docker --docker-tag-latest --docker-push
+      - run: ./build.py --compress --lipo --docker --docker-tag-latest --docker-push
         if: startsWith(github.ref, 'refs/tags/')
       - run: ./build.py
         if: "!startsWith(github.ref, 'refs/tags/')"

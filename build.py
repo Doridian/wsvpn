@@ -232,6 +232,7 @@ def main():
     parser.add_argument("--architectures", "-a", default="*", required=False, type=str, help="Which architectures to build for (* for all, comma separated). Use \"list\" to get a list")
     parser.add_argument("--projects", "-i", default="*", required=False, type=str, help="Which projects to build (* for all, comma separated). Accepted: client, server, dual")
     parser.add_argument("--compress", "-c", default=False, action="store_true", help="Output UPX compressed binaries for Linux")
+    parser.add_argument("--lipo", default=False, action="store_true", help="Produce universal binaries using lipo or llvm-lipo")
     parser.add_argument("--docker", default=False, action="store_true", help="Whether to build Docker images for Linux")
     parser.add_argument("--docker-tag-latest", default=False, action="store_true", help="Whether to tag latest on built Docker images")
     parser.add_argument("--docker-push", default=False, action="store_true", help="Whether to push Docker images to the registry")

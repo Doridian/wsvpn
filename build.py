@@ -56,29 +56,30 @@ class Arch():
     goarch: str
     goenv: map
     upx_supported: bool
+    platforms: list
 
 KNOWN_ARCHITECTURES: map = {}
 
 def add_arch(arch: Arch):
     KNOWN_ARCHITECTURES[arch.name] = arch
 
-add_arch(Arch(name="amd64", docker_name="amd64", darwin_name="x86_64", goarch="amd64", upx_supported=True, goenv={}))
-add_arch(Arch(name="386", docker_name="i386", darwin_name="", goarch="386", upx_supported=True, goenv={}))
+add_arch(Arch(name="amd64", docker_name="amd64", darwin_name="x86_64", goarch="amd64", upx_supported=True, goenv={}, platforms=["windows", "linux", "darwin"]))
+add_arch(Arch(name="386", docker_name="i386", darwin_name="", goarch="386", upx_supported=True, goenv={}, platforms=["windows", "linux"]))
 
-add_arch(Arch(name="arm64", docker_name="arm64", darwin_name="arm64", goarch="arm64", upx_supported=True, goenv={}))
+add_arch(Arch(name="arm64", docker_name="arm64", darwin_name="arm64", goarch="arm64", upx_supported=True, goenv={}, platforms=["windows", "linux", "darwin"]))
 
-add_arch(Arch(name="arm32v5", docker_name="arm32/v5", darwin_name="", goarch="arm", upx_supported=True, goenv={"GOARM": "5"}))
-add_arch(Arch(name="arm32v6", docker_name="arm32/v6", darwin_name="", goarch="arm", upx_supported=True, goenv={"GOARM": "6"}))
-add_arch(Arch(name="arm32v7", docker_name="arm32/v7", darwin_name="", goarch="arm", upx_supported=True, goenv={"GOARM": "7"}))
+add_arch(Arch(name="arm32v5", docker_name="arm32/v5", darwin_name="", goarch="arm", upx_supported=True, goenv={"GOARM": "5"}, platforms=["linux"]))
+add_arch(Arch(name="arm32v6", docker_name="arm32/v6", darwin_name="", goarch="arm", upx_supported=True, goenv={"GOARM": "6"}, platforms=["linux"]))
+add_arch(Arch(name="arm32v7", docker_name="arm32/v7", darwin_name="", goarch="arm", upx_supported=True, goenv={"GOARM": "7"}, platforms=["linux"]))
 
-add_arch(Arch(name="mips", docker_name="", darwin_name="", goarch="mips", upx_supported=True, goenv={}))
-add_arch(Arch(name="mips-softfloat", docker_name="", darwin_name="", goarch="mips", upx_supported=True, goenv={}))
-add_arch(Arch(name="mipsle", docker_name="", darwin_name="", goarch="mipsle", upx_supported=True, goenv={"GOMIPS": "softfloat"}))
-add_arch(Arch(name="mipsle-softfloat", docker_name="", darwin_name="", goarch="mipsle", upx_supported=True, goenv={"GOMIPS": "softfloat"}))
-add_arch(Arch(name="mips64", docker_name="", darwin_name="", goarch="mips64", upx_supported=False, goenv={}))
-add_arch(Arch(name="mips64le", docker_name="", darwin_name="", goarch="mips64le", upx_supported=False, goenv={}))
+add_arch(Arch(name="mips", docker_name="", darwin_name="", goarch="mips", upx_supported=True, goenv={}, platforms=["linux"]))
+add_arch(Arch(name="mips-softfloat", docker_name="", darwin_name="", goarch="mips", upx_supported=True, goenv={}, platforms=["linux"]))
+add_arch(Arch(name="mipsle", docker_name="", darwin_name="", goarch="mipsle", upx_supported=True, goenv={"GOMIPS": "softfloat"}, platforms=["linux"]))
+add_arch(Arch(name="mipsle-softfloat", docker_name="", darwin_name="", goarch="mipsle", upx_supported=True, goenv={"GOMIPS": "softfloat"}, platforms=["linux"]))
+add_arch(Arch(name="mips64", docker_name="", darwin_name="", goarch="mips64", upx_supported=False, goenv={}, platforms=["linux"]))
+add_arch(Arch(name="mips64le", docker_name="", darwin_name="", goarch="mips64le", upx_supported=False, goenv={}, platforms=["linux"]))
 
-def exec_add_env(args: list[str], env: map):
+def exec_add_env(args: list, env: map):
     subpid = fork()
     if subpid == 0:
         for k, v in env.items():
@@ -95,8 +96,8 @@ def exec_add_env(args: list[str], env: map):
 build_task_cond = Condition()
 
 class BuildTask(Thread):
-    def __init__(self, dependencies: list[str], outputs: list[str], name: str) -> None:
-        super().__init__()
+    def __init__(self, dependencies: list, outputs: list, name: str) -> None:
+        super().__init__(name=name)
         self.dependencies = dependencies
         self.outputs = outputs
         self.name = name
@@ -121,8 +122,8 @@ class BuildTask(Thread):
             build_task_cond.release()
 
 class GoBuildTask(BuildTask):
-    def __init__(self, proj: str, arch: Arch, goos: str) -> None:
-        super().__init__(dependencies=[proj], outputs=[f"dist/{proj}-{goos}-{arch.name}"], name=f"Go build {proj}-{goos}-{arch.name}")
+    def __init__(self, proj: str, arch: Arch, goos: str, exesuffix: str) -> None:
+        super().__init__(dependencies=[proj], outputs=[f"dist/{proj}-{goos}-{arch.name}{exesuffix}"], name=f"Go build {proj}-{goos}-{arch.name}{exesuffix}")
         self.arch = arch
         self.goos = goos
         self.proj = proj
@@ -130,6 +131,8 @@ class GoBuildTask(BuildTask):
     def _run(self) -> None:
         env = {
             "CGO_ENABLED": "0",
+            "GOOS": self.goos,
+            "GOARCH": self.arch.goarch,
         }
         for k, v in self.arch.goenv.items():
             env[k] = v
@@ -144,7 +147,7 @@ class CompressTask(BuildTask):
         check_call(["upx", "-9", f"-o{self.outputs[0]}", self.dependencies[0]])
 
 class DockerBuildTask(BuildTask):
-    def __init__(self, gobins: list[GoBuildTask], tag_latest: bool, push: bool) -> None:
+    def __init__(self, gobins: list, tag_latest: bool, push: bool) -> None:
         super().__init__(dependencies=[gobin.outputs[0] for gobin in gobins], outputs=[], name="Docker buildx")
         
         self.gobins = gobins
@@ -156,6 +159,8 @@ class DockerBuildTask(BuildTask):
                 raise ValueError("DockerBuildTask is only for Linux targets")
             if gobin.proj != self.proj:
                 raise ValueError("DockerBuildTask can only build one project at a time!")
+            if not gobin.arch.docker_name:
+                raise ValueError("Only supply archs to DockerBuildTask that have a valid Docker arch associated!")
 
         tag_base = f"ghcr.io/doridian/wsvpn/{self.proj}"
         self.tags = [f"{tag_base}:{VERSION}"]
@@ -164,12 +169,49 @@ class DockerBuildTask(BuildTask):
 
     def _run(self) -> None:
         args = ["docker", "buildx", "build", "--build-arg", f"SIDE={self.proj}", "--platform", ",".join([f"{gobin.goos}/{gobin.arch.docker_name}" for gobin in self.gobins])]
+    
         for tag in self.tags:
             args.append("-t")
             args.append(tag)
+    
         if self.push:
             args.append("--push")
+    
         args.append(".")
+    
+        check_call(args)
+
+class LipoTask(BuildTask):
+    def __init__(self, gobins: list) -> None:
+        super().__init__(dependencies=[gobin.outputs[0] for gobin in gobins], outputs=[f"dist/{gobins[0].proj}-{gobins[0].goos}-universal"], name="Lipo")
+
+        self.gobins = gobins
+        self.proj = gobins[0].proj
+
+        for gobin in gobins:
+            if gobin.goos != "darwin":
+                raise ValueError("LipoTask is only for Darwin targets")
+            if gobin.proj != self.proj:
+                raise ValueError("LipoTask can only build one project at a time!")
+            if not gobin.arch.docker_name:
+                raise ValueError("Only supply archs to LipoTask that have a valid Darwin arch associated!")
+    
+    def _run(self) -> None:
+        lipo_bin = "lipo"
+
+        args = [lipo_bin, "-create"]
+
+        for gobin in self.gobins:
+            darwin_name = gobin.arch.darwin_name
+            if not darwin_name:
+                continue
+            args.append("-arch")
+            args.append(darwin_name)
+            args.append(gobin.outputs[0])
+
+        args.append("-output")
+        args.append(self.outputs[0])
+        
         check_call(args)
 
 def main():
@@ -213,12 +255,20 @@ def main():
     call(["docker", "buildx", "create", "--name", "multiarch"])
     check_call(["docker", "buildx", "use", "multiarch"])
 
-    tasks: list[BuildTask] = []
+    tasks: list = []
     for proj in projects:
         for platform in platforms:
-            platform_tasks: list[GoBuildTask] = []
+            exesuffix = ""
+            if platform == "windows":
+                exesuffix = ".exe"
+
+            platform_tasks: list = []
             for arch_name in architectures:
-                task = GoBuildTask(proj=proj, arch=KNOWN_ARCHITECTURES[arch_name], goos=platform)
+                arch = KNOWN_ARCHITECTURES[arch_name]
+                if platform not in arch.platforms:
+                    continue
+
+                task = GoBuildTask(proj=proj, arch=arch, goos=platform, exesuffix=exesuffix)
                 platform_tasks.append(task)
 
                 tasks.append(task)
@@ -228,6 +278,9 @@ def main():
             if platform == "linux" and res.docker:
                 tasks.append(DockerBuildTask([task for task in platform_tasks if task.arch.docker_name], tag_latest=res.docker_tag_latest, push=res.docker_push))
 
+            if platform == "darwin":
+                tasks.append(LipoTask([task for task in platform_tasks if task.arch.darwin_name]))
+
     def pick_task() -> Optional[BuildTask]:
         for i, task in enumerate(tasks):
             if task.can_run():
@@ -236,7 +289,7 @@ def main():
         return None
 
     num_jobs = res.jobs
-    running_tasks: list[BuildTask] = []
+    running_tasks: list = []
     while len(tasks) > 0:
         while len(running_tasks) < num_jobs:
             task = pick_task()

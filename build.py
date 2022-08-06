@@ -1,23 +1,14 @@
 #!/usr/bin/env python3
 
 import argparse
-from cProfile import run
 from dataclasses import dataclass
 from os.path import join, exists
 from threading import Condition, Thread
 from subprocess import call, check_call, check_output
 from os import execvp, fork, listdir, mkdir, putenv, remove, waitpid, WEXITSTATUS, WIFEXITED
 import os
-from time import time
 from typing import Optional
 from shutil import which
-
-#VERSION="$(git describe --tags 2> /dev/null)"
-#if [ -z "$VERSION" ]
-#then
-#	VERSION="dev"
-#fi
-#LDFLAGS="-w -s -X 'github.com/Doridian/wsvpn/shared.Version=${VERSION}'"
 
 VERSION = None
 try:

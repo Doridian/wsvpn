@@ -28,18 +28,18 @@ def packet_equal(self, other):
     return packet_equal(self.payload, other.payload)
 
 class PacketTest:
-    def __init__(self, svbin: GoBin, clbin: GoBin, ethernet: bool) -> None:
+    def __init__(self, svbin: GoBin, clbin: GoBin) -> None:
         self.svbin = svbin
         self.clbin = clbin
-        self.ethernet = ethernet
+        self.ethernet = svbin.cfg["tunnel"]["mode"] == "TAP"
         self.pkts = []
-        self.need_dummy_layer = (not ethernet) and (system() == "Darwin")
+        self.need_dummy_layer = (not self.ethernet) and (system() == "Darwin")
 
 
     def pkt_add(self, pkt):
         if self.ethernet:
             pkt = scapy_layers.Ether()/pkt
-        self.pkts.append(pkt)
+        self.pkts.append((pkt, pkt))
 
 
     def simple_pkt(self, pktlen: int):
@@ -47,12 +47,12 @@ class PacketTest:
         if pktlen > 0:
             payload = payload / scapy_packet.Raw(bytes(b"A"*pktlen))
         
-        pkt = scapy_layers.IP(version=4,ihl=5,src="192.168.3.2",dst="192.168.3.1",len=28+pktlen,id=len(self.pkts)+1,ttl=1) / payload
+        pkt = scapy_layers.IP(version=4, ihl=5) / payload
 
         if self.need_dummy_layer:
             pkt = scapy_layers.Loopback(type=0x2) / pkt
 
-        self.pkt_add((pkt, pkt))
+        self.pkt_add(pkt)
 
 
     def add_defaults(self):
@@ -76,8 +76,8 @@ class PacketTest:
                 scapy_sendrecv.sendp(raw_pkt, iface=send_iface, count=1, return_packets=True)
 
             def dosniff() -> scapy_plist.PacketList:
-                pkt.src = src_ip
-                pkt.dst = dst_ip
+                pkt.getlayer(scapy_layers.IP).src = src_ip
+                pkt.getlayer(scapy_layers.IP).dst = dst_ip
 
                 res: scapy_plist.PacketList = scapy_sendrecv.sniff(iface=recv_iface, started_callback=sendpkt, filter=None, count=1, store=1, timeout=2)
                 assert len(res.res) > 0

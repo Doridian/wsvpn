@@ -21,3 +21,5 @@ jobs:
       - uses: docker://ghcr.io/doridian/wsvpn/testcontainer:latest
         env:
           GITHUB_ACTIONS: true
+        volumes:
+          - "${PWD}:/mnt:ro"

@@ -31,12 +31,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
         if: startsWith(github.ref, 'refs/tags/')
+      - name: Build everything for release
+        run: ./build.py --compress --lipo --docker --docker-tag-latest --docker-push
+        if: startsWith(github.ref, 'refs/tags/')
+      - name: Build all platforms, but only single architecture
+        run: ./build.py --architecture local
+        if: "!startsWith(github.ref, 'refs/tags/')"
       - name: Run tests
         run: python3 -m pytest ./tests
-      - run: ./build.py --compress --lipo --docker --docker-tag-latest --docker-push
-        if: startsWith(github.ref, 'refs/tags/')
-      - run: ./build.py
-        if: "!startsWith(github.ref, 'refs/tags/')"
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')

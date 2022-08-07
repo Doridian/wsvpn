@@ -1,3 +1,4 @@
+from http import client
 from platform import system
 from tests.conftest import GoBin
 
@@ -40,7 +41,7 @@ class PacketTest:
         self.pkts.append(pkt)
 
     def simple_pkt(self, pktlen: int):
-        payload = scapy_layers.ICMP(type=0, code=0, id=0x0, seq=0x0, chksum=0xf7ff)
+        payload = scapy_layers.ICMP(type=0, code=0, id=0x0, seq=0x0)
         if pktlen > 0:
             payload = payload / scapy_packet.Raw(bytes(b"A"*pktlen))
         
@@ -64,11 +65,16 @@ class PacketTest:
         for pkt, raw_pkt in self.pkts:
             send_iface = None
             recv_iface = None
+            src_ip = None
+            dst_ip = None
 
             def sendpkt():
                 scapy_sendrecv.sendp(raw_pkt, iface=send_iface, count=1, return_packets=True)
 
             def dosniff() -> scapy_plist.PacketList:
+                pkt.src = src_ip
+                pkt.dst = dst_ip
+
                 res: scapy_plist.PacketList = scapy_sendrecv.sniff(iface=recv_iface, started_callback=sendpkt, filter=None, count=1, store=1, timeout=2)
                 assert len(res.res) > 0
 
@@ -76,10 +82,19 @@ class PacketTest:
 
                 assert packet_equal(pkt, actual_pkt)
 
-            send_iface = "utun100"
-            recv_iface = "utun20"
+            server_iface = self.svbin.get_interface_for(self.clbin)
+            client_iface = self.clbin.get_interface_for()
+            server_ip = self.svbin.get_ip()
+            client_ip = self.clbin.get_ip()
+
+            send_iface = server_iface
+            recv_iface = client_iface
+            src_ip = server_ip
+            dst_ip = client_ip
             dosniff()
 
-            send_iface = "utun20"
-            recv_iface = "utun100"
+            send_iface = client_iface
+            recv_iface = server_iface
+            src_ip = client_ip
+            dst_ip = server_ip
             dosniff()

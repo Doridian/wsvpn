@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 
@@ -18,7 +19,7 @@ import (
 
 func Main(configPtr *string, printDefaultConfigPtr *bool) {
 	if *printDefaultConfigPtr {
-		print(GetDefaultConfig())
+		fmt.Println(GetDefaultConfig())
 		return
 	}
 

@@ -75,7 +75,7 @@ func (c *Client) registerCommandHandlers() {
 			return err
 		}
 
-		c.log.Printf("Opened %s", c.iface.Name())
+		c.log.Printf("Opened interface %s", c.iface.Name())
 
 		c.setMTUNoInterface(parameters.MTU)
 		err = c.configureInterface()

@@ -1,11 +1,6 @@
 from tests.bins import GoBin
 from tests.tls_utils import TLSCertSet
-from tests.packet_utils import PacketTest
-
-def basic_traffic_test(svbin: GoBin, clbin: GoBin) -> None:
-    t = PacketTest(svbin=svbin, clbin=clbin)
-    t.add_defaults()
-    t.run()
+from tests.packet_utils import basic_traffic_test
 
 
 def test_run_e2e_wss(svbin: GoBin, clbin: GoBin, tls_cert_server: TLSCertSet) -> None:

@@ -27,7 +27,11 @@ func (c *Client) registerCommandHandlers() {
 			return err
 		}
 
-		return c.addRoute(routeNet)
+		err = c.addRoute(routeNet)
+		if err != nil {
+			c.log.Printf("Error adding subnet route (not fatal): %v", err)
+		}
+		return nil
 	})
 
 	c.socket.AddCommandHandler(commands.InitCommandName, func(command *commands.IncomingCommand) error {
@@ -83,9 +87,11 @@ func (c *Client) registerCommandHandlers() {
 			return err
 		}
 
-		err = c.addRoute(c.remoteNet.GetSubnet())
-		if err != nil {
-			return err
+		if c.doIpConfig {
+			err = c.addRoute(c.remoteNet.GetSubnet())
+			if err != nil {
+				c.log.Printf("Error adding subnet route (not fatal): %v", err)
+			}
 		}
 
 		err = c.socket.SetInterface(c.iface)

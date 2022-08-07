@@ -44,6 +44,8 @@ def split_ip(ipsub: str) -> str:
     return ipsub.split("/")[0]
 
 
+LAST_PORT = 4000
+
 class GoBin(Thread):
     def __init__(self, proj: str) -> None:
         super().__init__(daemon=True)
@@ -56,8 +58,13 @@ class GoBin(Thread):
         self.is_client = proj == "client"
 
         if self.is_server:
+            global LAST_PORT
+            port = LAST_PORT
+            LAST_PORT += 1
+
             tmp_ip = split_ip(self.cfg["tunnel"]["subnet"])
             self.ip = (IPv4Address(tmp_ip) + 1).exploded
+            self.cfg["server"]["listen"] = f"127.0.0.1:{port}"
         else:
             self.ip = None
 
@@ -199,3 +206,10 @@ class GoBin(Thread):
         finally:
             self._notify_ready(False)
             remove(cfgfile)
+
+def new_clbin():
+    return GoBin("client")
+
+def new_svbin():
+    return GoBin("server")
+

@@ -4,7 +4,7 @@ from tempfile import mktemp
 from shutil import rmtree
 from os import remove
 
-from tests.bins import GoBin
+from tests.bins import GoBin, new_clbin, new_svbin
 from tests.tls_utils import tls_cert_set
 
 
@@ -44,13 +44,13 @@ def tls_cert_client() -> Generator:
 
 @pytest.fixture(scope="function")
 def svbin() -> Generator:
-    gobin = GoBin("server")
+    gobin = new_svbin()
     yield gobin
     gobin.stop()
 
 
 @pytest.fixture(scope="function")
 def clbin() -> Generator:
-    gobin = GoBin("client")
+    gobin = new_clbin()
     yield gobin
     gobin.stop()

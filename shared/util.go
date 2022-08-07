@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 )
 
@@ -26,7 +27,11 @@ func ExecCmd(cmd string, arg ...string) error {
 	cmdO := exec.Command(cmd, arg...)
 	cmdO.Stdout = os.Stdout
 	cmdO.Stderr = os.Stderr
-	return cmdO.Run()
+	err := cmdO.Run()
+	if err == nil {
+		return nil
+	}
+	return fmt.Errorf("command %s %s: %v", cmd, strings.Join(arg, " "), err)
 }
 
 func GetSrcMAC(packet []byte) MacAddr {

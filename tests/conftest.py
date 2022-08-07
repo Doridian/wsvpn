@@ -28,7 +28,7 @@ def tls_cert_set(cn: str, conf: str) -> TLSCertSet:
 
     return TLSCertSet(ca=join(tmpdir, "cert.pem"), cert=join(tmpdir, "cert.pem"), key=join(tmpdir, "key.pem"), dir=tmpdir)
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def tls_cert_server() -> Generator:
     conftmp = mktemp()
     with open(conftmp, "w") as f:
@@ -54,19 +54,19 @@ def tls_cert_server() -> Generator:
     remove(conftmp)
     rmtree(res.dir)
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def tls_cert_client() -> Generator:
     res = tls_cert_set("testclient", conf="")
     yield res
     rmtree(res.dir)
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def svbin() -> Generator:
     gobin = GoBin("server")
     yield gobin
     gobin.stop()
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def clbin() -> Generator:
     gobin = GoBin("client")
     yield gobin

@@ -155,6 +155,10 @@ class GoBin(Thread):
                     self.iface_names[split_ip(lspl[1])] = lspl[2]
 
             elif lspl[0] == "down":
+                if self.is_client:
+                    self.iface_names.pop("server")
+                    self.ip = None
+
                 if self.is_server:
                     self.iface_names.pop(split_ip(lspl[1]))
 

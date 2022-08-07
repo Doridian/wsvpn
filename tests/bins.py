@@ -66,7 +66,9 @@ class GoBin(Thread):
     def stop(self) -> None:
         if self.proc is not None and self.proc.returncode is None:
             self.proc.send_signal(SIGINT)
-        self.join()
+
+        if self.is_alive():
+            self.join()
 
     def handle_line(self, line: str) -> None:
         if "VPN server online at" in line or "Configured interface, starting operations" in line:

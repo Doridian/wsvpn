@@ -4,7 +4,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install upx
-        run: sudo apt-get install --no-install-recommends -y upx python3 python3-pytest python3-yaml iproute2
+        run: sudo apt-get install --no-install-recommends -y upx python3 python3-pytest python3-yaml iproute2 openssl
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
         with:
@@ -31,6 +31,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
         if: startsWith(github.ref, 'refs/tags/')
+      - name: Run tests
+        run: pytest ./tests
       - run: ./build.py --compress --lipo --docker --docker-tag-latest --docker-push
         if: startsWith(github.ref, 'refs/tags/')
       - run: ./build.py

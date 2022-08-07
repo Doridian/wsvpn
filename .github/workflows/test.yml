@@ -5,7 +5,7 @@ on:
     types: [opened, reopened, synchronize]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Install dependency OS packages

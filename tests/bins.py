@@ -39,8 +39,10 @@ def _get_default_config(binf: str) -> Any:
     _default_configs[binf] = cfg
     return cfg
 
+
 def split_ip(ipsub: str) -> str:
     return ipsub.split("/")[0]
+
 
 class GoBin(Thread):
     def __init__(self, proj: str) -> None:

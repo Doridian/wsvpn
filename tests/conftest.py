@@ -7,6 +7,7 @@ from os import remove
 from tests.bins import GoBin
 from tests.tls_utils import tls_cert_set
 
+
 @pytest.fixture(scope="session")
 def tls_cert_server() -> Generator:
     conftmp = mktemp()
@@ -33,17 +34,20 @@ def tls_cert_server() -> Generator:
     remove(conftmp)
     rmtree(res.dir)
 
+
 @pytest.fixture(scope="session")
 def tls_cert_client() -> Generator:
     res = tls_cert_set("testclient", conf="")
     yield res
     rmtree(res.dir)
 
+
 @pytest.fixture(scope="function")
 def svbin() -> Generator:
     gobin = GoBin("server")
     yield gobin
     gobin.stop()
+
 
 @pytest.fixture(scope="function")
 def clbin() -> Generator:

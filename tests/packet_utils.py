@@ -35,10 +35,12 @@ class PacketTest:
         self.pkts = []
         self.need_dummy_layer = (not ethernet) and (system() == "Darwin")
 
+
     def pkt_add(self, pkt):
         if self.ethernet:
             pkt = scapy_layers.Ether()/pkt
         self.pkts.append(pkt)
+
 
     def simple_pkt(self, pktlen: int):
         payload = scapy_layers.ICMP(type=0, code=0, id=0x0, seq=0x0)
@@ -52,11 +54,13 @@ class PacketTest:
 
         self.pkt_add((pkt, pkt))
 
+
     def add_defaults(self):
         self.simple_pkt(0)
         self.simple_pkt(10)
         self.simple_pkt(1000)
         self.simple_pkt(1300)
+
 
     def run(self):
         self.svbin.assert_ready_ok()

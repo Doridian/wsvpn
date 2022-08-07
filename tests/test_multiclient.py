@@ -5,48 +5,44 @@ from tests.packet_utils import basic_traffic_test
 def configure(svbin: GoBin) -> None:
     svbin.cfg["interface"]["one-interface-per-connection"] = False
 
-
-def test_run_e2e_tun(svbin: GoBin, clbin: GoBin) -> None:
-    clbin2 = new_clbin()
-
-    configure(svbin=svbin)
-    svbin.cfg["tunnel"]["mode"] = "TUN"
-    clbin.connect_to(svbin)
-    clbin2.connect_to(svbin)
-
-    svbin.start()
-    svbin.assert_ready_ok()
-
+def runtest(svbin: GoBin, clbins: list, one_iface: bool, mode: str) -> None:
+    svbin.cfg["interface"]["one-interface-per-connection"] = one_iface
+    svbin.cfg["tunnel"]["mode"] = mode
+    
     try:
-        clbin.start()
-        clbin.assert_ready_ok()
-        clbin2.start()
-        clbin2.assert_ready_ok()
+        for clbin in clbins:
+            clbin.connect_to(svbin)
 
-        basic_traffic_test(svbin=svbin, clbin=clbin)
-        basic_traffic_test(svbin=svbin, clbin=clbin2)
+        svbin.start()
+        svbin.assert_ready_ok()
+
+        for clbin in clbins:
+            clbin.start()
+            clbin.assert_ready_ok()
+
+        for clbin in clbins:
+            basic_traffic_test(svbin=svbin, clbin=clbin)
+
     finally:
-        clbin2.stop()
+        for clbin in clbins:
+            clbin.stop()
 
 
-def test_run_e2e_tap(svbin: GoBin, clbin: GoBin) -> None:
+def test_run_e2e_oneiface_tap(svbin: GoBin, clbin: GoBin) -> None:
     clbin2 = new_clbin()
+    runtest(svbin, [clbin, clbin2], False, "TAP")
 
-    configure(svbin=svbin)
-    svbin.cfg["tunnel"]["mode"] = "TAP"
-    clbin.connect_to(svbin)
-    clbin2.connect_to(svbin)
 
-    svbin.start()
-    svbin.assert_ready_ok()
+def test_run_e2e_oneiface_tun(svbin: GoBin, clbin: GoBin) -> None:
+    clbin2 = new_clbin()
+    runtest(svbin, [clbin, clbin2], False, "TUN")
 
-    try:
-        clbin.start()
-        clbin.assert_ready_ok()
-        clbin2.start()
-        clbin2.assert_ready_ok()
 
-        basic_traffic_test(svbin=svbin, clbin=clbin)
-        basic_traffic_test(svbin=svbin, clbin=clbin2)
-    finally:
-        clbin2.stop()
+def test_run_e2e_manyiface_tap(svbin: GoBin, clbin: GoBin) -> None:
+    clbin2 = new_clbin()
+    runtest(svbin, [clbin, clbin2], True, "TAP")
+
+
+def test_run_e2e_manyiface_tun(svbin: GoBin, clbin: GoBin) -> None:
+    clbin2 = new_clbin()
+    runtest(svbin, [clbin, clbin2], True, "TUN")

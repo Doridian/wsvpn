@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from copy import deepcopy
 import pytest
 
 from os.path import join, dirname
@@ -9,7 +10,7 @@ from signal import SIGINT
 from subprocess import Popen
 from tempfile import mktemp
 from threading import Thread, Condition
-from typing import Optional
+from typing import Any, Optional
 from yaml import dump as yaml_dump
 
 TARGETARCH = getenv("TARGETARCH")
@@ -36,17 +37,25 @@ BASIC_CONFIG_CLIENT = {
 BIN_DIR = join(dirname(__file__), "../dist/")
 
 class GoBin(Thread):
-    def __init__(self, proj: str, cfg) -> None:
+    def __init__(self, proj: str) -> None:
         super().__init__(daemon=True)
 
         self.proj = proj
         self.bin = join(BIN_DIR, f"{proj}-linux-{TARGETARCH}{TARGETVARIANT}")
-        self.cfg = cfg
+        self.cfg = self._get_basic_config()
 
         self.proc_wait_cond = Condition()
         self.is_ready_or_done = False
         self.proc = None
         self.ready_ok = None
+    
+    def _get_basic_config(self) -> Any:
+        if self.proj == "client":
+            return deepcopy(BASIC_CONFIG_CLIENT)
+        elif self.proj == "server":
+            return deepcopy(BASIC_CONFIG_SERVER)
+        else:
+            raise ValueError("Invalid proj")
 
     def wait_ready_or_done(self, timeout: Optional[int] = None) -> None:
         while not self.is_ready_or_done:

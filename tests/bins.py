@@ -22,6 +22,9 @@ BASIC_CONFIG_SERVER = {
     "server": {
         "listen": "127.0.0.1:9000",
     },
+    "tunnel": {
+        "mtu": 4000,
+    },
     "interface": {
         "name": "wsvpns",
         "one-interface-per-connection": True,

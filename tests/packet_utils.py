@@ -76,8 +76,9 @@ class PacketTest:
                 scapy_sendrecv.sendp(raw_pkt, iface=send_iface, count=1, return_packets=True)
 
             def dosniff() -> scapy_plist.PacketList:
-                pkt.getlayer(scapy_layers.IP).src = src_ip
-                pkt.getlayer(scapy_layers.IP).dst = dst_ip
+                ip_layer = pkt.getlayer(scapy_layers.IP)
+                ip_layer.src = src_ip
+                ip_layer.dst = dst_ip
 
                 res: scapy_plist.PacketList = scapy_sendrecv.sniff(iface=recv_iface, started_callback=sendpkt, filter=None, count=1, store=1, timeout=2)
                 assert len(res.res) > 0

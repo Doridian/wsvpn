@@ -2,9 +2,6 @@ from tests.bins import GoBin, new_clbin
 from tests.packet_utils import basic_traffic_test
 
 
-def configure(svbin: GoBin) -> None:
-    svbin.cfg["interface"]["one-interface-per-connection"] = False
-
 def runtest(svbin: GoBin, clbins: list, one_iface: bool, mode: str) -> None:
     svbin.cfg["interface"]["one-interface-per-connection"] = one_iface
     svbin.cfg["tunnel"]["mode"] = mode

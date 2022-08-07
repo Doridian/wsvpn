@@ -95,7 +95,7 @@ class PacketTest:
                     eth_layer.src = get_mac(src_iface)
                     eth_layer.dst = get_mac(dst_iface)
 
-                res: scapy_plist.PacketList = scapy_sendrecv.sniff(iface=dst_iface, started_callback=sendpkt, filter=None, count=1, store=1, timeout=2)
+                res: scapy_plist.PacketList = scapy_sendrecv.sniff(iface=dst_iface, started_callback=sendpkt, filter="ip" if system() == "Linux" else None, count=1, store=1, timeout=2)
                 assert len(res.res) > 0
 
                 actual_pkt = res.res[0]

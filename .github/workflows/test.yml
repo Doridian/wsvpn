@@ -18,5 +18,6 @@ jobs:
           cache: true
       - name: Build all platforms, but only single architecture
         run: ./build.py --architecture local
-      - name: Run tests
-        run: ./test.sh
+      - using: docker
+        image: 'Dockerfile.test'
+

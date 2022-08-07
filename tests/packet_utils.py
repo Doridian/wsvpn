@@ -1,9 +1,7 @@
 from fcntl import ioctl
-from http import client
 from platform import system
 from socket import AF_INET, SOCK_DGRAM, socket
 from struct import pack
-from subprocess import check_call
 from tests.conftest import GoBin
 
 import scapy.layers.all as scapy_layers
@@ -97,16 +95,21 @@ class PacketTest:
                     eth_layer.src = get_mac(src_iface)
                     eth_layer.dst = get_mac(dst_iface)
 
-                check_call(["ip", "addr"])
-
-                pkt.show()
-
                 res: scapy_plist.PacketList = scapy_sendrecv.sniff(iface=dst_iface, started_callback=sendpkt, filter=None, count=1, store=1, timeout=2)
                 assert len(res.res) > 0
 
                 actual_pkt = res.res[0]
 
-                assert packet_equal(pkt, actual_pkt)
+                try:
+                    assert packet_equal(pkt, actual_pkt)
+                except Exception:
+                    print("Expected packet:")
+                    pkt.show()
+
+                    print("Actual packet:")
+                    actual_pkt.show()
+
+                    raise
 
             server_iface = self.svbin.get_interface_for(self.clbin)
             client_iface = self.clbin.get_interface_for()

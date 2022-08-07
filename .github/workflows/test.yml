@@ -9,11 +9,7 @@ name: Test
 jobs:
   test:
     runs-on: ubuntu-latest
-    steps:
-      - name: Install dependency OS packages
-        run: sudo apt-get install --no-install-recommends -y upx python3 python3-pytest python3-yaml iproute2 openssl python3-scapy tcpdump
-      - name: Install plugin for pytest
-        run: pip3 install pytest-github-actions-annotate-failures
+    steps:=
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
         with:
@@ -23,4 +19,4 @@ jobs:
       - name: Build all platforms, but only single architecture
         run: ./build.py --architecture local
       - name: Run tests
-        run: sudo python3 -m pytest ./tests
+        run: ./test.sh

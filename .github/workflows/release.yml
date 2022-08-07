@@ -8,16 +8,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - name: Install dependency OS packages
-        run: sudo apt-get install --no-install-recommends -y upx python3 python3-pytest python3-yaml iproute2 openssl python3-scapy tcpdump
-      - name: Install plugin for pytest
-        run: pip3 install pytest-github-actions-annotate-failures
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
-        with:
-          go-version-file: 'go.mod'
-          check-latest: true
-          cache: true
+      - uses: ./.github/workflows/test
       - name: Cache LLVM and Clang
         id: cache-llvm
         uses: actions/cache@v2
@@ -39,8 +30,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build everything for release
         run: ./build.py --compress --lipo --docker --docker-tag-latest --docker-push
-      - name: Run tests
-        run: sudo python3 -m pytest ./tests
       - name: Release
         uses: softprops/action-gh-release@v1
         with:

@@ -6,6 +6,7 @@ name: Test container
 
 jobs:
   testcontainer:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Login to GitHub Container Registry

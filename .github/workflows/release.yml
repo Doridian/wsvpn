@@ -2,6 +2,8 @@ on:
   push:
     tags: '*'
 
+name: Release
+
 jobs:
   release:
     runs-on: ubuntu-latest

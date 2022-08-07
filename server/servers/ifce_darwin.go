@@ -32,6 +32,16 @@ func (s *Server) configIface(dev *water.Interface, ipClient net.IP) error {
 }
 
 func (s *Server) getPlatformSpecifics(config *water.Config) error {
+	if s.InterfaceConfig.OneInterfacePerConnection {
+		if s.InterfaceConfig.Name != "" {
+			config.Name = shared.FindLowestNetworkInterfaceByPrefix(s.InterfaceConfig.Name)
+		}
+
+		return nil
+	}
+
+	config.Name = s.InterfaceConfig.Name
+
 	return nil
 }
 

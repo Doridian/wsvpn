@@ -23,7 +23,12 @@ func (s *Server) configIface(dev *water.Interface, ipClient net.IP) error {
 	if s.InterfaceConfig.OneInterfacePerConnection {
 		return shared.ExecCmd("ifconfig", dev.Name(), s.VPNNet.GetServerIP().String(), ipClient.String(), "up")
 	}
-	return shared.ExecCmd("ifconfig", dev.Name(), fmt.Sprintf("%s/%d", s.VPNNet.GetServerIP().String(), s.VPNNet.GetSize()), "up")
+
+	err = shared.ExecCmd("ifconfig", dev.Name(), fmt.Sprintf("%s/%d", s.VPNNet.GetServerIP().String(), s.VPNNet.GetSize()), "up")
+	if err != nil {
+		err = shared.ExecCmd("ifconfig", dev.Name(), fmt.Sprintf("%s/%d", s.VPNNet.GetServerIP().String(), s.VPNNet.GetSize()), ipClient.String(), "up")
+	}
+	return err
 }
 
 func (s *Server) getPlatformSpecifics(config *water.Config) error {

@@ -19,7 +19,7 @@ type EventConfig struct {
 	Down string `yaml:"down"`
 }
 
-func (c *EventConfigHolder) RunEventScript(op string, remoteNet string, iface string) error {
+func (c *EventConfigHolder) RunEventScript(op string, remoteNet string, iface string, args ...string) error {
 	script := ""
 
 	switch op {
@@ -35,7 +35,9 @@ func (c *EventConfigHolder) RunEventScript(op string, remoteNet string, iface st
 		return nil
 	}
 
-	return ExecCmd(script, op, remoteNet, iface)
+	all_args := []string{op, remoteNet}
+	all_args = append(all_args, args...)
+	return ExecCmd(script, all_args...)
 }
 
 func (c *EventConfigHolder) LoadEventConfig(config *EventConfig) {

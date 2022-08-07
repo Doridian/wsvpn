@@ -47,9 +47,13 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		clientLogger.Printf("Unencrypted connection established")
 	}
 
-	authOk := s.handleSocketAuth(clientLogger, w, r, tlsConnectionState)
+	authOk, authUsername := s.handleSocketAuth(clientLogger, w, r, tlsConnectionState)
 	if !authOk {
 		return
+	}
+
+	if authUsername != "" {
+		clientLogger.Printf("Authenticated as: %s", authUsername)
 	}
 
 	var slot uint64 = 1
@@ -181,7 +185,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	doRunEventScript := func(event string) {
-		err := s.RunEventScript(event, remoteNetStr, ifaceName)
+		err := s.RunEventScript(event, remoteNetStr, ifaceName, authUsername)
 		if err != nil {
 			s.log.Printf("Error in %s script: %v", event, err)
 		}

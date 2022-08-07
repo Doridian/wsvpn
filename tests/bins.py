@@ -137,12 +137,13 @@ class GoBin(Thread):
 
         if "SCRIPT_HDL" in line:
             lspl = line.split(" ")[2:]
+
             if lspl[0] == "up":
                 if self.is_client:
-                    self._notify_ready(True)
                     self.iface_names["server"] = lspl[2]
                     self.ip = split_ip(lspl[1])
-                
+                    self._notify_ready(True)
+
                 if self.is_server:
                     self.iface_names[split_ip(lspl[1])] = lspl[2]
 

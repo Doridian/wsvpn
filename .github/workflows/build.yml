@@ -19,11 +19,13 @@ jobs:
             C:/Program Files/LLVM
             ./llvm
           key: llvm-10
+        if: startsWith(github.ref, 'refs/tags/')
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v1
         with:
           version: "10"
           cached: ${{ steps.cache-llvm.outputs.cache-hit }}
+        if: startsWith(github.ref, 'refs/tags/')
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:

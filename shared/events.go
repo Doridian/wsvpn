@@ -35,7 +35,7 @@ func (c *EventConfigHolder) RunEventScript(op string, remoteNet string, iface st
 		return nil
 	}
 
-	all_args := []string{op, remoteNet}
+	all_args := []string{op, remoteNet, iface}
 	all_args = append(all_args, args...)
 	return ExecCmd(script, all_args...)
 }

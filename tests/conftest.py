@@ -33,8 +33,13 @@ def tls_cert_server() -> Generator:
     conftmp = mktemp()
     with open(conftmp, "w") as f:
         f.write("[req]\n")
+        f.write("default_bits = 2048\n")
+        f.write("prompt = no\n")
         f.write("req_extensions = req_ext\n")
         f.write("x509_extensions = v3_req\n")
+        f.write("distinguished_name = req_distinguished_name\n")
+        f.write("[req_distinguished_name]\n")
+        f.write("commonName = localhost\n")
         f.write("[req_ext]\n")
         f.write("subjectAltName = @alt_names\n")
         f.write("[v3_req]\n")

@@ -18,8 +18,4 @@ jobs:
           cache: true
       - name: Build all platforms, but only single architecture
         run: ./build.py --architecture local
-      - uses: docker://ghcr.io/doridian/wsvpn/testcontainer:latest
-        env:
-          GITHUB_ACTIONS: true
-        volumes:
-          - "${PWD}:/mnt:ro"
+      - run: ./test.sh

@@ -20,4 +20,5 @@ jobs:
         run: ./build.py --architecture local
       - uses: docker
         image: 'Dockerfile.test'
-
+        env:
+          GITHUB_ACTIONS: true

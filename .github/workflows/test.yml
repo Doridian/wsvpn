@@ -18,7 +18,6 @@ jobs:
           cache: true
       - name: Build all platforms, but only single architecture
         run: ./build.py --architecture local
-      - uses: docker
-        image: 'Dockerfile.test'
+      - uses: docker://Dockerfile.test
         env:
           GITHUB_ACTIONS: true

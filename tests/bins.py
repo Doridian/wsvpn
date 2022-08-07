@@ -73,7 +73,7 @@ class GoBin(Thread):
             self.join()
 
     def handle_line(self, line: str) -> None:
-        if "VPN server online at" in line or "Configured interface, starting operations" in line:
+        if "VPN server online at" in line or "Configured interface, VPN online" in line:
             self._notify_ready(True)
         print(line)
 

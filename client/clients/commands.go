@@ -88,7 +88,6 @@ func (c *Client) registerCommandHandlers() {
 			return err
 		}
 
-		c.log.Printf("Configured interface, starting operations")
 		err = c.socket.SetInterface(c.iface)
 		if err != nil {
 			return err
@@ -96,6 +95,8 @@ func (c *Client) registerCommandHandlers() {
 
 		c.doRunEventScript(shared.EventUp)
 		c.sentUpEvent = true
+
+		c.log.Printf("Configured interface, VPN online")
 
 		return nil
 	})

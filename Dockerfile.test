@@ -8,7 +8,7 @@ ENV TARGETVARIANT ${TARGETVARIANT}
 
 USER root
 
-RUN apt update && apt -y install python3 python3-yaml python3-pytest iproute2 openssl
+RUN apt update && apt -y --no-install-recommends install python3 python3-yaml python3-pytest iproute2 openssl python3-scapy tcpdump
 
 VOLUME "/mnt"
 WORKDIR /mnt

@@ -38,7 +38,7 @@ jobs:
         run: ./build.py --architecture local
         if: "!startsWith(github.ref, 'refs/tags/')"
       - name: Run tests
-        run: python3 -m pytest ./tests
+        run: sudo python3 -m pytest ./tests
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')

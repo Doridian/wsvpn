@@ -106,6 +106,7 @@ add_arch(Arch(name="mipsle-softfloat", docker_name="", darwin_name="", goarch="m
 add_arch(Arch(name="mips64", docker_name="", darwin_name="", goarch="mips64", upx_supported=False, goenv={}, platforms=["linux"]))
 add_arch(Arch(name="mips64le", docker_name="", darwin_name="", goarch="mips64le", upx_supported=False, goenv={}, platforms=["linux"]))
 
+
 def try_resolve_arch(name: str) -> Optional[str]:
     if name in KNOWN_ARCHITECTURES:
         return name
@@ -118,6 +119,21 @@ def check_call_addenv(args: list, env: map) -> int:
         if k not in env:
             env[k] = v
     return check_call(args, env=env)
+
+def get_local_arch() -> str:
+    machine_res = machine().lower()
+    if not machine_res:
+        raise ValueError("Could not determine local architecture!")
+    arch_name = try_resolve_arch(machine_res)
+    if not arch_name:
+        raise ValueError(f"Could not find a supported architecture for: {machine_res}")
+    return arch_name
+
+def get_local_platform() -> str:
+    system_res = system().lower()
+    if not system_res:
+        raise ValueError("Could not determine local platform!")
+    return system_res
 
 build_task_cond = Condition()
 
@@ -265,10 +281,7 @@ def main():
     if flags.platforms == "*":
         platforms = ["linux", "darwin", "windows"]
     elif flags.platforms == "local":
-        system_res = system().lower()
-        if not system_res:
-            raise ValueError("Could not determine local platform!")
-        platforms = [system_res]
+        platforms = [get_local_platform()]
     else:
         platforms = flags.platforms.split(",")
 
@@ -282,13 +295,7 @@ def main():
     if flags.architectures == "*":
         architectures = [arch for arch in KNOWN_ARCHITECTURES]
     elif flags.architectures == "local":
-        machine_res = machine().lower()
-        if not machine_res:
-            raise ValueError("Could not determine local architecture!")
-        arch_name = try_resolve_arch(machine_res)
-        if not arch_name:
-            raise ValueError(f"Could not find a supported architecture for: {machine_res}")
-        architectures = [arch_name]
+        architectures = [get_local_arch()]
     elif flags.architectures == "list":
         print("Supported architectures:")
         for _, arch in KNOWN_ARCHITECTURES.items():

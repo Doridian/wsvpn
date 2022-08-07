@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from subprocess import check_call
-from typing import Generator, Iterable
+from typing import Generator
 import pytest
 
 from tempfile import mkdtemp, mktemp

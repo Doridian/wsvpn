@@ -13,8 +13,10 @@ from threading import Thread, Condition
 from typing import Any, Optional
 from yaml import dump as yaml_dump
 
-TARGETARCH = getenv("TARGETARCH")
-TARGETVARIANT = getenv("TARGETVARIANT")
+from build import get_local_arch, get_local_platform
+
+LOCAL_ARCH = get_local_arch()
+LOCAL_PLATFORM = get_local_platform()
 
 BASIC_CONFIG_SERVER = {
     "server": {
@@ -41,7 +43,7 @@ class GoBin(Thread):
         super().__init__(daemon=True)
 
         self.proj = proj
-        self.bin = join(BIN_DIR, f"{proj}-linux-{TARGETARCH}{TARGETVARIANT}")
+        self.bin = join(BIN_DIR, f"{proj}-{LOCAL_PLATFORM}-{LOCAL_ARCH}")
         self.cfg = self._get_basic_config()
 
         self.proc_wait_cond = Condition()

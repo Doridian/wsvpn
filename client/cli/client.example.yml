@@ -1,7 +1,7 @@
 tunnel:
   set-default-gateway: false
   ping:
-    interval: 30s
+    interval: 25s
     timeout: 5s
 
 interface:

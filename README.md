@@ -1,6 +1,12 @@
 # WSVPN
 
-VPN server and client that can talk over WebSocket
+VPN server and client that can talk over WebSocket or WebTransport
+
+## Potential use cases
+
+- Put VPN server behind reverse proxy, for added security and/or flexibility
+- Connect to VPN server from behind very restrictive firewalls as the traffic looks like normal HTTP(S) traffic
+- *Very advanced/niche: Connect to the internet from within your browser by writing your own VPN client!*
 
 ## Current features
 
@@ -8,7 +14,7 @@ VPN server and client that can talk over WebSocket
 - WebTransport protocol (requires SSL as HTTP/3 requires SSL)
 - TUN and TAP mode
 - Works on Linux, macOS and Windows (Windows requires OpenVPN TAP driver)
-- Can authenticate clients via HTTP Basic authentication or mTLS or both
+- Can authenticate clients via HTTP Basic authentication or mTLS (Mutual TLS) or both
 
 ## Download
 
@@ -16,7 +22,7 @@ You can download the latest release binaries at https://github.com/Doridian/wsvp
 
 Pick the correct binaries for your architecture and OS (`darwin` refers to macOS).
 
-The naming convention is `side-os-architecture` (side being either `client` or `server`)
+The naming convention is `side-os-architecture` (`side` being either `client`, `server` or `dual`)
 
 Some common CPU types and what their architecture is called:
 - Intel or AMD CPU: `amd64` on a 64-bit OS, `386` on a 32-bit OS
@@ -25,13 +31,33 @@ Some common CPU types and what their architecture is called:
 
 For Linux, packed binaries are also offered for very space-constrained devices. These are the ones that end in `-compressed` and are packed using https://github.com/upx/upx
 
+For macOS, universal binaries are offered as `side-darwin-universal`
+
+## Example configurations
+
+In each of these examples, you run the tunnel as follows:
+1. Put the config in a file ending in `.yml`
+1. Run the binary with `--config=myfile.yml` with the full filename of the file
+   1. On Windows, this has to be done in a "Run as Administrator" command prompt, and works like `.\client-windows-amd64.exe --config=myfile.yml`
+   1. On macOS and linux, this has to be run as root, like: `sudo ./client-linux-amd64 --config=myfile.yml`
+
+**Keep in mind that WebTransport should perform better than WebSocket in most scenarios but is considered to be less stable**
+
+[VPN with TLS + htpasswd](https://github.com/Doridian/wsvpn/wiki/Example:-VPN-with-TLS-and-htpasswd-authentication)
+
+
+*A bit of work might be required to setup an mTLS CA for this one:* [VPN with TLS + mTLS](https://github.com/Doridian/wsvpn/wiki/Example:-VPN-with-TLS-and-mTLS)
+
+
 ## Building
 
-WSVPN currently requires Golang at least version 1.18 to build successfully. You can use `build.sh` locally if you wish.
+WSVPN currently requires Golang at least version 1.18 to build successfully. You can use `build.py` locally if you wish.
 
-Alternatively, the normal go build commands (`go build -o sv ./server`, `go build -o cl ./client`, etc) will work just fine.
+The suggested invocation to build binaries for your local machine would look like: `./build.py --platform local --architecture local`.
 
-## Configuration
+The binaries can be found in the `dist` folder.
+
+## Advanced configurations
 
 You can run the server or client binary with `--print-default-config` and it will give you a commented YAML config file with default options.
 

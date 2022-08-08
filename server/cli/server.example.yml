@@ -11,7 +11,7 @@ tunnel:
     local: true # Configure local interface automatically
     remote: true # Send configuration data to clients for their interfaces
   ping:
-    interval: 30s
+    interval: 25s
     timeout: 5s
 
 interface:

@@ -189,7 +189,7 @@ class GoBuildTask(BuildTask):
             env[k] = v
 
         ldflags = f"-w -s -X 'github.com/Doridian/wsvpn/shared.Version={get_version()}'"
-        check_call_addenv(["go", "build", "-ldflags", ldflags, "-o", self.outputs[0], f"./{self.proj}"], env=env)
+        check_call_addenv(["go", "build", "-trimpath", "-ldflags", ldflags, "-o", self.outputs[0], f"./{self.proj}"], env=env)
 
 class CompressTask(BuildTask):
     def __init__(self, input: str) -> None:

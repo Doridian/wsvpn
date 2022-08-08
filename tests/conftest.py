@@ -13,6 +13,9 @@ TEST_PASSWORD = "pAsSwOrD1234"
 
 INVALID_TEXT = "invalid"
 
+INVALID_HOST = "invalid.local"
+VALID_HOST = "valid.local"
+
 
 @pytest.fixture(scope="session")
 def authenticator_config() -> Generator:
@@ -42,14 +45,41 @@ def tls_cert_server() -> Generator:
         f.write("subjectAltName = @alt_names\n")
         f.write("[alt_names]\n")
         f.write("DNS.1 = localhost\n")
+        f.write(f"DNS.2 = {VALID_HOST}\n")
         f.write("IP.1 = 127.0.0.1\n")
 
     res = tls_cert_set("localhost", conf=conftmp)
+    remove(conftmp)
 
     yield res
-    remove(conftmp)
     rmtree(res.dir)
 
+
+@pytest.fixture(scope="session")
+def tls_cert_server_noip() -> Generator:
+    conftmp = mktemp()
+    with open(conftmp, "w") as f:
+        f.write("[req]\n")
+        f.write("default_bits = 2048\n")
+        f.write("prompt = no\n")
+        f.write("req_extensions = req_ext\n")
+        f.write("x509_extensions = v3_req\n")
+        f.write("distinguished_name = req_distinguished_name\n")
+        f.write("[req_distinguished_name]\n")
+        f.write("commonName = localhost\n")
+        f.write("[req_ext]\n")
+        f.write("subjectAltName = @alt_names\n")
+        f.write("[v3_req]\n")
+        f.write("subjectAltName = @alt_names\n")
+        f.write("[alt_names]\n")
+        f.write("DNS.1 = localhost\n")
+        f.write(f"DNS.2 = {VALID_HOST}\n")
+
+    res = tls_cert_set("localhost", conf=conftmp)
+    remove(conftmp)
+
+    yield res
+    rmtree(res.dir)
 
 @pytest.fixture(scope="session")
 def tls_cert_client() -> Generator:

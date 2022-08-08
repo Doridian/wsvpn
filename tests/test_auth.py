@@ -27,35 +27,29 @@ def run_client_auth(svbin: GoBin, protocol: str, tls_cert_server: Optional[TLSCe
 
     try:
         clbin.connect_to(server=svbin, protocol=protocol, user=user, password=password)
-
-        if tls_cert_server:
-            clbin.cfg["client"]["tls"]["ca"] = tls_cert_server.ca
-
-        if mtls:
-            clbin.cfg["client"]["tls"]["key"] = mtls.key
-            clbin.cfg["client"]["tls"]["certificate"] = mtls.cert
-        else:
-            clbin.cfg["client"]["tls"]["key"] = ""
-            clbin.cfg["client"]["tls"]["certificate"] = ""
+        clbin.enable_tls(tls_cert_server)
+        clbin.enable_mtls(mtls)
 
         clbin.start()
         clbin.assert_ready_ok(should=should_be_ok)
 
         if should_be_ok:
             basic_traffic_test(svbin=svbin, clbin=clbin, minimal=True)
+            assert svbin.get_auth_for(clbin=clbin) == TEST_USER
 
     finally:
         clbin.stop()
 
 
 def run_auth_server(svbin: GoBin, protocol: str, tls_cert_server: Optional[TLSCertSet], mtls_on: bool, mtls_server: Optional[TLSCertSet], mtls_clients: list[TLSCertSet] = None, authenticator: str = "allow-all", authenticator_config: str = "") -> None:
-    if mtls_server and mtls_on:
-        svbin.cfg["server"]["tls"]["client-ca"] = mtls_server.ca
+    if mtls_on:
+        svbin.enable_mtls(mtls_server)
     else:
-        svbin.cfg["server"]["tls"]["client-ca"] = ""
+        svbin.enable_mtls(None)
 
     svbin.cfg["server"]["authenticator"]["type"] = authenticator
     svbin.cfg["server"]["authenticator"]["config"] = authenticator_config
+    svbin.http_auth_enabled = authenticator != "allow-all"
 
     svbin.start()
     svbin.assert_ready_ok()
@@ -80,7 +74,7 @@ def run_auth_server(svbin: GoBin, protocol: str, tls_cert_server: Optional[TLSCe
         # No mTLS with valid user
         run_client_auth(svbin=svbin, tls_cert_server=tls_cert_server, protocol=protocol, mtls=None, user=TEST_USER, password=TEST_PASSWORD, should_be_ok=(not mtls_on))
         # No mTLS with no user
-        run_client_auth(svbin=svbin, tls_cert_server=tls_cert_server, protocol=protocol, mtls=None, user="", password="", should_be_ok=(not mtls_on and not htpasswd_on))
+        run_client_auth(svbin=svbin, tls_cert_server=tls_cert_server, protocol=protocol, mtls=None, user="", password="", should_be_ok=False)
         # Valid mTLS with invalid user
         run_client_auth(svbin=svbin, tls_cert_server=tls_cert_server, protocol=protocol, mtls=mtls_client, user=INVALID_TEXT, password=TEST_PASSWORD, should_be_ok=(not htpasswd_on and mtls_valid))
         # Valid mTLS with invalid password

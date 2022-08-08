@@ -74,7 +74,11 @@ class GoBin(Thread):
         self.ready_ok = None
         
         self.iface_names = {}
+        self.auth_names = {}
         self.startup_timeout = None
+
+        self.http_auth_enabled = False
+        self.mtls_auth_enabled = False
 
 
     def connect_to(self, server: GoBin, user: str = "", password: str = "", protocol: str = "AUTO") -> None:
@@ -98,17 +102,29 @@ class GoBin(Thread):
         auth_str = ""
         if user or password:
             auth_str = f"{user}:{password}@"
+            self.http_auth_enabled = True
 
         self.cfg["client"]["server"] = f"{protocol}://{auth_str}127.0.0.1:{port}"
 
 
-    def enable_tls(self, tls_cert_set: TLSCertSet) -> None:
+    def enable_tls(self, tls_cert_set: Optional[TLSCertSet]) -> None:
         if self.is_client:
-            self.cfg["client"]["tls"]["ca"] = tls_cert_set.ca
+            self.cfg["client"]["tls"]["ca"] = tls_cert_set.ca if tls_cert_set else None
             return
 
-        self.cfg["server"]["tls"]["certificate"] = tls_cert_set.cert
-        self.cfg["server"]["tls"]["key"] = tls_cert_set.key
+        self.cfg["server"]["tls"]["certificate"] = tls_cert_set.cert if tls_cert_set else None
+        self.cfg["server"]["tls"]["key"] = tls_cert_set.key if tls_cert_set else None
+
+
+    def enable_mtls(self, tls_cert_set: Optional[TLSCertSet]) -> None:
+        self.mtls_auth_enabled = tls_cert_set is not None
+
+        if self.is_server:
+            self.cfg["server"]["tls"]["client-ca"] = tls_cert_set.ca if tls_cert_set else None
+            return
+
+        self.cfg["client"]["tls"]["certificate"] = tls_cert_set.cert if tls_cert_set else None
+        self.cfg["client"]["tls"]["key"] = tls_cert_set.key if tls_cert_set else None
 
 
     def wait_ready_or_done(self) -> None:
@@ -139,6 +155,8 @@ class GoBin(Thread):
 
 
     def handle_line(self, line: str) -> None:
+        print(line)
+    
         if self.is_server and "VPN server online at" in line:
             self._notify_ready(True)
 
@@ -146,13 +164,15 @@ class GoBin(Thread):
             lspl = line.split(" ")[2:]
 
             if lspl[0] == "up":
+                ip = split_ip(lspl[1])
                 if self.is_client:
                     self.iface_names["server"] = lspl[2]
-                    self.ip = split_ip(lspl[1])
+                    self.ip = ip
                     self._notify_ready(True)
 
                 if self.is_server:
-                    self.iface_names[split_ip(lspl[1])] = lspl[2]
+                    self.iface_names[ip] = lspl[2]
+                    self.auth_names[ip] = lspl[3] if (len(lspl) >= 4) else ""
 
             elif lspl[0] == "down":
                 if self.is_client:
@@ -160,15 +180,24 @@ class GoBin(Thread):
                     self.ip = None
 
                 if self.is_server:
-                    self.iface_names.pop(split_ip(lspl[1]))
+                    ip = split_ip(lspl[1])
+                    self.iface_names.pop(ip)
+                    self.auth_names.pop(ip)
 
-            return
-
-        print(line)
+            else:
+                raise Exception(f"script called with invalid args: {lspl}")
 
 
     def get_ip(self) -> str:
         return self.ip
+
+
+    def get_auth_for(self, clbin: GoBin = None) -> str:
+        if not self.is_server:
+            raise Exception("Only servers can use get_auth_for")
+
+        client_ip = clbin.get_ip()
+        return self.auth_names[client_ip]
 
 
     def get_interface_for(self, clbin: GoBin = None) -> str:

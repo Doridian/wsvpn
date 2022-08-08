@@ -35,5 +35,9 @@ func (s *Server) handleSocketAuth(logger *log.Logger, w http.ResponseWriter, r *
 		return false, ""
 	}
 
+	if authUsername == "" {
+		return true, tlsUsername
+	}
+
 	return true, authUsername
 }

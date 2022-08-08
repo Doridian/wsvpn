@@ -3,11 +3,10 @@
 from __future__ import annotations
 from copy import deepcopy
 from os.path import join, dirname
-from asyncio.subprocess import DEVNULL, PIPE
 from os import remove
 from signal import SIGTERM
-from subprocess import Popen, check_output
-from tempfile import mktemp
+from subprocess import Popen, check_output, DEVNULL, PIPE
+from tempfile import NamedTemporaryFile
 from threading import Thread, Condition
 from time import sleep
 from typing import Any, Optional
@@ -231,9 +230,10 @@ class GoBin(Thread):
 
 
     def run(self) -> None:
-        cfgfile = mktemp()
-        with open(cfgfile, "w") as f:
+        cfgfile = None
+        with NamedTemporaryFile(mode="w", delete=False) as f:
             yaml_dump(self.cfg, f)
+            cfgfile = f.name
 
         try:
             self.proc = Popen([self.bin, "-config", cfgfile], stdin=DEVNULL, stderr=PIPE, text=True)

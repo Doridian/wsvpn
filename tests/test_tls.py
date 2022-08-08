@@ -1,9 +1,9 @@
 import pytest
 
+from tempfile import NamedTemporaryFile
 from typing import Generator
 from os import remove
 from shutil import rmtree
-from tempfile import mktemp
 from tests.bins import GoBin
 from tests.conftest import INVALID_HOST, VALID_HOST
 from tests.packet_utils import basic_traffic_test
@@ -12,8 +12,8 @@ from tests.tls_utils import TLSCertSet, tls_cert_set
 
 @pytest.fixture(scope="module")
 def tls_cert_server_noip() -> Generator:
-    conftmp = mktemp()
-    with open(conftmp, "w") as f:
+    conftmp = None
+    with NamedTemporaryFile(mode="w", delete=False) as f:
         f.write("[req]\n")
         f.write("default_bits = 2048\n")
         f.write("prompt = no\n")
@@ -29,6 +29,7 @@ def tls_cert_server_noip() -> Generator:
         f.write("[alt_names]\n")
         f.write("DNS.1 = localhost\n")
         f.write(f"DNS.2 = {VALID_HOST}\n")
+        conftmp = f.name
 
     res = tls_cert_set("localhost", conf=conftmp)
     remove(conftmp)

@@ -1,6 +1,7 @@
 import pytest
+
+from tempfile import NamedTemporaryFile
 from typing import Generator
-from tempfile import mktemp
 from shutil import rmtree
 from os import remove
 
@@ -19,9 +20,10 @@ VALID_HOST = "valid.local"
 
 @pytest.fixture(scope="session")
 def authenticator_config() -> Generator:
-    aconf = mktemp()
-    with open(aconf, "w") as f:
+    aconf = None
+    with NamedTemporaryFile(mode="w", delete=False) as f:
         f.write(f"{TEST_USER}:{TEST_PASSWORD}\n")
+        aconf = f.name
     
     yield aconf
     remove(aconf)
@@ -29,8 +31,8 @@ def authenticator_config() -> Generator:
 
 @pytest.fixture(scope="session")
 def tls_cert_server() -> Generator:
-    conftmp = mktemp()
-    with open(conftmp, "w") as f:
+    conftmp = None
+    with NamedTemporaryFile(mode="w", delete=False) as f:
         f.write("[req]\n")
         f.write("default_bits = 2048\n")
         f.write("prompt = no\n")
@@ -47,6 +49,7 @@ def tls_cert_server() -> Generator:
         f.write("DNS.1 = localhost\n")
         f.write(f"DNS.2 = {VALID_HOST}\n")
         f.write("IP.1 = 127.0.0.1\n")
+        conftmp = f.name
 
     res = tls_cert_set("localhost", conf=conftmp)
     remove(conftmp)

@@ -5,10 +5,13 @@ on:
 name: Release
 
 jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+
   release:
     runs-on: ubuntu-latest
-    steps:
-      - uses: ./.github/workflows/test.yml
+    needs: test
+    steps:  
       - name: Cache LLVM and Clang
         id: cache-llvm
         uses: actions/cache@v2

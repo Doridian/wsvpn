@@ -1,11 +1,25 @@
-from os import remove
-from tempfile import mktemp
-from typing import Optional
+import pytest
+
+from shutil import rmtree
+from typing import Generator, Optional
 from tests.bins import GoBin, new_clbin
 from tests.conftest import INVALID_TEXT, TEST_PASSWORD, TEST_USER
-from tests.tls_utils import TLSCertSet
+from tests.tls_utils import TLSCertSet, tls_cert_set
 from tests.packet_utils import basic_traffic_test
-import pytest
+
+
+@pytest.fixture(scope="module")
+def tls_cert_client2() -> Generator:
+    res = tls_cert_set(TEST_USER, conf="")
+    yield res
+    rmtree(res.dir)
+
+
+@pytest.fixture(scope="module")
+def tls_cert_client_invalid_user() -> Generator:
+    res = tls_cert_set(INVALID_TEXT, conf="")
+    yield res
+    rmtree(res.dir)
 
 
 def run_client_auth(svbin: GoBin, protocol: str, tls_cert_server: Optional[TLSCertSet], mtls: Optional[TLSCertSet], user: str, password: str, should_be_ok: bool) -> None:

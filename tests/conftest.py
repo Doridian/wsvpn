@@ -56,48 +56,8 @@ def tls_cert_server() -> Generator:
 
 
 @pytest.fixture(scope="session")
-def tls_cert_server_noip() -> Generator:
-    conftmp = mktemp()
-    with open(conftmp, "w") as f:
-        f.write("[req]\n")
-        f.write("default_bits = 2048\n")
-        f.write("prompt = no\n")
-        f.write("req_extensions = req_ext\n")
-        f.write("x509_extensions = v3_req\n")
-        f.write("distinguished_name = req_distinguished_name\n")
-        f.write("[req_distinguished_name]\n")
-        f.write("commonName = localhost\n")
-        f.write("[req_ext]\n")
-        f.write("subjectAltName = @alt_names\n")
-        f.write("[v3_req]\n")
-        f.write("subjectAltName = @alt_names\n")
-        f.write("[alt_names]\n")
-        f.write("DNS.1 = localhost\n")
-        f.write(f"DNS.2 = {VALID_HOST}\n")
-
-    res = tls_cert_set("localhost", conf=conftmp)
-    remove(conftmp)
-
-    yield res
-    rmtree(res.dir)
-
-@pytest.fixture(scope="session")
 def tls_cert_client() -> Generator:
     res = tls_cert_set(TEST_USER, conf="")
-    yield res
-    rmtree(res.dir)
-
-
-@pytest.fixture(scope="session")
-def tls_cert_client2() -> Generator:
-    res = tls_cert_set(TEST_USER, conf="")
-    yield res
-    rmtree(res.dir)
-
-
-@pytest.fixture(scope="session")
-def tls_cert_client_invalid_user() -> Generator:
-    res = tls_cert_set(INVALID_TEXT, conf="")
     yield res
     rmtree(res.dir)
 

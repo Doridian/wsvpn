@@ -128,10 +128,9 @@ class GoBin(Thread):
 
 
     def wait_ready_or_done(self) -> None:
-        while not self.is_ready_or_done:
-            self.proc_wait_cond.acquire()
-            self.proc_wait_cond.wait()
-            self.proc_wait_cond.release()
+        self.proc_wait_cond.acquire()
+        self.proc_wait_cond.wait_for(predicate=lambda : self.is_ready_or_done)
+        self.proc_wait_cond.release()
 
     
     def start(self) -> None:

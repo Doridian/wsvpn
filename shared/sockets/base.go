@@ -42,6 +42,7 @@ type Socket struct {
 	pingTimeout      time.Duration
 	isReady          bool
 	isClosing        bool
+	closeLock        *sync.Mutex
 }
 
 func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *water.Interface, ifaceManaged bool) *Socket {
@@ -62,6 +63,7 @@ func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *water
 		log:                   logger,
 		isReady:               false,
 		isClosing:             false,
+		closeLock:             &sync.Mutex{},
 
 		lastFragmentId:             0,
 		defragBuffer:               make(map[uint32]*fragmentsInfo),
@@ -139,6 +141,9 @@ func (s *Socket) setReady() {
 }
 
 func (s *Socket) Close() {
+	s.closeLock.Lock()
+	defer s.closeLock.Unlock()
+
 	s.adapter.Close()
 	if s.iface != nil && s.ifaceManaged {
 		s.iface.Close()

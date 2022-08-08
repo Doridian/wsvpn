@@ -81,6 +81,14 @@ class GoBin(Thread):
         self.mtls_auth_enabled = False
 
 
+    def is_tap_supported(self) -> bool:
+        return get_local_platform() != "darwin"
+
+
+    def is_one_interface_per_connection_supported(self) -> bool:
+        return get_local_platform() != "windows"
+
+
     def connect_to(self, server: GoBin, user: str = "", password: str = "", protocol: str = "AUTO") -> None:
         if not self.is_client or not server.is_server:
             raise ValueError("Can only connect client to server")

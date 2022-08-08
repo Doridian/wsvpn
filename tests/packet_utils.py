@@ -2,6 +2,7 @@ from fcntl import ioctl
 from platform import system
 from socket import AF_INET, SOCK_DGRAM, socket
 from struct import pack
+from build import get_local_platform
 from tests.bins import GoBin
 
 import scapy.layers.all as scapy_layers
@@ -43,7 +44,7 @@ class PacketTest:
         self.clbin = clbin
         self.ethernet = svbin.cfg["tunnel"]["mode"] == "TAP"
         self.pkts = []
-        self.need_dummy_layer = (not self.ethernet) and (system() == "Darwin")
+        self.need_dummy_layer = (not self.ethernet) and (get_local_platform() == "darwin")
 
 
     def pkt_add(self, pkt):
@@ -97,7 +98,7 @@ class PacketTest:
                     eth_layer.src = get_mac(src_iface)
                     eth_layer.dst = get_mac(dst_iface)
 
-                res: scapy_plist.PacketList = scapy_sendrecv.sniff(iface=dst_iface, started_callback=sendpkt, filter="ip" if system() == "Linux" else None, count=1, store=1, timeout=2)
+                res: scapy_plist.PacketList = scapy_sendrecv.sniff(iface=dst_iface, started_callback=sendpkt, filter="ip" if get_local_platform() == "linux" else None, count=1, store=1, timeout=2)
                 assert len(res.res) > 0
 
                 actual_pkt = res.res[0]

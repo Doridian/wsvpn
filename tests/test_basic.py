@@ -1,3 +1,5 @@
+import pytest
+
 from tests.bins import GoBin
 from tests.tls_utils import TLSCertSet
 from tests.packet_utils import basic_traffic_test
@@ -49,7 +51,11 @@ def test_run_e2e_tun(svbin: GoBin, clbin: GoBin) -> None:
 
     basic_traffic_test(svbin=svbin, clbin=clbin)
 
+
 def test_run_e2e_tap(svbin: GoBin, clbin: GoBin) -> None:
+    if not svbin.is_tap_supported():
+        pytest.skip("TAP not supported on this platform")
+
     svbin.cfg["tunnel"]["mode"] = "TAP"
     clbin.connect_to(svbin)
 

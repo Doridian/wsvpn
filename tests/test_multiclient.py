@@ -13,7 +13,14 @@ def clbin2() -> Generator:
 def runtest(svbin: GoBin, clbins: list, one_iface: bool, mode: str) -> None:
     svbin.cfg["interface"]["one-interface-per-connection"] = one_iface
     svbin.cfg["tunnel"]["mode"] = mode
-    
+
+    if mode == "TAP" and not svbin.is_tap_supported():
+        pytest.skip("TAP not supported on this platform")
+
+    if one_iface and not svbin.is_one_interface_per_connection_supported():
+        pytest.skip("One-Interface-Per-Connection not supported on this platform")
+
+
     try:
         for clbin in clbins:
             clbin.connect_to(svbin)

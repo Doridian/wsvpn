@@ -34,8 +34,6 @@ def _get_default_config(binf: str) -> Any:
     cfg["scripts"]["down"] = SCRIPT_HDL
     cfg["scripts"]["up"] = SCRIPT_HDL
 
-    cfg["interface"]["one-interface-per-connection"] = True
-
     _default_configs[binf] = cfg
     return cfg
 

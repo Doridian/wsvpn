@@ -4,9 +4,9 @@ from tests.packet_utils import basic_traffic_test
 from tests.tls_utils import TLSCertSet
 
 
-def test_run_tls_wss_invalid_ca(svbin: GoBin, clbin: GoBin, tls_cert_server: TLSCertSet, tls_cert_client: TLSCertSet) -> None:
+def test_run_tls_wss_invalid_ca(svbin: GoBin, clbin: GoBin, tls_cert_server: TLSCertSet, tls_cert_server_noip: TLSCertSet) -> None:
     svbin.enable_tls(tls_cert_server)
-    clbin.enable_tls(tls_cert_client) # This is for having an invalid CA
+    clbin.enable_tls(tls_cert_server_noip) # This is for having an invalid CA
     clbin.connect_to(svbin, protocol="wss")
 
     svbin.start()
@@ -16,9 +16,9 @@ def test_run_tls_wss_invalid_ca(svbin: GoBin, clbin: GoBin, tls_cert_server: TLS
     clbin.assert_ready_ok(should=False)
 
 
-def test_run_tls_webtransport_invalid_ca(svbin: GoBin, clbin: GoBin, tls_cert_server: TLSCertSet, tls_cert_client: TLSCertSet) -> None:
+def test_run_tls_webtransport_invalid_ca(svbin: GoBin, clbin: GoBin, tls_cert_server: TLSCertSet, tls_cert_server_noip: TLSCertSet) -> None:
     svbin.enable_tls(tls_cert_server)
-    clbin.enable_tls(tls_cert_client) # This is for having an invalid CA
+    clbin.enable_tls(tls_cert_server_noip) # This is for having an invalid CA
     svbin.cfg["server"]["enable-http3"] = True
     clbin.connect_to(svbin, protocol="webtransport")
 

@@ -45,6 +45,7 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 		}
 	} else {
 		userInfo = dest.User
+		dest.User = nil
 	}
 
 	tlsConfig := &tls.Config{}

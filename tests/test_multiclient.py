@@ -1,5 +1,13 @@
+from email.generator import Generator
 from tests.bins import GoBin, new_clbin
 from tests.packet_utils import basic_traffic_test
+import pytest
+
+@pytest.fixture(scope="function")
+def clbin2() -> Generator:
+    gobin = new_clbin()
+    yield gobin
+    gobin.stop()
 
 
 def runtest(svbin: GoBin, clbins: list, one_iface: bool, mode: str) -> None:
@@ -25,21 +33,17 @@ def runtest(svbin: GoBin, clbins: list, one_iface: bool, mode: str) -> None:
             clbin.stop()
 
 
-def test_run_e2e_oneiface_tap(svbin: GoBin, clbin: GoBin) -> None:
-    clbin2 = new_clbin()
+def test_run_e2e_oneiface_tap(svbin: GoBin, clbin: GoBin, clbin2: GoBin) -> None:
     runtest(svbin, [clbin, clbin2], False, "TAP")
 
 
-def test_run_e2e_oneiface_tun(svbin: GoBin, clbin: GoBin) -> None:
-    clbin2 = new_clbin()
+def test_run_e2e_oneiface_tun(svbin: GoBin, clbin: GoBin, clbin2: GoBin) -> None:
     runtest(svbin, [clbin, clbin2], False, "TUN")
 
 
-def test_run_e2e_manyiface_tap(svbin: GoBin, clbin: GoBin) -> None:
-    clbin2 = new_clbin()
+def test_run_e2e_manyiface_tap(svbin: GoBin, clbin: GoBin, clbin2: GoBin) -> None:
     runtest(svbin, [clbin, clbin2], True, "TAP")
 
 
-def test_run_e2e_manyiface_tun(svbin: GoBin, clbin: GoBin) -> None:
-    clbin2 = new_clbin()
+def test_run_e2e_manyiface_tun(svbin: GoBin, clbin: GoBin, clbin2: GoBin) -> None:
     runtest(svbin, [clbin, clbin2], True, "TUN")

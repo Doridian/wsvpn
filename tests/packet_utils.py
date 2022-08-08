@@ -2,7 +2,7 @@ from fcntl import ioctl
 from platform import system
 from socket import AF_INET, SOCK_DGRAM, socket
 from struct import pack
-from tests.conftest import GoBin
+from tests.bins import GoBin
 
 import scapy.layers.all as scapy_layers
 import scapy.plist as scapy_plist
@@ -65,9 +65,11 @@ class PacketTest:
         self.pkt_add(pkt)
 
 
-    def add_defaults(self):
-        self.simple_pkt(0)
+    def add_defaults(self, minimal: bool):
         self.simple_pkt(10)
+        if minimal:
+            return
+        self.simple_pkt(0)
         self.simple_pkt(1000)
         self.simple_pkt(1300)
 
@@ -129,7 +131,7 @@ class PacketTest:
             dosniff()
 
 
-def basic_traffic_test(svbin: GoBin, clbin: GoBin) -> None:
+def basic_traffic_test(svbin: GoBin, clbin: GoBin, minimal: bool = False) -> None:
     t = PacketTest(svbin=svbin, clbin=clbin)
-    t.add_defaults()
+    t.add_defaults(minimal=minimal)
     t.run()

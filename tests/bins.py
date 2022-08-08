@@ -170,6 +170,7 @@ class GoBin(Thread):
     def get_ip(self) -> str:
         return self.ip
 
+
     def get_interface_for(self, clbin: GoBin = None) -> str:
         if self.is_client:
             # clbin does not matter here, we only have one iface
@@ -190,9 +191,10 @@ class GoBin(Thread):
         self.proc_wait_cond.release()
 
 
-    def assert_ready_ok(self) -> None:
+    def assert_ready_ok(self, should: bool = True) -> None:
         self.wait_ready_or_done()
-        assert self.ready_ok
+        assert self.ready_ok == should
+
 
     def run(self) -> None:
         cfgfile = mktemp()

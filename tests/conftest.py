@@ -4,8 +4,24 @@ from tempfile import mktemp
 from shutil import rmtree
 from os import remove
 
-from tests.bins import GoBin, new_clbin, new_svbin
+from tests.bins import new_clbin, new_svbin
 from tests.tls_utils import tls_cert_set
+
+
+TEST_USER = "testuser"
+TEST_PASSWORD = "pAsSwOrD1234"
+
+INVALID_TEXT = "invalid"
+
+
+@pytest.fixture(scope="session")
+def authenticator_config() -> Generator:
+    aconf = mktemp()
+    with open(aconf, "w") as f:
+        f.write(f"{TEST_USER}:{TEST_PASSWORD}\n")
+    
+    yield aconf
+    remove(aconf)
 
 
 @pytest.fixture(scope="session")
@@ -37,7 +53,21 @@ def tls_cert_server() -> Generator:
 
 @pytest.fixture(scope="session")
 def tls_cert_client() -> Generator:
-    res = tls_cert_set("testclient", conf="")
+    res = tls_cert_set(TEST_USER, conf="")
+    yield res
+    rmtree(res.dir)
+
+
+@pytest.fixture(scope="session")
+def tls_cert_client2() -> Generator:
+    res = tls_cert_set(TEST_USER, conf="")
+    yield res
+    rmtree(res.dir)
+
+
+@pytest.fixture(scope="session")
+def tls_cert_client_invalid_user() -> Generator:
+    res = tls_cert_set(INVALID_TEXT, conf="")
     yield res
     rmtree(res.dir)
 

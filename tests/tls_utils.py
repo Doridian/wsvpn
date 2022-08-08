@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 @dataclass
 class TLSCertSet:
+    cn: str
     ca: str
     cert: str
     key: str
@@ -21,4 +22,4 @@ def tls_cert_set(cn: str, conf: str) -> TLSCertSet:
     tmpdir = mkdtemp()
     check_call(args, cwd=tmpdir)
 
-    return TLSCertSet(ca=join(tmpdir, "cert.pem"), cert=join(tmpdir, "cert.pem"), key=join(tmpdir, "key.pem"), dir=tmpdir)
+    return TLSCertSet(cn=cn, ca=join(tmpdir, "cert.pem"), cert=join(tmpdir, "cert.pem"), key=join(tmpdir, "key.pem"), dir=tmpdir)

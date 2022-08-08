@@ -57,7 +57,7 @@ def run_auth_server(svbin: GoBin, protocol: str, tls_cert_server: Optional[TLSCe
             mtls_valid = mtls_client.cn == TEST_USER
 
         # If we can't do mTLS (WS plaintext), these tests are pointless!
-        if mtls_server:
+        if mtls_client:
             # Valid mTLS with valid user
             run_client_auth(svbin=svbin, tls_cert_server=tls_cert_server, protocol=protocol, mtls=mtls_client, user=TEST_USER, password=TEST_PASSWORD, should_be_ok=mtls_valid)
             # Valid mTLS with no user

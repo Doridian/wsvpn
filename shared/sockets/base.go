@@ -135,7 +135,6 @@ func (s *Socket) featureCheck() {
 		if s.remoteFeatures[feat] {
 			s.usedFeatures[feat] = true
 		}
-		log.Printf("F = %s, L = %v, R = %v, U = %v", feat, en, s.remoteFeatures[feat], s.usedFeatures[feat])
 	}
 
 	if s.remoteProtocolVersion >= fragmentationMinProtocol && s.remoteProtocolVersion < fragmentationNegotiatedMinProtocol {

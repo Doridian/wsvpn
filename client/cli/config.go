@@ -8,6 +8,7 @@ import (
 
 	"github.com/Doridian/wsvpn/shared"
 	shared_cli "github.com/Doridian/wsvpn/shared/cli"
+	"github.com/Doridian/wsvpn/shared/commands"
 )
 
 //go:embed client.example.yml
@@ -15,8 +16,9 @@ var defaultConfig string
 
 type Config struct {
 	Tunnel struct {
-		SetDefaultGateway bool                  `yaml:"set-default-gateway"`
-		Ping              shared_cli.PingConfig `yaml:"ping"`
+		SetDefaultGateway bool                    `yaml:"set-default-gateway"`
+		Ping              shared_cli.PingConfig   `yaml:"ping"`
+		Features          commands.FeaturesConfig `yaml:"features"`
 	} `yaml:"tunnel"`
 
 	Interface shared.InterfaceConfig `yaml:"interface"`

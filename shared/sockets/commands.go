@@ -56,10 +56,16 @@ func (s *Socket) registerDefaultCommandHandlers() {
 		if err != nil {
 			return err
 		}
+
 		s.remoteProtocolVersion = parameters.ProtocolVersion
 		s.log.Printf("Remote version is: %s (protocol %d)", parameters.Version, parameters.ProtocolVersion)
 
-		s.translateAllowEnableToEnableFramgnetation()
+		s.remoteFeatures = make(map[commands.Feature]bool)
+		for _, v := range parameters.EnabledFeatures {
+			s.remoteFeatures[v] = true
+		}
+
+		s.featureCheck()
 
 		s.setReady()
 
@@ -88,7 +94,20 @@ func (s *Socket) registerDefaultCommandHandlers() {
 }
 
 func (s *Socket) sendDefaultWelcome() error {
-	return s.MakeAndSendCommand(&commands.VersionParameters{Version: shared.Version, ProtocolVersion: shared.ProtocolVersion})
+	localFeaturesArray := make([]commands.Feature, len(s.localFeatures))
+
+	for feat, en := range s.localFeatures {
+		if !en {
+			continue
+		}
+		localFeaturesArray = append(localFeaturesArray, feat)
+	}
+
+	return s.MakeAndSendCommand(&commands.VersionParameters{
+		Version:         shared.Version,
+		ProtocolVersion: shared.ProtocolVersion,
+		EnabledFeatures: localFeaturesArray,
+	})
 }
 
 func (s *Socket) SendMessage(msgType string, message string) error {

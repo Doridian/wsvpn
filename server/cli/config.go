@@ -7,6 +7,7 @@ import (
 
 	"github.com/Doridian/wsvpn/shared"
 	shared_cli "github.com/Doridian/wsvpn/shared/cli"
+	"github.com/Doridian/wsvpn/shared/commands"
 )
 
 //go:embed server.example.yml
@@ -14,14 +15,14 @@ var defaultConfig string
 
 type Config struct {
 	Tunnel struct {
-		Mtu                    int    `yaml:"mtu"`
-		Subnet                 string `yaml:"subnet"`
-		Mode                   string `yaml:"mode"`
-		AllowClientToClient    bool   `yaml:"allow-client-to-client"`
-		AllowIpSpoofing        bool   `yaml:"allow-ip-spoofing"`
-		AllowUnknownEtherTypes bool   `yaml:"allow-unknown-ether-types"`
-		AllowMacChanging       bool   `yaml:"allow-mac-changing"`
-		EnableFragmentation    bool   `yaml:"enable-fragmentation"`
+		Mtu                    int                     `yaml:"mtu"`
+		Subnet                 string                  `yaml:"subnet"`
+		Mode                   string                  `yaml:"mode"`
+		AllowClientToClient    bool                    `yaml:"allow-client-to-client"`
+		AllowIpSpoofing        bool                    `yaml:"allow-ip-spoofing"`
+		AllowUnknownEtherTypes bool                    `yaml:"allow-unknown-ether-types"`
+		AllowMacChanging       bool                    `yaml:"allow-mac-changing"`
+		Features               commands.FeaturesConfig `yaml:"features"`
 		IpConfig               struct {
 			Local  bool `yaml:"local"`
 			Remote bool `yaml:"remote"`

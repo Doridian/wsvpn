@@ -146,6 +146,10 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	socket := sockets.MakeSocket(clientLogger, adapter, iface, ifaceManaged)
 	defer socket.Close()
 
+	for feat, en := range s.localFeatures {
+		socket.SetLocalFeature(feat, en)
+	}
+
 	socket.AssignedIP = shared.NetIPToIPv4(ipClient)
 
 	if s.SocketConfigurator != nil {
@@ -155,7 +159,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	socket.SetAllowEnableFragmentation(s.EnableFragmentation)
+
 	if s.PacketHandler != nil {
 		socket.SetPacketHandler(s.PacketHandler)
 	}
@@ -186,7 +190,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		DoIpConfig:          s.DoRemoteIpConfig,
 		IpAddress:           remoteNetStr,
 		MTU:                 s.mtu,
-		EnableFragmentation: s.EnableFragmentation,
+		EnableFragmentation: socket.IsLocalFeature(commands.FEATURE_FRAGMENTATION),
 	})
 	if err != nil {
 		socket.CloseError(fmt.Errorf("error sending init command: %v", err))

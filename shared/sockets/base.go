@@ -12,6 +12,7 @@ import (
 )
 
 const UndeterminedProtocolVersion = 0
+const featureFieldMinProtocol = 12
 
 type Socket struct {
 	AssignedIP shared.IPv4
@@ -21,10 +22,11 @@ type Socket struct {
 	defragBuffer          map[uint32]*fragmentsInfo
 	defragLock            *sync.Mutex
 	fragmentCleanupTicker *time.Ticker
+	fragmentationEnabled  bool
 
-	fragmentationEnabled       bool
-	fragmentationEnableAllowed *bool
-	remoteProtocolVersion      int
+	compressionEnabled bool
+
+	remoteProtocolVersion int
 
 	adapter          adapters.SocketAdapter
 	iface            *water.Interface
@@ -43,6 +45,10 @@ type Socket struct {
 	isReady          bool
 	isClosing        bool
 	closeLock        *sync.Mutex
+
+	localFeatures  map[commands.Feature]bool
+	remoteFeatures map[commands.Feature]bool
+	usedFeatures   map[commands.Feature]bool
 }
 
 func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *water.Interface, ifaceManaged bool) *Socket {
@@ -65,13 +71,18 @@ func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *water
 		isClosing:             false,
 		closeLock:             &sync.Mutex{},
 
-		lastFragmentId:             0,
-		defragBuffer:               make(map[uint32]*fragmentsInfo),
-		defragLock:                 &sync.Mutex{},
-		lastFragmentCleanup:        time.Now(),
-		fragmentCleanupTicker:      time.NewTicker(fragmentExpiryTime),
-		fragmentationEnabled:       false,
-		fragmentationEnableAllowed: nil,
+		lastFragmentId:        0,
+		defragBuffer:          make(map[uint32]*fragmentsInfo),
+		defragLock:            &sync.Mutex{},
+		lastFragmentCleanup:   time.Now(),
+		fragmentCleanupTicker: time.NewTicker(fragmentExpiryTime),
+		fragmentationEnabled:  false,
+
+		compressionEnabled: false,
+
+		localFeatures:  make(map[commands.Feature]bool, 0),
+		remoteFeatures: make(map[commands.Feature]bool, 0),
+		usedFeatures:   make(map[commands.Feature]bool),
 	}
 }
 
@@ -80,33 +91,65 @@ func (s *Socket) ConfigurePing(pingInterval time.Duration, pingTimeout time.Dura
 	s.pingTimeout = pingTimeout
 }
 
+func (s *Socket) SetLocalFeature(feature commands.Feature, enabled bool) {
+	if !enabled {
+		delete(s.localFeatures, feature)
+		return
+	}
+	s.localFeatures[feature] = true
+}
+
+func (s *Socket) IsLocalFeature(feature commands.Feature) bool {
+	return s.localFeatures[feature]
+}
+
 func (s *Socket) SetPacketHandler(packetHandler PacketHandler) {
 	s.packetHandler = packetHandler
 }
 
-func (s *Socket) SetAllowEnableFragmentation(allowEnable bool) {
-	s.fragmentationEnableAllowed = &allowEnable
-	s.translateAllowEnableToEnableFramgnetation()
+func (s *Socket) HandleInitPacketFragmentation(enabled bool) {
+	if s.remoteProtocolVersion >= featureFieldMinProtocol {
+		return
+	}
+
+	s.SetLocalFeature(commands.FEATURE_FRAGMENTATION, true)
+	if enabled {
+		s.remoteFeatures[commands.FEATURE_FRAGMENTATION] = true
+	} else {
+		delete(s.remoteFeatures, commands.FEATURE_FRAGMENTATION)
+	}
+
+	s.featureCheck()
 }
 
-func (s *Socket) translateAllowEnableToEnableFramgnetation() {
-	if s.remoteProtocolVersion == UndeterminedProtocolVersion || s.fragmentationEnableAllowed == nil {
+func (s *Socket) featureCheck() {
+	if s.remoteProtocolVersion == UndeterminedProtocolVersion {
 		return
 	}
 
-	switch {
-	case s.remoteProtocolVersion == UndeterminedProtocolVersion:
-		return
-	case s.remoteProtocolVersion < fragmentationMinProtocol:
-		s.fragmentationEnabled = false
-	case s.remoteProtocolVersion < fragmentationNegotiatedMinProtocol:
-		s.fragmentationEnabled = true
-	default:
-		s.fragmentationEnabled = *s.fragmentationEnableAllowed
+	s.usedFeatures = make(map[commands.Feature]bool)
+	for feat, en := range s.localFeatures {
+		if !en {
+			continue
+		}
+		if s.remoteFeatures[feat] {
+			s.usedFeatures[feat] = true
+		}
+		log.Printf("F = %s, L = %v, R = %v, U = %v", feat, en, s.remoteFeatures[feat], s.usedFeatures[feat])
 	}
+
+	if s.remoteProtocolVersion >= fragmentationMinProtocol && s.remoteProtocolVersion < fragmentationNegotiatedMinProtocol {
+		s.fragmentationEnabled = true
+	} else if s.remoteProtocolVersion >= fragmentationNegotiatedMinProtocol && s.remoteProtocolVersion < featureFieldMinProtocol {
+		s.fragmentationEnabled = s.localFeatures[commands.FEATURE_FRAGMENTATION]
+	} else {
+		s.fragmentationEnabled = s.usedFeatures[commands.FEATURE_FRAGMENTATION]
+	}
+
+	s.compressionEnabled = s.usedFeatures[commands.FEATURE_COMPRESSION]
 
 	s.log.Printf("Setting fragmentation: %s", shared.BoolToEnabled(s.fragmentationEnabled))
-
+	s.log.Printf("Setting compression: %s", shared.BoolToEnabled(s.compressionEnabled))
 }
 
 func (s *Socket) Wait() {

@@ -102,6 +102,9 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 	client.SocketConfigurator = &cli.PingFlagsSocketConfigurator{
 		Config: &config.Tunnel.Ping,
 	}
+	for _, feat := range config.Tunnel.Features {
+		client.SetLocalFeature(feat, true)
+	}
 	client.SetDefaultGateway = config.Tunnel.SetDefaultGateway
 	client.ServerUrl = dest
 	client.SetBasicAuthFromUserInfo(userInfo)

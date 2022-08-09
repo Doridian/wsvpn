@@ -10,6 +10,7 @@ import (
 	"github.com/Doridian/wsvpn/server/authenticators"
 	"github.com/Doridian/wsvpn/server/upgraders"
 	"github.com/Doridian/wsvpn/shared"
+	"github.com/Doridian/wsvpn/shared/commands"
 	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/songgao/water"
 )
@@ -20,18 +21,17 @@ var ErrNoServeWaitsLeft = errors.New("no serve waits left")
 type Server struct {
 	shared.EventConfigHolder
 
-	PacketHandler       sockets.PacketHandler
-	VPNNet              *shared.VPNNet
-	DoLocalIpConfig     bool
-	DoRemoteIpConfig    bool
-	TLSConfig           *tls.Config
-	ListenAddr          string
-	HTTP3Enabled        bool
-	Authenticator       authenticators.Authenticator
-	Mode                shared.VPNMode
-	SocketConfigurator  sockets.SocketConfigurator
-	InterfaceConfig     *shared.InterfaceConfig
-	EnableFragmentation bool
+	PacketHandler      sockets.PacketHandler
+	VPNNet             *shared.VPNNet
+	DoLocalIpConfig    bool
+	DoRemoteIpConfig   bool
+	TLSConfig          *tls.Config
+	ListenAddr         string
+	HTTP3Enabled       bool
+	Authenticator      authenticators.Authenticator
+	Mode               shared.VPNMode
+	SocketConfigurator sockets.SocketConfigurator
+	InterfaceConfig    *shared.InterfaceConfig
 
 	upgraders          []upgraders.SocketUpgrader
 	slotMutex          *sync.Mutex
@@ -49,6 +49,8 @@ type Server struct {
 	serveErrorChannel chan interface{}
 	serveError        error
 	serveWaitGroup    *sync.WaitGroup
+
+	localFeatures map[commands.Feature]bool
 }
 
 func NewServer() *Server {
@@ -61,6 +63,7 @@ func NewServer() *Server {
 		serveWaitGroup:     &sync.WaitGroup{},
 		closers:            make([]io.Closer, 0),
 		closerLock:         &sync.Mutex{},
+		localFeatures:      make(map[commands.Feature]bool),
 	}
 }
 
@@ -132,4 +135,12 @@ func (s *Server) Close() {
 func (s *Server) SetMTU(mtu int) {
 	s.mtu = mtu
 	s.packetBufferSize = shared.GetPacketBufferSizeByMTU(mtu)
+}
+
+func (s *Server) SetLocalFeature(feature commands.Feature, enabled bool) {
+	if !enabled {
+		delete(s.localFeatures, feature)
+		return
+	}
+	s.localFeatures[feature] = true
 }

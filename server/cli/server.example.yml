@@ -1,12 +1,14 @@
 tunnel:
   mtu: 1420
-  enable-fragmentation: true # Enable packet fragmentation (default enabled), required for MTU > 1216 in WebTransport
   subnet: 192.168.3.0/24 # Server will pick the first host from this, and assign others to clients in order
   mode: TUN # TUN or TAP
   allow-client-to-client: false # Allow clients to talk to other clients on the same server
   allow-ip-spoofing: false # TAP only: Allow clients to use any IP address and not just the assigned one (on TUN IPs are always enforced)
   allow-mac-changing: false # TAP only: Allow clients to only use a single unicast MAC address (the first one they communicate with)
   allow-unknown-ether-types: false # TAP only: allow unknown ether types (Anything other than ARP, IPv4)
+  features:
+  - fragmentation # Enable packet fragmentation (default enabled), required for MTU > 1216 in WebTransport
+  #- compression # Enable packet compression (default disabled)
   ip-config:
     local: true # Configure local interface automatically
     remote: true # Send configuration data to clients for their interfaces

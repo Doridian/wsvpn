@@ -112,11 +112,10 @@ func (s *WebTransportAdapter) setReady() {
 }
 
 func (s *WebTransportAdapter) RefreshFeatures() {
-	s.streamId = getStreamID(s.stream)
-	s.quarterStreamId = s.streamId / 4
-
 	if s.featuresContainer.IsFeatureEnabled(features.FEATURE_DATAGRAM_ID_0) {
 		s.quarterStreamId = 0
+	} else {
+		s.quarterStreamId = s.streamId / 4
 	}
 
 	buf := &bytes.Buffer{}
@@ -140,6 +139,7 @@ func (s *WebTransportAdapter) Serve() (error, bool) {
 		return err, true
 	}
 
+	s.streamId = getStreamID(s.stream)
 	s.RefreshFeatures()
 
 	s.wg.Add(1)

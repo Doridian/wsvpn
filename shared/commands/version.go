@@ -11,6 +11,10 @@ const (
 
 type FeaturesConfig = []Feature
 
+func IsFeatureSupported(feat Feature) bool {
+	return feat == FEATURE_FRAGMENTATION
+}
+
 type VersionParameters struct {
 	ProtocolVersion int            `json:"protocol_version"`
 	Version         string         `json:"version"`

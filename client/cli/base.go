@@ -12,6 +12,7 @@ import (
 	"github.com/Doridian/wsvpn/client/clients"
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/cli"
+	"github.com/Doridian/wsvpn/shared/commands"
 )
 
 func Main(configPtr *string, printDefaultConfigPtr *bool) {
@@ -103,6 +104,9 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 		Config: &config.Tunnel.Ping,
 	}
 	for _, feat := range config.Tunnel.Features {
+		if !commands.IsFeatureSupported(feat) {
+			panic(fmt.Errorf("unknown feature: %s", feat))
+		}
 		client.SetLocalFeature(feat, true)
 	}
 	client.SetDefaultGateway = config.Tunnel.SetDefaultGateway

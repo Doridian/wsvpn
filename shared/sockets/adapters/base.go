@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/Doridian/wsvpn/shared/commands"
+	"github.com/Doridian/wsvpn/shared/features"
 )
 
 type MessageHandler = func(message []byte) bool
@@ -19,6 +20,8 @@ type SocketAdapter interface {
 
 	WaitReady()
 	Name() string
+
+	SetFeaturesContainer(ct features.FeaturesContainer)
 
 	WriteControlMessage(message []byte) error
 	SetControlMessageHandler(handler MessageHandler)
@@ -37,22 +40,29 @@ type SocketAdapter interface {
 	IsClient() bool
 
 	MaxDataPayloadLen() uint16
+
+	RefreshFeatures()
 }
 
-type socketBase struct {
+type adapterBase struct {
 	controlMessageHandler MessageHandler
 	dataMessageHandler    MessageHandler
 	pongHandler           func()
+	featuresContainer     features.FeaturesContainer
 }
 
-func (s *socketBase) SetControlMessageHandler(handler MessageHandler) {
+func (s *adapterBase) SetControlMessageHandler(handler MessageHandler) {
 	s.controlMessageHandler = handler
 }
 
-func (s *socketBase) SetDataMessageHandler(handler MessageHandler) {
+func (s *adapterBase) SetDataMessageHandler(handler MessageHandler) {
 	s.dataMessageHandler = handler
 }
 
-func (s *socketBase) SetPongHandler(handler func()) {
+func (s *adapterBase) SetPongHandler(handler func()) {
 	s.pongHandler = handler
+}
+
+func (s *adapterBase) SetFeaturesContainer(featuresContainer features.FeaturesContainer) {
+	s.featuresContainer = featuresContainer
 }

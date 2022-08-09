@@ -14,7 +14,7 @@ import (
 	"github.com/Doridian/wsvpn/server/servers"
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/cli"
-	"github.com/Doridian/wsvpn/shared/commands"
+	"github.com/Doridian/wsvpn/shared/features"
 	"github.com/google/uuid"
 )
 
@@ -57,7 +57,7 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 	server.SetMTU(config.Tunnel.Mtu)
 	server.HTTP3Enabled = config.Server.EnableHTTP3
 	for feat, en := range config.Tunnel.Features {
-		if !commands.IsFeatureSupported(feat) {
+		if !features.IsFeatureSupported(feat) {
 			panic(fmt.Errorf("unknown feature: %s", feat))
 		}
 		server.SetLocalFeature(feat, en)

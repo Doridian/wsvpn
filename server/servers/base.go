@@ -10,7 +10,7 @@ import (
 	"github.com/Doridian/wsvpn/server/authenticators"
 	"github.com/Doridian/wsvpn/server/upgraders"
 	"github.com/Doridian/wsvpn/shared"
-	"github.com/Doridian/wsvpn/shared/commands"
+	"github.com/Doridian/wsvpn/shared/features"
 	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/songgao/water"
 )
@@ -50,7 +50,7 @@ type Server struct {
 	serveError        error
 	serveWaitGroup    *sync.WaitGroup
 
-	localFeatures map[commands.Feature]bool
+	localFeatures map[features.Feature]bool
 }
 
 func NewServer() *Server {
@@ -63,7 +63,7 @@ func NewServer() *Server {
 		serveWaitGroup:     &sync.WaitGroup{},
 		closers:            make([]io.Closer, 0),
 		closerLock:         &sync.Mutex{},
-		localFeatures:      make(map[commands.Feature]bool),
+		localFeatures:      make(map[features.Feature]bool),
 	}
 }
 
@@ -137,7 +137,7 @@ func (s *Server) SetMTU(mtu int) {
 	s.packetBufferSize = shared.GetPacketBufferSizeByMTU(mtu)
 }
 
-func (s *Server) SetLocalFeature(feature commands.Feature, enabled bool) {
+func (s *Server) SetLocalFeature(feature features.Feature, enabled bool) {
 	if !enabled {
 		delete(s.localFeatures, feature)
 		return

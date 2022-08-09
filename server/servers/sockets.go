@@ -8,6 +8,7 @@ import (
 
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
+	"github.com/Doridian/wsvpn/shared/features"
 	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 	"github.com/google/uuid"
@@ -190,7 +191,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		DoIpConfig:          s.DoRemoteIpConfig,
 		IpAddress:           remoteNetStr,
 		MTU:                 s.mtu,
-		EnableFragmentation: socket.IsLocalFeature(commands.FEATURE_FRAGMENTATION),
+		EnableFragmentation: socket.IsLocalFeature(features.FEATURE_FRAGMENTATION),
 	})
 	if err != nil {
 		socket.CloseError(fmt.Errorf("error sending init command: %v", err))

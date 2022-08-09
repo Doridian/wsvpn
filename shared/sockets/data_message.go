@@ -23,8 +23,6 @@ type fragmentsInfo struct {
 }
 
 const fragmentExpiryTime = time.Second * time.Duration(30)
-const fragmentationMinProtocol = 10
-const fragmentationNegotiatedMinProtocol = 11
 
 func (s *Socket) processPacket(packet []byte) bool {
 	if len(packet) < 1 {

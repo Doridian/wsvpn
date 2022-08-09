@@ -4,6 +4,7 @@ package servers
 
 import (
 	"fmt"
+	"log"
 	"net"
 
 	"github.com/Doridian/wsvpn/shared"
@@ -28,7 +29,17 @@ func (s *Server) configIface(dev *water.Interface, ipClient net.IP) error {
 	if err != nil {
 		err = shared.ExecCmd("ifconfig", dev.Name(), fmt.Sprintf("%s/%d", s.VPNNet.GetServerIP().String(), s.VPNNet.GetSize()), ipClient.String(), "up")
 	}
-	return err
+
+	if err != nil {
+		return err
+	}
+
+	err = shared.ExecCmd("route", "add", "-net", fmt.Sprintf("%s/%d", s.VPNNet.GetServerIP().String(), s.VPNNet.GetSize()), "-interface", dev.Name())
+	if err != nil {
+		log.Printf("Error adding route: %v", err)
+	}
+
+	return nil
 }
 
 func (s *Server) getPlatformSpecifics(config *water.Config) error {

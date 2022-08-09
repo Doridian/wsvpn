@@ -6,6 +6,7 @@ import (
 
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
+	"github.com/Doridian/wsvpn/shared/features"
 )
 
 var ErrCommandNotSupported = errors.New("command not supported by peer")
@@ -60,7 +61,7 @@ func (s *Socket) registerDefaultCommandHandlers() {
 		s.remoteProtocolVersion = parameters.ProtocolVersion
 		s.log.Printf("Remote version is: %s (protocol %d)", parameters.Version, parameters.ProtocolVersion)
 
-		s.remoteFeatures = make(map[commands.Feature]bool)
+		s.remoteFeatures = make(map[features.Feature]bool)
 		for _, v := range parameters.EnabledFeatures {
 			s.remoteFeatures[v] = true
 		}
@@ -94,7 +95,7 @@ func (s *Socket) registerDefaultCommandHandlers() {
 }
 
 func (s *Socket) sendDefaultWelcome() error {
-	localFeaturesArray := make([]commands.Feature, len(s.localFeatures))
+	localFeaturesArray := make([]features.Feature, 0, len(s.localFeatures))
 
 	for feat, en := range s.localFeatures {
 		if !en {

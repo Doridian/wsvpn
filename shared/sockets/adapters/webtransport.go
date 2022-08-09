@@ -13,6 +13,7 @@ import (
 
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
+	"github.com/Doridian/wsvpn/shared/features"
 	"github.com/lucas-clemente/quic-go"
 	"github.com/lucas-clemente/quic-go/http3"
 	"github.com/lucas-clemente/quic-go/quicvarint"
@@ -30,15 +31,16 @@ const (
 )
 
 type WebTransportAdapter struct {
-	socketBase
-	qconn             quic.Connection
-	conn              *webtransport.Session
-	stream            webtransport.Stream
-	isServer          bool
-	wg                *sync.WaitGroup
-	readyWait         *sync.Cond
-	isReady           bool
-	serializationType commands.SerializationType
+	adapterBase
+	qconn              quic.Connection
+	conn               *webtransport.Session
+	stream             webtransport.Stream
+	isServer           bool
+	wg                 *sync.WaitGroup
+	readyWait          *sync.Cond
+	isReady            bool
+	isFullyInitialized bool
+	serializationType  commands.SerializationType
 
 	lastServeError           error
 	lastServeErrorUnexpected bool
@@ -68,13 +70,14 @@ func getQuicConnection(conn *webtransport.Session) quic.Connection {
 
 func NewWebTransportAdapter(conn *webtransport.Session, serializationType commands.SerializationType, isServer bool) *WebTransportAdapter {
 	adapter := &WebTransportAdapter{
-		conn:              conn,
-		qconn:             getQuicConnection(conn),
-		isServer:          isServer,
-		readyWait:         shared.MakeSimpleCond(),
-		wg:                &sync.WaitGroup{},
-		isReady:           false,
-		serializationType: serializationType,
+		conn:               conn,
+		qconn:              getQuicConnection(conn),
+		isServer:           isServer,
+		readyWait:          shared.MakeSimpleCond(),
+		wg:                 &sync.WaitGroup{},
+		isReady:            false,
+		isFullyInitialized: false,
+		serializationType:  serializationType,
 	}
 	return adapter
 }
@@ -108,6 +111,21 @@ func (s *WebTransportAdapter) setReady() {
 	s.readyWait.Broadcast()
 }
 
+func (s *WebTransportAdapter) RefreshFeatures() {
+	s.streamId = getStreamID(s.stream)
+	s.quarterStreamId = s.streamId / 4
+
+	if s.featuresContainer.IsFeatureEnabled(features.FEATURE_DATAGRAM_ID_0) {
+		s.quarterStreamId = 0
+	}
+
+	buf := &bytes.Buffer{}
+	quicvarint.Write(buf, s.quarterStreamId)
+	s.quarterStreamIdVarint = buf.Bytes()
+
+	s.maxPayloadLen = uint16(1220 - (len(s.quarterStreamIdVarint) + 3))
+}
+
 func (s *WebTransportAdapter) Serve() (error, bool) {
 	var err error
 
@@ -122,12 +140,7 @@ func (s *WebTransportAdapter) Serve() (error, bool) {
 		return err, true
 	}
 
-	s.streamId = getStreamID(s.stream)
-	s.quarterStreamId = s.streamId / 4
-	buf := &bytes.Buffer{}
-	quicvarint.Write(buf, s.quarterStreamId)
-	s.quarterStreamIdVarint = buf.Bytes()
-	s.maxPayloadLen = uint16(1220 - (len(s.quarterStreamIdVarint) + 3))
+	s.RefreshFeatures()
 
 	s.wg.Add(1)
 	go s.serveStream()
@@ -135,6 +148,7 @@ func (s *WebTransportAdapter) Serve() (error, bool) {
 	s.wg.Add(1)
 	go s.serveData()
 
+	s.isFullyInitialized = true
 	s.setReady()
 
 	s.wg.Wait()
@@ -225,8 +239,7 @@ func (s *WebTransportAdapter) serveData() {
 			break
 		}
 		if quarterStreamId != s.quarterStreamId {
-			s.handleServeError(errors.New("wrong quarterStreamId"), true)
-			break
+			continue
 		}
 		s.dataMessageHandler(buf.Bytes())
 	}
@@ -241,8 +254,8 @@ func (s *WebTransportAdapter) WaitReady() {
 }
 
 func (s *WebTransportAdapter) WriteControlMessage(message []byte) error {
-	if !s.isReady {
-		return errors.New("not ready")
+	if !s.isFullyInitialized {
+		return errors.New("not able to send")
 	}
 
 	msgLen := len(message)
@@ -271,8 +284,8 @@ func (s *WebTransportAdapter) MaxDataPayloadLen() uint16 {
 }
 
 func (s *WebTransportAdapter) WriteDataMessage(message []byte) error {
-	if !s.isReady {
-		return errors.New("not ready")
+	if !s.isFullyInitialized {
+		return errors.New("not able to send")
 	}
 
 	buf := &bytes.Buffer{}

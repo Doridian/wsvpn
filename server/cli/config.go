@@ -7,7 +7,7 @@ import (
 
 	"github.com/Doridian/wsvpn/shared"
 	shared_cli "github.com/Doridian/wsvpn/shared/cli"
-	"github.com/Doridian/wsvpn/shared/commands"
+	"github.com/Doridian/wsvpn/shared/features"
 )
 
 //go:embed server.example.yml
@@ -22,7 +22,7 @@ type Config struct {
 		AllowIpSpoofing        bool                    `yaml:"allow-ip-spoofing"`
 		AllowUnknownEtherTypes bool                    `yaml:"allow-unknown-ether-types"`
 		AllowMacChanging       bool                    `yaml:"allow-mac-changing"`
-		Features               commands.FeaturesConfig `yaml:"features"`
+		Features               features.FeaturesConfig `yaml:"features"`
 		IpConfig               struct {
 			Local  bool `yaml:"local"`
 			Remote bool `yaml:"remote"`

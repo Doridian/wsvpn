@@ -8,6 +8,7 @@ tunnel:
   allow-unknown-ether-types: false # TAP only: allow unknown ether types (Anything other than ARP, IPv4)
   features:
     fragmentation: true # Enable packet fragmentation (default enabled), required for MTU > 1216 in WebTransport
+    datagram_id_0: true
   ip-config:
     local: true # Configure local interface automatically
     remote: true # Send configuration data to clients for their interfaces

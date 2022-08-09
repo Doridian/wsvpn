@@ -10,7 +10,7 @@ import (
 )
 
 type WebSocketAdapter struct {
-	socketBase
+	adapterBase
 	conn              *websocket.Conn
 	writeLock         *sync.Mutex
 	serializationType commands.SerializationType
@@ -34,6 +34,10 @@ func (s *WebSocketAdapter) IsServer() bool {
 
 func (s *WebSocketAdapter) IsClient() bool {
 	return !s.isServer
+}
+
+func (s *WebSocketAdapter) RefreshFeatures() {
+
 }
 
 func (s *WebSocketAdapter) GetTLSConnectionState() (tls.ConnectionState, bool) {

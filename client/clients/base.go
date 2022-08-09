@@ -10,7 +10,7 @@ import (
 
 	"github.com/Doridian/wsvpn/client/connectors"
 	"github.com/Doridian/wsvpn/shared"
-	"github.com/Doridian/wsvpn/shared/commands"
+	"github.com/Doridian/wsvpn/shared/features"
 	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 	"github.com/songgao/water"
@@ -41,7 +41,7 @@ type Client struct {
 
 	sentUpEvent bool
 
-	localFeatures map[commands.Feature]bool
+	localFeatures map[features.Feature]bool
 }
 
 func NewClient() *Client {
@@ -49,7 +49,7 @@ func NewClient() *Client {
 		Headers:       make(http.Header),
 		log:           shared.MakeLogger("CLIENT", ""),
 		connectors:    make(map[string]connectors.SocketConnector),
-		localFeatures: make(map[commands.Feature]bool),
+		localFeatures: make(map[features.Feature]bool),
 	}
 }
 
@@ -162,7 +162,7 @@ func (c *Client) doRunEventScript(event string) {
 	}()
 }
 
-func (c *Client) SetLocalFeature(feature commands.Feature, enabled bool) {
+func (c *Client) SetLocalFeature(feature features.Feature, enabled bool) {
 	if !enabled {
 		delete(c.localFeatures, feature)
 		return

@@ -56,11 +56,11 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 	server.ListenAddr = config.Server.Listen
 	server.SetMTU(config.Tunnel.Mtu)
 	server.HTTP3Enabled = config.Server.EnableHTTP3
-	for _, feat := range config.Tunnel.Features {
+	for feat, en := range config.Tunnel.Features {
 		if !commands.IsFeatureSupported(feat) {
 			panic(fmt.Errorf("unknown feature: %s", feat))
 		}
-		server.SetLocalFeature(feat, true)
+		server.SetLocalFeature(feat, en)
 	}
 	server.LoadEventConfig(&config.Scripts)
 

@@ -103,11 +103,11 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 	client.SocketConfigurator = &cli.PingFlagsSocketConfigurator{
 		Config: &config.Tunnel.Ping,
 	}
-	for _, feat := range config.Tunnel.Features {
+	for feat, en := range config.Tunnel.Features {
 		if !commands.IsFeatureSupported(feat) {
 			panic(fmt.Errorf("unknown feature: %s", feat))
 		}
-		client.SetLocalFeature(feat, true)
+		client.SetLocalFeature(feat, en)
 	}
 	client.SetDefaultGateway = config.Tunnel.SetDefaultGateway
 	client.ServerUrl = dest

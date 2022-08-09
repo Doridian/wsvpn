@@ -9,16 +9,16 @@ const (
 	FEATURE_COMPRESSION   Feature = "compression"
 )
 
-type FeaturesConfig = []Feature
+type FeaturesConfig = map[Feature]bool
 
 func IsFeatureSupported(feat Feature) bool {
 	return feat == FEATURE_FRAGMENTATION
 }
 
 type VersionParameters struct {
-	ProtocolVersion int            `json:"protocol_version"`
-	Version         string         `json:"version"`
-	EnabledFeatures FeaturesConfig `json:"enabled_features"`
+	ProtocolVersion int       `json:"protocol_version"`
+	Version         string    `json:"version"`
+	EnabledFeatures []Feature `json:"enabled_features"`
 }
 
 func (c *VersionParameters) MakeCommand(id string) (*OutgoingCommand, error) {

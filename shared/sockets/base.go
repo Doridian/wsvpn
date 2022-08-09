@@ -148,7 +148,7 @@ func (s *Socket) featureCheck() {
 	s.compressionEnabled = s.usedFeatures[commands.FEATURE_COMPRESSION]
 
 	s.log.Printf("Setting fragmentation: %s", shared.BoolToEnabled(s.fragmentationEnabled))
-	s.log.Printf("Setting compression: %s", shared.BoolToEnabled(s.compressionEnabled))
+	// s.log.Printf("Setting compression: %s", shared.BoolToEnabled(s.compressionEnabled))
 }
 
 func (s *Socket) Wait() {

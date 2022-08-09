@@ -5,7 +5,6 @@ tunnel:
     timeout: 5s
   features:
   - fragmentation # Enable packet fragmentation (default enabled), required for MTU > 1216 in WebTransport
-  #- compression # Enable packet compression (default disabled)
 
 interface:
   name: ""

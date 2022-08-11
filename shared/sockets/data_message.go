@@ -54,7 +54,7 @@ func (s *Socket) processPacket(packet []byte) bool {
 
 func (s *Socket) dataMessageHandler(message []byte) bool {
 	// Ignore all packets before version negotiation
-	if s.remoteProtocolVersion == UndeterminedProtocolVersion {
+	if s.remoteProtocolVersion == UndeterminedProtocolVersion || !s.isReady {
 		return true
 	}
 
@@ -150,7 +150,7 @@ func (s *Socket) sendDataWithError(data []byte) error {
 
 func (s *Socket) WritePacket(data []byte) error {
 	// Ignore all packets before version negotiation
-	if s.remoteProtocolVersion == UndeterminedProtocolVersion {
+	if s.remoteProtocolVersion == UndeterminedProtocolVersion || !s.isReady {
 		return nil
 	}
 

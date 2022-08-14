@@ -68,7 +68,7 @@ func (g *MACSwitch) RegisterSocket(socket *sockets.Socket) {
 	var err error
 	g.socketTable[socket], err = lru.NewWithEvict(g.AllowedMacsPerConnection, g.onMACEvicted)
 	if err != nil {
-		socket.CloseError(err)
+		go socket.CloseError(err)
 	}
 }
 

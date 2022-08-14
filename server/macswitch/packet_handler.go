@@ -18,7 +18,9 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 	}
 
 	if socket != nil {
-		g.setMACFrom(socket, packet)
+		if !g.setMACFrom(socket, packet) {
+			return true, nil
+		}
 
 		if !g.AllowIpSpoofing && etherType == shared.ETHTYPE_IPV4 {
 			if len(packet) < ETH_LEN+20 {
@@ -52,19 +54,19 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 func (g *MACSwitch) RegisterSocket(socket *sockets.Socket) {
 	g.macLock.Lock()
 	defer g.macLock.Unlock()
+
 	g.socketTable[socket] = shared.DefaultMac
 }
 
 func (g *MACSwitch) UnregisterSocket(socket *sockets.Socket) {
 	g.macLock.Lock()
 	defer g.macLock.Unlock()
-	socketMac, ok := g.socketTable[socket]
-	if !ok {
-		socketMac = shared.DefaultMac
-	}
+
+	socketMac := g.socketTable[socket]
 
 	if socketMac != shared.DefaultMac {
 		delete(g.macTable, socketMac)
-		delete(g.socketTable, socket)
 	}
+
+	delete(g.socketTable, socket)
 }

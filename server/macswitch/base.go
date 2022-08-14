@@ -11,6 +11,7 @@ type MACSwitch struct {
 	AllowClientToClient    bool
 	AllowIpSpoofing        bool
 	AllowUnknownEtherTypes bool
+	AllowMacChanging       bool
 
 	macTable    map[shared.MacAddr]*sockets.Socket
 	socketTable map[*sockets.Socket]shared.MacAddr
@@ -22,6 +23,7 @@ func MakeMACSwitch() *MACSwitch {
 		AllowClientToClient:    false,
 		AllowIpSpoofing:        false,
 		AllowUnknownEtherTypes: false,
+		AllowMacChanging:       false,
 		macTable:               make(map[shared.MacAddr]*sockets.Socket),
 		socketTable:            make(map[*sockets.Socket]shared.MacAddr),
 		macLock:                &sync.RWMutex{},

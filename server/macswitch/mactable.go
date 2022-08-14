@@ -30,29 +30,31 @@ func (g *MACSwitch) findSocketByMAC(mac shared.MacAddr) *sockets.Socket {
 	return g.macTable[mac]
 }
 
-func (g *MACSwitch) setMACFrom(socket *sockets.Socket, msg []byte) {
+func (g *MACSwitch) setMACFrom(socket *sockets.Socket, msg []byte) bool {
 	srcMac := shared.GetSrcMAC(msg)
-	socketMac, ok := g.socketTable[socket]
-	if !ok {
-		socketMac = shared.DefaultMac
-	}
+	socketMac := g.socketTable[socket]
 
 	if !shared.MACIsUnicast(srcMac) || srcMac == socketMac {
-		return
+		return true
+	}
+
+	if !g.AllowMacChanging && socketMac != shared.DefaultMac {
+		return false
 	}
 
 	g.macLock.Lock()
 	defer g.macLock.Unlock()
 	if socketMac != shared.DefaultMac {
 		delete(g.macTable, socketMac)
-		delete(g.socketTable, socket)
 	}
 
 	if g.macTable[srcMac] != nil {
 		socket.CloseError(errors.New("MAC collision"))
-		return
+		return false
 	}
 
 	g.socketTable[socket] = srcMac
 	g.macTable[srcMac] = socket
+
+	return true
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/sockets"
+	lru "github.com/hashicorp/golang-lru"
 )
 
 func (g *MACSwitch) broadcastDataMessage(data []byte, skip *sockets.Socket) {
@@ -39,27 +40,20 @@ func (g *MACSwitch) cleanupAllMACs() {
 		}
 
 		g.macLock.RLock()
-		keys := make([]*sockets.Socket, 0, len(g.socketTable))
-		for socket := range g.socketTable {
-			keys = append(keys, socket)
+		tables := make([]*lru.Cache, 0, len(g.socketTable))
+		for _, table := range g.socketTable {
+			tables = append(tables, table)
 		}
 		g.macLock.RUnlock()
 
-		for _, socket := range keys {
-			g.cleanupMACs(socket)
+		for _, table := range tables {
+			g.cleanupMACs(table)
 		}
 	}
 	g.cleanupTimer.Stop()
 }
 
-func (g *MACSwitch) cleanupMACs(socket *sockets.Socket) {
-	g.macLock.RLock()
-	macTable := g.socketTable[socket]
-	g.macLock.RUnlock()
-	if macTable == nil {
-		return
-	}
-
+func (g *MACSwitch) cleanupMACs(macTable *lru.Cache) {
 	for {
 		k, v, ok := macTable.GetOldest()
 		if !ok || time.Since(v.(time.Time)) <= g.MacTableTimeout {

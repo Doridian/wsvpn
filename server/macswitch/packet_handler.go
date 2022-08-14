@@ -52,7 +52,7 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 	return false, nil
 }
 
-func (g *MACSwitch) onMacEvicted(key interface{}, value interface{}) {
+func (g *MACSwitch) onMACEvicted(key interface{}, value interface{}) {
 	macAddr := key.(shared.MacAddr)
 
 	g.macLock.Lock()
@@ -66,7 +66,7 @@ func (g *MACSwitch) RegisterSocket(socket *sockets.Socket) {
 	defer g.macLock.Unlock()
 
 	var err error
-	g.socketTable[socket], err = lru.NewWithEvict(g.AllowedMacsPerConnection, g.onMacEvicted)
+	g.socketTable[socket], err = lru.NewWithEvict(g.AllowedMacsPerConnection, g.onMACEvicted)
 	if err != nil {
 		socket.CloseError(err)
 	}

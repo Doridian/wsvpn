@@ -9,12 +9,12 @@ import (
 
 func (g *MACSwitch) broadcastDataMessage(data []byte, skip *sockets.Socket) {
 	g.macLock.RLock()
-	targetList := make([]*sockets.Socket, 0, len(g.macTable))
-	for _, v := range g.macTable {
-		if v == skip {
+	targetList := make([]*sockets.Socket, 0, len(g.socketTable))
+	for sock := range g.socketTable {
+		if sock == skip {
 			continue
 		}
-		targetList = append(targetList, v)
+		targetList = append(targetList, sock)
 	}
 	g.macLock.RUnlock()
 

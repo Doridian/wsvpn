@@ -50,7 +50,9 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 }
 
 func (g *MACSwitch) RegisterSocket(socket *sockets.Socket) {
-
+	g.macLock.Lock()
+	defer g.macLock.Unlock()
+	g.socketTable[socket] = shared.DefaultMac
 }
 
 func (g *MACSwitch) UnregisterSocket(socket *sockets.Socket) {

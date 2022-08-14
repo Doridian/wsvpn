@@ -3,6 +3,7 @@ package macswitch
 import (
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/sockets"
+	lru "github.com/hashicorp/golang-lru"
 )
 
 const ETH_LEN = 14
@@ -51,22 +52,43 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 	return false, nil
 }
 
+func (g *MACSwitch) onMacEvicted(key interface{}, value interface{}) {
+	macAddr := key.(shared.MacAddr)
+
+	g.macLock.Lock()
+	defer g.macLock.Unlock()
+
+	delete(g.macTable, macAddr)
+}
+
 func (g *MACSwitch) RegisterSocket(socket *sockets.Socket) {
 	g.macLock.Lock()
 	defer g.macLock.Unlock()
 
-	g.socketTable[socket] = shared.DefaultMac
+	var err error
+	g.socketTable[socket], err = lru.NewWithEvict(g.AllowedMacsPerConnection, g.onMacEvicted)
+	if err != nil {
+		socket.CloseError(err)
+	}
 }
 
 func (g *MACSwitch) UnregisterSocket(socket *sockets.Socket) {
 	g.macLock.Lock()
-	defer g.macLock.Unlock()
 
-	socketMac := g.socketTable[socket]
+	socketTbl := g.socketTable[socket]
+	if socketTbl == nil {
+		g.macLock.Unlock()
+		return
+	}
+	socketMacs := socketTbl.Keys()
 
-	if socketMac != shared.DefaultMac {
-		delete(g.macTable, socketMac)
+	for _, mac := range socketMacs {
+		delete(g.macTable, mac.(shared.MacAddr))
 	}
 
 	delete(g.socketTable, socket)
+
+	g.macLock.Unlock()
+
+	socketTbl.Purge()
 }

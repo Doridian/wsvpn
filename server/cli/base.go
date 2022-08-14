@@ -73,6 +73,7 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 				macSwitch.AllowIpSpoofing = config.Tunnel.AllowIpSpoofing
 				macSwitch.AllowUnknownEtherTypes = config.Tunnel.AllowUnknownEtherTypes
 				macSwitch.AllowMacChanging = config.Tunnel.AllowMacChanging
+				macSwitch.AllowedMacsPerConnection = config.Tunnel.AllowedMacsPerConnection
 				server.PacketHandler = macSwitch
 			} else {
 				ipSwitch := ipswitch.MakeIPSwitch()

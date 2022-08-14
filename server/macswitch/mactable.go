@@ -2,6 +2,7 @@ package macswitch
 
 import (
 	"errors"
+	"time"
 
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/sockets"
@@ -30,31 +31,61 @@ func (g *MACSwitch) findSocketByMAC(mac shared.MacAddr) *sockets.Socket {
 	return g.macTable[mac]
 }
 
+func (g *MACSwitch) cleanupAllMACs() {
+	for g.isRunning {
+		<-g.cleanupTimer.C
+		for socket := range g.socketTable {
+			g.cleanupMACs(socket)
+		}
+	}
+	g.cleanupTimer.Stop()
+}
+
+func (g *MACSwitch) cleanupMACs(socket *sockets.Socket) {
+	g.macLock.Lock()
+	macTable := g.socketTable[socket]
+	g.macLock.Unlock()
+	if macTable == nil {
+		return
+	}
+
+	for {
+		k, v, ok := macTable.GetOldest()
+		if !ok || time.Since(v.(time.Time)) <= g.MacTableTimeout {
+			break
+		}
+		macTable.Remove(k)
+	}
+}
+
 func (g *MACSwitch) setMACFrom(socket *sockets.Socket, msg []byte) bool {
 	srcMac := shared.GetSrcMAC(msg)
-	socketMac := g.socketTable[socket]
+	socketMacs := g.socketTable[socket]
 
-	if !shared.MACIsUnicast(srcMac) || srcMac == socketMac {
+	if !shared.MACIsUnicast(srcMac) {
 		return true
 	}
 
-	if !g.AllowMacChanging && socketMac != shared.DefaultMac {
+	if socketMacs.Contains(srcMac) {
+		socketMacs.Add(srcMac, time.Now())
+		return true
+	}
+
+	if !g.AllowMacChanging && socketMacs.Len() > 0 {
 		return false
 	}
 
 	g.macLock.Lock()
-	defer g.macLock.Unlock()
-	if socketMac != shared.DefaultMac {
-		delete(g.macTable, socketMac)
-	}
-
 	if g.macTable[srcMac] != nil {
+		g.macLock.Unlock()
 		socket.CloseError(errors.New("MAC collision"))
 		return false
 	}
 
-	g.socketTable[socket] = srcMac
 	g.macTable[srcMac] = socket
+	g.macLock.Unlock()
+
+	socketMacs.Add(srcMac, time.Now())
 
 	return true
 }

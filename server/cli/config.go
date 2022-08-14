@@ -15,15 +15,16 @@ var defaultConfig string
 
 type Config struct {
 	Tunnel struct {
-		Mtu                    int                     `yaml:"mtu"`
-		Subnet                 string                  `yaml:"subnet"`
-		Mode                   string                  `yaml:"mode"`
-		AllowClientToClient    bool                    `yaml:"allow-client-to-client"`
-		AllowIpSpoofing        bool                    `yaml:"allow-ip-spoofing"`
-		AllowUnknownEtherTypes bool                    `yaml:"allow-unknown-ether-types"`
-		AllowMacChanging       bool                    `yaml:"allow-mac-changing"`
-		Features               features.FeaturesConfig `yaml:"features"`
-		IpConfig               struct {
+		Mtu                            int                     `yaml:"mtu"`
+		Subnet                         string                  `yaml:"subnet"`
+		Mode                           string                  `yaml:"mode"`
+		AllowClientToClient            bool                    `yaml:"allow-client-to-client"`
+		AllowIpSpoofing                bool                    `yaml:"allow-ip-spoofing"`
+		AllowUnknownEtherTypes         bool                    `yaml:"allow-unknown-ether-types"`
+		AllowMacChanging               bool                    `yaml:"allow-mac-changing"`
+		AllowMultipleMacsPerConnection bool                    `yaml:"allow-multiple-macs-per-connection"`
+		Features                       features.FeaturesConfig `yaml:"features"`
+		IpConfig                       struct {
 			Local  bool `yaml:"local"`
 			Remote bool `yaml:"remote"`
 		} `yaml:"ip-config"`

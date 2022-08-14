@@ -65,7 +65,14 @@ func (g *MACSwitch) cleanupMACs(macTable *lru.Cache) {
 
 func (g *MACSwitch) setMACFrom(socket *sockets.Socket, msg []byte) bool {
 	srcMac := shared.GetSrcMAC(msg)
+
+	g.macLock.RLock()
 	socketMacs := g.socketTable[socket]
+	g.macLock.RUnlock()
+
+	if socketMacs == nil {
+		return false
+	}
 
 	if !shared.MACIsUnicast(srcMac) {
 		return true

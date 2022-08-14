@@ -34,7 +34,18 @@ func (g *MACSwitch) findSocketByMAC(mac shared.MacAddr) *sockets.Socket {
 func (g *MACSwitch) cleanupAllMACs() {
 	for g.isRunning {
 		<-g.cleanupTimer.C
+		if !g.AllowMacChanging {
+			continue
+		}
+
+		g.macLock.RLock()
+		keys := make([]*sockets.Socket, 0, len(g.socketTable))
 		for socket := range g.socketTable {
+			keys = append(keys, socket)
+		}
+		g.macLock.RUnlock()
+
+		for _, socket := range keys {
 			g.cleanupMACs(socket)
 		}
 	}
@@ -42,9 +53,9 @@ func (g *MACSwitch) cleanupAllMACs() {
 }
 
 func (g *MACSwitch) cleanupMACs(socket *sockets.Socket) {
-	g.macLock.Lock()
+	g.macLock.RLock()
 	macTable := g.socketTable[socket]
-	g.macLock.Unlock()
+	g.macLock.RUnlock()
 	if macTable == nil {
 		return
 	}

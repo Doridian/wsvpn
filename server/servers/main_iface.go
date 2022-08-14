@@ -8,7 +8,7 @@ import (
 
 func (s *Server) serveMainIface() {
 	defer func() {
-		s.serveErrorChannel <- errors.New("main iface closed")
+		s.setServeError(errors.New("main iface closed"))
 		s.serveWaitGroup.Done()
 	}()
 

@@ -83,9 +83,10 @@ func (s *Server) setServeError(err error) {
 		return
 	}
 
-	if s.serveError == nil {
-		s.serveError = err
+	if s.serveError != nil {
+		return
 	}
+	s.serveError = err
 	close(s.serveErrorChannel)
 }
 

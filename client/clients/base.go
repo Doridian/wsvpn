@@ -47,6 +47,7 @@ type Client struct {
 func NewClient() *Client {
 	return &Client{
 		Headers:       make(http.Header),
+		TLSConfig:     &tls.Config{},
 		log:           shared.MakeLogger("CLIENT", ""),
 		connectors:    make(map[string]connectors.SocketConnector),
 		localFeatures: make(map[features.Feature]bool),

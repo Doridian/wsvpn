@@ -5,9 +5,12 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"log"
 	"net/url"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/Doridian/wsvpn/client/clients"
 	"github.com/Doridian/wsvpn/shared"
@@ -15,30 +18,23 @@ import (
 	"github.com/Doridian/wsvpn/shared/features"
 )
 
-func Main(configPtr *string, printDefaultConfigPtr *bool) {
-	if *printDefaultConfigPtr {
-		fmt.Println(GetDefaultConfig())
-		return
-	}
-
-	shared.PrintVersion()
-
+func reloadConfig(configPtr *string, client *clients.Client) error {
 	config := Load(*configPtr)
 
 	dest, err := url.Parse(config.Client.Server)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	var userInfo *url.Userinfo
-
 	if config.Client.AuthFile != "" {
 		authData, err := os.ReadFile(config.Client.AuthFile)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		authDataStr := strings.Trim(string(authData), "\r\n\t ")
 		authDataSplit := strings.SplitN(authDataStr, ":", 2)
+
 		if len(authDataSplit) > 1 {
 			userInfo = url.UserPassword(authDataSplit[0], authDataSplit[1])
 		} else {
@@ -49,53 +45,44 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 		dest.User = nil
 	}
 
-	tlsConfig := &tls.Config{}
+	client.SetBasicAuthFromUserInfo(userInfo)
 
-	tlsConfig.InsecureSkipVerify = config.Client.Tls.Config.Insecure
-	tlsConfig.ServerName = config.Client.Tls.ServerName
-	err = cli.TlsUseConfig(tlsConfig, &config.Client.Tls.Config)
+	client.TLSConfig.InsecureSkipVerify = config.Client.Tls.Config.Insecure
+	client.TLSConfig.ServerName = config.Client.Tls.ServerName
+	err = cli.TlsUseConfig(client.TLSConfig, &config.Client.Tls.Config)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	if config.Client.Tls.Ca != "" {
 		data, err := os.ReadFile(config.Client.Tls.Ca)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		certPool := x509.NewCertPool()
 		ok := certPool.AppendCertsFromPEM(data)
 		if !ok {
-			panic(errors.New("error loading root CA file"))
+			return errors.New("error loading root CA file")
 		}
-		tlsConfig.RootCAs = certPool
+		client.TLSConfig.RootCAs = certPool
 	}
 
 	if config.Client.Tls.Certificate != "" || config.Client.Tls.Key != "" {
 		if config.Client.Tls.Certificate == "" || config.Client.Tls.Key == "" {
-			panic(errors.New("provide either both tls.key and tls.certificate or neither"))
+			return errors.New("provide either both tls.key and tls.certificate or neither")
 		}
 
 		tlsClientCertX509, err := tls.LoadX509KeyPair(config.Client.Tls.Certificate, config.Client.Tls.Key)
 		if err != nil {
-			panic(err)
+			return err
 		}
-		tlsConfig.Certificates = []tls.Certificate{tlsClientCertX509}
+		client.TLSConfig.Certificates = []tls.Certificate{tlsClientCertX509}
 	}
-
-	client := clients.NewClient()
-	defer client.Close()
-	client.RegisterDefaultConnectors()
-
-	cli.RegisterShutdownSignals(func() {
-		client.Close()
-		os.Exit(0)
-	})
 
 	if config.Client.Proxy != "" {
 		proxyUrl, err := url.Parse(config.Client.Proxy)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		client.ProxyUrl = proxyUrl
 	}
@@ -105,17 +92,58 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 	}
 	for feat, en := range config.Tunnel.Features {
 		if !features.IsFeatureSupported(feat) {
-			panic(fmt.Errorf("unknown feature: %s", feat))
+			return fmt.Errorf("unknown feature: %s", feat)
 		}
 		client.SetLocalFeature(feat, en)
 	}
 	client.SetDefaultGateway = config.Tunnel.SetDefaultGateway
 	client.ServerUrl = dest
-	client.SetBasicAuthFromUserInfo(userInfo)
-	client.TLSConfig = tlsConfig
 	client.InterfaceConfig = &config.Interface
 	client.AutoReconnectDelay = config.Client.AutoReconnectDelay
 	client.LoadEventConfig(&config.Scripts)
+
+	return nil
+}
+
+func Main(configPtr *string, printDefaultConfigPtr *bool) {
+	if *printDefaultConfigPtr {
+		fmt.Println(GetDefaultConfig())
+		return
+	}
+
+	shared.PrintVersion()
+
+	client := clients.NewClient()
+
+	runReloadLoop := true
+	defer func() {
+		runReloadLoop = false
+		client.Close()
+	}()
+	client.RegisterDefaultConnectors()
+
+	err := reloadConfig(configPtr, client)
+	if err != nil {
+		panic(err)
+	}
+
+	reloadSig := make(chan os.Signal, 1)
+	signal.Notify(reloadSig, syscall.SIGHUP)
+	go func() {
+		for runReloadLoop {
+			<-reloadSig
+			log.Printf("Reloading configuration, might not take effect until next connection...")
+			err := reloadConfig(configPtr, client)
+			if err != nil {
+				log.Printf("Error reloading config: %v", err)
+			}
+		}
+	}()
+
+	cli.RegisterShutdownSignals(func() {
+		client.Close()
+		os.Exit(0)
+	})
 
 	client.ServeLoop()
 }

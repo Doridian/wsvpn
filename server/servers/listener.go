@@ -70,7 +70,7 @@ func (s *Server) listenEncrypted(httpHandlerFunc http.HandlerFunc) {
 		// go func() {
 		//	err := quicServer.ListenAndServe()
 		//	if err != nil {
-		//		s.serveErrorChannel <- err
+		//		s.setServeError(err)
 		//	}
 		// }()
 	}

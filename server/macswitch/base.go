@@ -46,6 +46,19 @@ func MakeMACSwitch() *MACSwitch {
 	return sw
 }
 
+func (g *MACSwitch) ConfigUpdate() {
+	g.macLock.RLock()
+	tables := make([]*lru.Cache, 0, len(g.socketTable))
+	for _, table := range g.socketTable {
+		tables = append(tables, table)
+	}
+	g.macLock.RUnlock()
+
+	for _, table := range tables {
+		table.Resize(g.AllowedMacsPerConnection)
+	}
+}
+
 func (g *MACSwitch) Close() {
 	g.isRunning = false
 }

@@ -83,18 +83,22 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 		log.Printf("NOTE: Can not reload interface section, TUN/TAP mode, MTU, listeners or HTTP/3 state!")
 	}
 
+	var newAuthenticator authenticators.Authenticator
+
 	if config.Server.Authenticator.Type == "allow-all" {
-		server.Authenticator = &authenticators.AllowAllAuthenticator{}
+		newAuthenticator = &authenticators.AllowAllAuthenticator{}
 	} else if config.Server.Authenticator.Type == "htpasswd" {
-		server.Authenticator = &authenticators.HtpasswdAuthenticator{}
+		newAuthenticator = &authenticators.HtpasswdAuthenticator{}
 	} else {
 		return errors.New("invalid authenticator selected")
 	}
 
-	err = server.Authenticator.Load(config.Server.Authenticator.Config)
+	err = newAuthenticator.Load(config.Server.Authenticator.Config)
 	if err != nil {
 		return err
 	}
+
+	server.Authenticator = newAuthenticator
 
 	if config.Server.Tls.Certificate != "" || config.Server.Tls.Key != "" || config.Server.Tls.ClientCa != "" {
 		if config.Server.Tls.Certificate == "" && config.Server.Tls.Key == "" {

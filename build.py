@@ -95,7 +95,7 @@ add_arch(Arch(name="386", docker_name="i386", darwin_name="", goarch="386", upx_
 add_arch(Arch(name="arm64", docker_name="arm64", darwin_name="arm64", goarch="arm64", upx_supported=True, goenv={}, platforms=["windows", "linux", "darwin"]))
 KNOWN_ARCHITECTURE_ALIASES["aarch64"] = "arm64"
 
-add_arch(Arch(name="arm32v5", docker_name="", darwin_name="", goarch="arm", upx_supported=True, goenv={"GOARM": "5"}, platforms=["linux"]))
+add_arch(Arch(name="armv5", docker_name="", darwin_name="", goarch="arm", upx_supported=True, goenv={"GOARM": "5"}, platforms=["linux"]))
 add_arch(Arch(name="armv6", docker_name="arm/v6", darwin_name="", goarch="arm", upx_supported=True, goenv={"GOARM": "6"}, platforms=["linux"]))
 add_arch(Arch(name="armv7", docker_name="arm/v7", darwin_name="", goarch="arm", upx_supported=True, goenv={"GOARM": "7"}, platforms=["linux"]))
 

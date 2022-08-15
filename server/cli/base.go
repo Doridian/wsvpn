@@ -54,45 +54,76 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 	}
 	server.LoadEventConfig(&config.Scripts)
 
+	vpnMode := shared.VPN_MODE_INVALID
+	switch strings.ToUpper(config.Tunnel.Mode) {
+	case "TAP":
+		vpnMode = shared.VPN_MODE_TAP
+	case "TUN":
+		vpnMode = shared.VPN_MODE_TUN
+	default:
+		return errors.New("invalid VPN mode selected")
+	}
+
 	if initialConfig {
-		server.InterfaceConfig = &config.Interface
 		server.ListenAddr = config.Server.Listen
-		server.SetMTU(config.Tunnel.Mtu)
 		server.HTTP3Enabled = config.Server.EnableHTTP3
 
-		if strings.ToUpper(config.Tunnel.Mode) == "TAP" {
-			server.Mode = shared.VPN_MODE_TAP
-		} else {
-			server.Mode = shared.VPN_MODE_TUN
+		server.Mode = vpnMode
+	} else {
+		if server.ListenAddr != config.Server.Listen {
+			log.Printf("WARNING: Ignoring change of server.listen on reload")
 		}
+		if server.HTTP3Enabled != config.Server.EnableHTTP3 {
+			log.Printf("WARNING: Ignoring change of server.enable-http3 on reload")
+		}
+		if server.Mode != vpnMode {
+			log.Printf("WARNING: Ignoring change of tunnel.mode on reload")
+		}
+	}
 
-		if !config.Interface.OneInterfacePerConnection {
+	server.SetMTU(config.Tunnel.Mtu)
+
+	if !initialConfig && server.InterfaceConfig.OneInterfacePerConnection != config.Interface.OneInterfacePerConnection {
+		log.Printf("WARNING: Ignroing interface config due to change of interface.one-interface-per-connection on reload")
+	} else {
+		server.InterfaceConfig = &config.Interface
+
+		if !server.InterfaceConfig.OneInterfacePerConnection {
 			if server.Mode == shared.VPN_MODE_TAP {
-				macSwitch := macswitch.MakeMACSwitch()
+				var macSwitch *macswitch.MACSwitch
+				if initialConfig {
+					macSwitch = macswitch.MakeMACSwitch()
+					server.PacketHandler = macSwitch
+				} else {
+					macSwitch = server.PacketHandler.(*macswitch.MACSwitch)
+				}
 				macSwitch.AllowClientToClient = config.Tunnel.AllowClientToClient
 				macSwitch.AllowIpSpoofing = config.Tunnel.AllowIpSpoofing
 				macSwitch.AllowUnknownEtherTypes = config.Tunnel.AllowUnknownEtherTypes
 				macSwitch.AllowMacChanging = config.Tunnel.AllowMacChanging
 				macSwitch.AllowedMacsPerConnection = config.Tunnel.AllowedMacsPerConnection
 				macSwitch.ConfigUpdate()
-				server.PacketHandler = macSwitch
 			} else {
-				ipSwitch := ipswitch.MakeIPSwitch()
+				var ipSwitch *ipswitch.IPSwitch
+				if initialConfig {
+					ipSwitch = ipswitch.MakeIPSwitch()
+					server.PacketHandler = ipSwitch
+				} else {
+					ipSwitch = server.PacketHandler.(*ipswitch.IPSwitch)
+				}
 				ipSwitch.AllowClientToClient = config.Tunnel.AllowClientToClient
-				server.PacketHandler = ipSwitch
 			}
 		}
-	} else {
-		log.Printf("NOTE: Can not reload interface section, TUN/TAP mode, MTU, listeners or HTTP/3 state!")
 	}
 
 	var newAuthenticator authenticators.Authenticator
 
-	if config.Server.Authenticator.Type == "allow-all" {
+	switch strings.ToLower(config.Server.Authenticator.Type) {
+	case "allow-all":
 		newAuthenticator = &authenticators.AllowAllAuthenticator{}
-	} else if config.Server.Authenticator.Type == "htpasswd" {
+	case "htpasswd":
 		newAuthenticator = &authenticators.HtpasswdAuthenticator{}
-	} else {
+	default:
 		return errors.New("invalid authenticator selected")
 	}
 
@@ -144,16 +175,17 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 		tlsConfig = newTlsConfig
 
 		if server.TLSConfig == nil {
-			if !initialConfig {
-				return errors.New("cannot enable TLS while server is already running")
-			}
-			server.TLSConfig = &tls.Config{
-				GetConfigForClient: getTlsConfig,
-				GetCertificate:     getTlsCert,
+			if initialConfig {
+				server.TLSConfig = &tls.Config{
+					GetConfigForClient: getTlsConfig,
+					GetCertificate:     getTlsCert,
+				}
+			} else {
+				log.Printf("WARNING: Ignoring enablement of TLS on reload")
 			}
 		}
 	} else if !initialConfig && server.TLSConfig != nil {
-		return errors.New("cannot disable TLS while server is already running")
+		log.Printf("WARNING: Ignoring disablement of TLS on reload")
 	}
 
 	return nil

@@ -17,11 +17,11 @@ func (c *Client) GetProxyUrl() *url.URL {
 }
 
 func (c *Client) GetTLSConfig() *tls.Config {
-	return c.TLSConfig
+	return c.TLSConfig.Clone()
 }
 
 func (c *Client) GetHeaders() http.Header {
-	return c.Headers
+	return c.Headers.Clone()
 }
 
 func (c *Client) GetServerUrl() *url.URL {

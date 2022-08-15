@@ -115,11 +115,13 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 
 	client := clients.NewClient()
 
-	runReloadLoop := true
-	defer func() {
-		runReloadLoop = false
+	shutdown := func() {
 		client.Close()
-	}()
+		os.Exit(0)
+	}
+	defer shutdown()
+	cli.RegisterShutdownSignals(shutdown)
+
 	client.RegisterDefaultConnectors()
 
 	err := reloadConfig(configPtr, client)
@@ -130,7 +132,7 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 	reloadSig := make(chan os.Signal, 1)
 	signal.Notify(reloadSig, syscall.SIGHUP)
 	go func() {
-		for runReloadLoop {
+		for {
 			<-reloadSig
 			log.Printf("Reloading configuration, might not take effect until next connection...")
 			err := reloadConfig(configPtr, client)
@@ -139,11 +141,6 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 			}
 		}
 	}()
-
-	cli.RegisterShutdownSignals(func() {
-		client.Close()
-		os.Exit(0)
-	})
 
 	client.ServeLoop()
 }

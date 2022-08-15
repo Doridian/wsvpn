@@ -147,6 +147,16 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	socket := sockets.MakeSocket(clientLogger, adapter, iface, ifaceManaged)
 	defer socket.Close()
 
+	s.closerLock.Lock()
+	s.sockets[socket] = true
+	s.closerLock.Unlock()
+
+	defer func() {
+		s.closerLock.Lock()
+		delete(s.sockets, socket)
+		s.closerLock.Unlock()
+	}()
+
 	for feat, en := range s.localFeatures {
 		socket.SetLocalFeature(feat, en)
 	}
@@ -199,5 +209,6 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	socket.Wait()
+
 	go doRunEventScript(shared.EventDown)
 }

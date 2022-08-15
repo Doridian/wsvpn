@@ -20,6 +20,13 @@ func (s *Socket) SetMTU(mtu int) {
 	s.packetBufferSize = shared.GetPacketBufferSizeByMTU(mtu)
 }
 
+func (s *Socket) GetInterfaceIfManaged() *water.Interface {
+	if !s.ifaceManaged {
+		return nil
+	}
+	return s.iface
+}
+
 func (s *Socket) tryServeIfaceRead() {
 	if s.iface == nil || !s.ifaceManaged {
 		return
@@ -29,9 +36,13 @@ func (s *Socket) tryServeIfaceRead() {
 	go func() {
 		defer s.closeDone()
 
-		packet := make([]byte, s.packetBufferSize)
+		packet := make([]byte, 0)
 
 		for {
+			if len(packet) != s.packetBufferSize {
+				packet = make([]byte, s.packetBufferSize)
+			}
+
 			n, err := s.iface.Read(packet)
 			if err != nil {
 				s.log.Printf("Error reading packet from tun: %v", err)

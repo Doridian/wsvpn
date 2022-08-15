@@ -10,8 +10,17 @@ import (
 	"github.com/songgao/water"
 )
 
+func (s *Server) configureInterfaceMTU(dev *water.Interface) error {
+	return shared.ExecCmd("ip", "link", "set", "dev", dev.Name(), "mtu", fmt.Sprintf("%d", s.mtu))
+}
+
 func (s *Server) configIface(dev *water.Interface, ipClient net.IP) error {
-	err := shared.ExecCmd("ip", "link", "set", "dev", dev.Name(), "mtu", fmt.Sprintf("%d", s.mtu), "up")
+	err := shared.ExecCmd("ip", "link", "set", "dev", dev.Name(), "up")
+	if err != nil {
+		return err
+	}
+
+	err := s.configureInterfaceMTU(dev)
 	if err != nil {
 		return err
 	}

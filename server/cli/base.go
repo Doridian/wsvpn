@@ -87,7 +87,10 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 		}
 	}
 
-	server.SetMTU(config.Tunnel.Mtu)
+	err = server.SetMTU(config.Tunnel.Mtu)
+	if err != nil {
+		return err
+	}
 
 	if !initialConfig && server.InterfaceConfig.OneInterfacePerConnection != config.Interface.OneInterfacePerConnection {
 		log.Printf("WARNING: Ignroing interface config due to change of interface.one-interface-per-connection on reload")

@@ -25,6 +25,10 @@ func (s *Server) serveMainIface() {
 			return
 		}
 
+		if n >= len(packet) {
+			continue
+		}
+
 		_, err = s.PacketHandler.HandlePacket(nil, packet[:n])
 		if err != nil {
 			s.log.Printf("Error handling packet from main iface: %v", err)

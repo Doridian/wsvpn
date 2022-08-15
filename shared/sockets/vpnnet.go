@@ -49,6 +49,10 @@ func (s *Socket) tryServeIfaceRead() {
 				return
 			}
 
+			if n >= len(packet) {
+				continue
+			}
+
 			err = s.WritePacket(packet[:n])
 			if err != nil {
 				return

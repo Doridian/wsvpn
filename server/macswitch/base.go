@@ -31,7 +31,7 @@ func MakeMACSwitch() *MACSwitch {
 		AllowClientToClient:      false,
 		AllowIpSpoofing:          false,
 		AllowUnknownEtherTypes:   false,
-		AllowMacChanging:         false,
+		AllowMacChanging:         true,
 		AllowedMacsPerConnection: 1,
 		MacTableTimeout:          time.Duration(600 * time.Second),
 		macTable:                 make(map[shared.MacAddr]*sockets.Socket),

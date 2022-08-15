@@ -20,7 +20,7 @@ func (s *Server) configIface(dev *water.Interface, ipClient net.IP) error {
 		return err
 	}
 
-	err := s.configureInterfaceMTU(dev)
+	err = s.configureInterfaceMTU(dev)
 	if err != nil {
 		return err
 	}

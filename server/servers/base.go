@@ -140,6 +140,9 @@ func (s *Server) SetMTU(mtu int) error {
 	if mtu < 500 || mtu > 65535 {
 		return errors.New("MTU out of range (500 - 65535)")
 	}
+	if s.mtu == mtu {
+		return nil
+	}
 
 	oldMtu := s.mtu
 	s.mtu = mtu

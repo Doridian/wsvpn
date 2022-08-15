@@ -56,7 +56,7 @@ func NewClient() *Client {
 
 func (c *Client) ServeLoop() {
 	for {
-		c.Close()
+		c.closeInternal()
 		err := c.Serve()
 		if err != nil {
 			c.log.Printf("Client error: %v", err)
@@ -129,6 +129,11 @@ func (c *Client) Wait() {
 }
 
 func (c *Client) Close() {
+	c.AutoReconnectDelay = time.Duration(0)
+	c.closeInternal()
+}
+
+func (c *Client) closeInternal() {
 	if c.sentUpEvent {
 		c.doRunEventScript(shared.EventDown)
 		c.sentUpEvent = false

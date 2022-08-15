@@ -210,10 +210,12 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 
 	server := servers.NewServer()
 
-	cli.RegisterShutdownSignals(func() {
+	shutdown := func() {
 		server.Close()
 		os.Exit(0)
-	})
+	}
+	cli.RegisterShutdownSignals(shutdown)
+	defer shutdown()
 
 	serverUUID, err := uuid.NewRandom()
 	if err != nil {
@@ -226,15 +228,10 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 		panic(err)
 	}
 
-	runReloadLoop := true
-	defer func() {
-		runReloadLoop = false
-	}()
-
 	reloadSig := make(chan os.Signal, 1)
 	signal.Notify(reloadSig, syscall.SIGHUP)
 	go func() {
-		for runReloadLoop {
+		for {
 			<-reloadSig
 			log.Printf("Reloading configuration, might not take effect until next connection...")
 			err := reloadConfig(configPtr, server, false)

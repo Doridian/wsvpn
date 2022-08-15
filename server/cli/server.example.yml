@@ -4,7 +4,7 @@ tunnel:
   mode: TUN # TUN or TAP
   allow-client-to-client: false # Allow clients to talk to other clients on the same server
   allow-ip-spoofing: false # TAP only: Allow clients to use any IP address and not just the assigned one (on TUN IPs are always enforced)
-  allow-mac-changing: true # TAP only: Allow clients to only use a single unicast MAC address (the first one they communicate with)
+  allow-mac-changing: true # TAP only: Allow clients to change the MAC address(es) they use on the interface
   allowed-macs-per-connection: 1 # TAP only: Allow multiple MAC addresses per connection
   allow-unknown-ether-types: false # TAP only: allow unknown ether types (Anything other than ARP, IPv4)
   features:

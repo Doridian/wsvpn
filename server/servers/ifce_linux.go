@@ -15,12 +15,12 @@ func (s *Server) configureInterfaceMTU(dev *water.Interface) error {
 }
 
 func (s *Server) configIface(dev *water.Interface, ipClient net.IP) error {
-	err := shared.ExecCmd("ip", "link", "set", "dev", dev.Name(), "up")
+	err = s.configureInterfaceMTU(dev)
 	if err != nil {
 		return err
 	}
 
-	err = s.configureInterfaceMTU(dev)
+	err := shared.ExecCmd("ip", "link", "set", "dev", dev.Name(), "up")
 	if err != nil {
 		return err
 	}

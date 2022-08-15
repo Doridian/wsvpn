@@ -1,4 +1,6 @@
-FROM scratch
+FROM alpine:latest
+
+RUN apk add --no-cache ca-certificates curl bash
 
 ARG TARGETARCH
 ARG TARGETVARIANT

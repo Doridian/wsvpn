@@ -36,9 +36,15 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 
 	config := Load(*configPtr)
 
-	server.VPNNet, err = shared.ParseVPNNet(config.Tunnel.Subnet)
+	newVPNNet, err := shared.ParseVPNNet(config.Tunnel.Subnet)
 	if err != nil {
 		return err
+	}
+
+	if initialConfig {
+		server.VPNNet = newVPNNet
+	} else if !server.VPNNet.Equals(newVPNNet) {
+		log.Printf("WARNING: Ignoring change of tunnel.subnet on reload")
 	}
 
 	server.SocketConfigurator = &cli.PingFlagsSocketConfigurator{
@@ -81,7 +87,10 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 		}
 	}
 
-	server.SetMTU(config.Tunnel.Mtu)
+	err = server.SetMTU(config.Tunnel.Mtu)
+	if err != nil {
+		return err
+	}
 
 	if !initialConfig && server.InterfaceConfig.OneInterfacePerConnection != config.Interface.OneInterfacePerConnection {
 		log.Printf("WARNING: Ignroing interface config due to change of interface.one-interface-per-connection on reload")

@@ -12,14 +12,21 @@ func (s *Server) serveMainIface() {
 		s.serveWaitGroup.Done()
 	}()
 
-	// TODO: For change-able MTU we need to re-create this buffer
-	packet := make([]byte, s.packetBufferSize)
+	packet := make([]byte, 0)
 
 	for {
+		if len(packet) != s.packetBufferSize {
+			packet = make([]byte, s.packetBufferSize)
+		}
+
 		n, err := s.mainIface.Read(packet)
 		if err != nil {
 			s.log.Printf("Error reading packet from main iface: %v", err)
 			return
+		}
+
+		if n < 1 || n >= len(packet) {
+			continue
 		}
 
 		_, err = s.PacketHandler.HandlePacket(nil, packet[:n])

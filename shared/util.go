@@ -123,7 +123,7 @@ func BoolToEnabled(val bool) string {
 }
 
 func GetPacketBufferSizeByMTU(mtu int) int {
-	return mtu + 18
+	return mtu + 18 + 64
 }
 
 func MakeSimpleCond() *sync.Cond {

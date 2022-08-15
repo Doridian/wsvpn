@@ -10,6 +10,7 @@ import (
 	"github.com/Doridian/wsvpn/server/authenticators"
 	"github.com/Doridian/wsvpn/server/upgraders"
 	"github.com/Doridian/wsvpn/shared"
+	"github.com/Doridian/wsvpn/shared/commands"
 	"github.com/Doridian/wsvpn/shared/features"
 	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/songgao/water"
@@ -44,6 +45,7 @@ type Server struct {
 	serverId           string
 
 	closers    []io.Closer
+	sockets    map[*sockets.Socket]bool
 	closerLock *sync.Mutex
 
 	serveErrorChannel chan interface{}
@@ -62,6 +64,7 @@ func NewServer() *Server {
 		serveErrorChannel:  make(chan interface{}),
 		serveWaitGroup:     &sync.WaitGroup{},
 		closers:            make([]io.Closer, 0),
+		sockets:            make(map[*sockets.Socket]bool),
 		closerLock:         &sync.Mutex{},
 		localFeatures:      make(map[features.Feature]bool),
 	}
@@ -133,9 +136,46 @@ func (s *Server) Close() {
 	s.setServeError(errNone)
 }
 
-func (s *Server) SetMTU(mtu int) {
+func (s *Server) SetMTU(mtu int) error {
+	if mtu < 500 || mtu > 65535 {
+		return errors.New("MTU out of range (500 - 65535)")
+	}
+	if s.mtu == mtu {
+		return nil
+	}
+
+	oldMtu := s.mtu
 	s.mtu = mtu
-	s.packetBufferSize = shared.GetPacketBufferSizeByMTU(mtu)
+
+	if s.mainIface != nil {
+		err := s.configureInterfaceMTU(s.mainIface)
+		if err != nil {
+			s.mtu = oldMtu
+			return err
+		}
+	}
+
+	s.packetBufferSize = shared.GetPacketBufferSizeByMTU(s.mtu)
+
+	s.closerLock.Lock()
+	defer s.closerLock.Unlock()
+
+	for sock := range s.sockets {
+		sock.SetMTU(s.mtu)
+		iface := sock.GetInterfaceIfManaged()
+		if iface != nil {
+			err := s.configureInterfaceMTU(iface)
+			if err != nil {
+				s.mtu = oldMtu
+				return err
+			}
+		}
+		sock.MakeAndSendCommand(&commands.SetMtuParameters{
+			MTU: s.mtu,
+		})
+	}
+
+	return nil
 }
 
 func (s *Server) SetLocalFeature(feature features.Feature, enabled bool) {

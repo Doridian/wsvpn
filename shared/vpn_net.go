@@ -47,6 +47,10 @@ func (r *VPNNet) GetClientSlots() uint64 {
 	return cidr.AddressCount(r.ipNet) - 3
 }
 
+func (r *VPNNet) Equals(other *VPNNet) bool {
+	return r.str == other.str
+}
+
 func ParseVPNNet(rNetStr string) (*VPNNet, error) {
 	ip, ipNet, err := net.ParseCIDR(rNetStr)
 	if err != nil {

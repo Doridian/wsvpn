@@ -49,7 +49,7 @@ func (s *Socket) tryServeIfaceRead() {
 				return
 			}
 
-			if n >= len(packet) {
+			if n < 1 || n >= len(packet) {
 				continue
 			}
 

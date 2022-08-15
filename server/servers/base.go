@@ -155,6 +155,8 @@ func (s *Server) SetMTU(mtu int) error {
 		}
 	}
 
+	s.packetBufferSize = shared.GetPacketBufferSizeByMTU(s.mtu)
+
 	s.closerLock.Lock()
 	defer s.closerLock.Unlock()
 
@@ -172,8 +174,6 @@ func (s *Server) SetMTU(mtu int) error {
 			MTU: s.mtu,
 		})
 	}
-
-	s.packetBufferSize = shared.GetPacketBufferSizeByMTU(s.mtu)
 
 	return nil
 }

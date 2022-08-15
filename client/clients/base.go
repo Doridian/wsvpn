@@ -136,12 +136,15 @@ func (c *Client) Close() {
 
 	if c.iface != nil {
 		c.iface.Close()
+		c.iface = nil
 	}
 	if c.socket != nil {
 		c.socket.Close()
+		c.socket = nil
 	}
 	if c.adapter != nil {
 		c.adapter.Close()
+		c.adapter = nil
 	}
 }
 

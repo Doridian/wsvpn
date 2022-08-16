@@ -5,11 +5,6 @@ import (
 )
 
 func (s *Socket) installPingPongHandlers() {
-	if s.pingInterval <= 0 || s.pingTimeout <= 0 {
-		s.log.Println("Ping disabled")
-		return
-	}
-
 	// Create a dummy timer that won't ever run so we can wait for it
 	pingTimeoutTimer := time.NewTimer(time.Hour)
 	pingTimeoutTimer.Stop()
@@ -26,9 +21,19 @@ func (s *Socket) installPingPongHandlers() {
 		defer pingTimeoutTimer.Stop()
 
 		for {
+			pingEnabled := true
+			pingInterval := s.pingInterval
+			if s.pingInterval <= 0 || s.pingTimeout <= 0 {
+				pingInterval = time.Duration(10 * time.Second)
+				pingEnabled = false
+			}
+
 			select {
-			case <-time.After(s.pingInterval):
+			case <-time.After(pingInterval):
 				pingTimeoutTimer.Stop()
+				if !pingEnabled {
+					continue
+				}
 				s.log.Println("Sent ping")
 				err := s.adapter.WritePingMessage()
 				if err != nil {
@@ -44,6 +49,4 @@ func (s *Socket) installPingPongHandlers() {
 			}
 		}
 	}()
-
-	s.log.Printf("Ping enabled with interval %v and timeout %v", s.pingInterval, s.pingTimeout)
 }

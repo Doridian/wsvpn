@@ -20,14 +20,14 @@ func (s *Socket) installPingPongHandlers() {
 		defer s.closeDone()
 		defer pingTimeoutTimer.Stop()
 
-		pingEnabled := true
-		pingInterval := s.pingInterval
-		if s.pingInterval <= 0 || s.pingTimeout <= 0 {
-			pingInterval = time.Duration(10 * time.Second)
-			pingEnabled = false
-		}
-
 		for {
+			pingEnabled := true
+			pingInterval := s.pingInterval
+			if s.pingInterval <= 0 || s.pingTimeout <= 0 {
+				pingInterval = time.Duration(10 * time.Second)
+				pingEnabled = false
+			}
+
 			select {
 			case <-time.After(pingInterval):
 				pingTimeoutTimer.Stop()

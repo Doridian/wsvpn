@@ -104,11 +104,9 @@ func (c *Client) Serve() error {
 	}
 
 	c.socket = sockets.MakeSocket(c.log, c.adapter, nil, true)
-	if c.SocketConfigurator != nil {
-		err := c.SocketConfigurator.ConfigureSocket(c.socket)
-		if err != nil {
-			return err
-		}
+	err = c.UpdateSocketConfig()
+	if err != nil {
+		return err
 	}
 	c.registerCommandHandlers()
 
@@ -119,6 +117,14 @@ func (c *Client) Serve() error {
 	c.socket.Serve()
 
 	return nil
+}
+
+func (c *Client) UpdateSocketConfig() error {
+	if c.socket == nil || c.SocketConfigurator == nil {
+		return nil
+	}
+
+	return c.SocketConfigurator.ConfigureSocket(c.socket)
 }
 
 func (c *Client) Wait() {

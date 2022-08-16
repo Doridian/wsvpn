@@ -44,9 +44,10 @@ type Server struct {
 	log                *log.Logger
 	serverId           string
 
-	closers    []io.Closer
-	sockets    map[*sockets.Socket]bool
-	closerLock *sync.Mutex
+	closers     []io.Closer
+	sockets     map[*sockets.Socket]bool
+	closerLock  *sync.Mutex
+	socketsLock *sync.Mutex
 
 	serveErrorChannel chan interface{}
 	serveError        error
@@ -157,8 +158,8 @@ func (s *Server) SetMTU(mtu int) error {
 
 	s.packetBufferSize = shared.GetPacketBufferSizeByMTU(s.mtu)
 
-	s.closerLock.Lock()
-	defer s.closerLock.Unlock()
+	s.socketsLock.Lock()
+	defer s.socketsLock.Unlock()
 
 	for sock := range s.sockets {
 		sock.SetMTU(s.mtu)

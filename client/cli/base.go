@@ -102,7 +102,7 @@ func reloadConfig(configPtr *string, client *clients.Client) error {
 	client.AutoReconnectDelay = config.Client.AutoReconnectDelay
 	client.LoadEventConfig(&config.Scripts)
 
-	return nil
+	return client.UpdateSocketConfig()
 }
 
 func Main(configPtr *string, printDefaultConfigPtr *bool) {

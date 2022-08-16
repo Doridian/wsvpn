@@ -67,6 +67,7 @@ func NewServer() *Server {
 		closers:            make([]io.Closer, 0),
 		sockets:            make(map[*sockets.Socket]bool),
 		closerLock:         &sync.Mutex{},
+		socketsLock:        &sync.Mutex{},
 		localFeatures:      make(map[features.Feature]bool),
 	}
 }

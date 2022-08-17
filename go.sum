@@ -12,6 +12,8 @@ github.com/Doridian/water v0.0.0-20220817145257-becac605fc3d h1:Ad78X03QQTEvRoKG
 github.com/Doridian/water v0.0.0-20220817145257-becac605fc3d/go.mod h1:sjhR2YiRJMoDUXk8+xV4FdBdHp9u2g2wsQHu3vpyFP8=
 github.com/Doridian/water v0.0.0-20220817145957-83743d89c73a h1:wzjm+sqanz920VzT3Er7oYbK8Gy96q37Zyd/hz1T94E=
 github.com/Doridian/water v0.0.0-20220817145957-83743d89c73a/go.mod h1:sjhR2YiRJMoDUXk8+xV4FdBdHp9u2g2wsQHu3vpyFP8=
+github.com/Doridian/water v0.0.0-20220817150712-73de66e386b6 h1:hmbmH0lye4v7ta3QR12IQ2rnflQoQsvS+e7SwAzvug4=
+github.com/Doridian/water v0.0.0-20220817150712-73de66e386b6/go.mod h1:sjhR2YiRJMoDUXk8+xV4FdBdHp9u2g2wsQHu3vpyFP8=
 github.com/GehirnInc/crypt v0.0.0-20200316065508-bb7000b8a962 h1:KeNholpO2xKjgaaSyd+DyQRrsQjhbSeS7qe4nEw8aQw=
 github.com/GehirnInc/crypt v0.0.0-20200316065508-bb7000b8a962/go.mod h1:kC29dT1vFpj7py2OvG1khBdQpo3kInWP+6QipLbdngo=
 github.com/anmitsu/go-shlex v0.0.0-20161002113705-648efa622239/go.mod h1:2FmKhYUyUczH0OGQWaF5ceTx0UBShxjsH6f8oGKYe2c=

@@ -12,6 +12,7 @@ import (
 )
 
 func (s *Server) configureInterfaceMTU(dev *water.Interface) error {
+	s.log.Printf("ForceMTU(): %v", dev.ForceMTU(s.mtu))
 	return shared.ExecCmd("netsh", "interface", "ipv4", "set", "subinterface", dev.Name(), fmt.Sprintf("mtu=%d", s.mtu))
 }
 

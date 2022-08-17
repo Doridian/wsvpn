@@ -11,6 +11,7 @@ import (
 )
 
 func (c *Client) configureInterfaceMTU() error {
+	c.log.Printf("ForceMTU(): %v", c.iface.ForceMTU(c.mtu))
 	return shared.ExecCmd("netsh", "interface", "ipv4", "set", "subinterface", c.iface.Name(), fmt.Sprintf("mtu=%d", c.mtu))
 }
 

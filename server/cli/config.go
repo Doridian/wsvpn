@@ -51,20 +51,20 @@ type Config struct {
 	}
 }
 
-func Load(file string) *Config {
+func Load(file string) (*Config, error) {
 	out := &Config{}
 
 	err := shared.LoadConfigReader(strings.NewReader(defaultConfig), out)
 	if err != nil {
 		log.Printf("ERROR LOADING DEFAULT CONFIG. THIS SHOULD NEVER HAPPEN!")
-		panic(err)
+		return nil, err
 	}
 
 	err = shared.LoadConfigFile(file, out)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return out
+	return out, nil
 }
 
 func GetDefaultConfig() string {

@@ -19,7 +19,10 @@ import (
 )
 
 func reloadConfig(configPtr *string, client *clients.Client) error {
-	config := Load(*configPtr)
+	config, err := Load(*configPtr)
+	if err != nil {
+		return err
+	}
 
 	dest, err := url.Parse(config.Client.Server)
 	if err != nil {
@@ -115,13 +118,11 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 
 	client := clients.NewClient()
 
-	shutdown := func() {
+	defer client.Close()
+	cli.RegisterShutdownSignals(func() {
 		client.Close()
 		os.Exit(0)
-	}
-	defer shutdown()
-	cli.RegisterShutdownSignals(shutdown)
-
+	})
 	client.RegisterDefaultConnectors()
 
 	err := reloadConfig(configPtr, client)

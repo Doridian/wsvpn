@@ -7,13 +7,13 @@ import (
 	"log"
 	"sync"
 
+	"github.com/Doridian/water"
 	"github.com/Doridian/wsvpn/server/authenticators"
 	"github.com/Doridian/wsvpn/server/upgraders"
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
 	"github.com/Doridian/wsvpn/shared/features"
 	"github.com/Doridian/wsvpn/shared/sockets"
-	"github.com/songgao/water"
 )
 
 var errNone = errors.New("none")

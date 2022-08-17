@@ -7,8 +7,8 @@ import (
 	"log"
 	"net"
 
+	"github.com/Doridian/water"
 	"github.com/Doridian/wsvpn/shared"
-	"github.com/songgao/water"
 )
 
 func (s *Server) configureInterfaceMTU(dev *water.Interface) error {

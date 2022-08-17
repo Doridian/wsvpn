@@ -3,8 +3,8 @@ package sockets
 import (
 	"errors"
 
+	"github.com/Doridian/water"
 	"github.com/Doridian/wsvpn/shared"
-	"github.com/songgao/water"
 )
 
 func (s *Socket) SetInterface(iface *water.Interface) error {

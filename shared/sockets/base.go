@@ -5,11 +5,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Doridian/water"
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
 	"github.com/Doridian/wsvpn/shared/features"
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
-	"github.com/songgao/water"
 )
 
 const UndeterminedProtocolVersion = 0

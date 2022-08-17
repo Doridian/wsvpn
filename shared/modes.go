@@ -1,6 +1,6 @@
 package shared
 
-import "github.com/songgao/water"
+import "github.com/Doridian/water"
 
 type VPNMode int
 

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/Doridian/water"
 	"github.com/Doridian/wsvpn/shared"
-	"github.com/songgao/water"
 )
 
 func (c *Client) configureInterfaceMTU() error {

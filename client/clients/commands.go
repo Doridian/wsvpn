@@ -4,9 +4,9 @@ import (
 	"errors"
 	"net"
 
+	"github.com/Doridian/water"
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
-	"github.com/songgao/water"
 )
 
 func (c *Client) registerCommandHandlers() {

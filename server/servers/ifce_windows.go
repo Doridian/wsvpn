@@ -37,8 +37,8 @@ func (s *Server) getPlatformSpecifics(config *water.Config) error {
 }
 
 func (s *Server) verifyPlatformFlags() error {
-	if !s.InterfaceConfig.OneInterfacePerConnection {
-		return errors.New("windows can not enable one-interface-per-connection")
+	if !s.InterfaceConfig.OneInterfacePerConnection && s.Mode == shared.VPN_MODE_TAP {
+		return errors.New("Windows can not use one-interface-per-connection with TAP")
 	}
 
 	return nil

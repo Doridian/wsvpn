@@ -19,16 +19,12 @@ func (w *WaterInterfaceWrapper) Configure(ipLocal net.IP, ipNet *shared.VPNNet, 
 
 	ipNetSize, ipLocalCidr := w.splitSubnet(ipNet, ipLocal)
 
-	err := shared.ExecCmd("ifconfig", w.Interface.Name(), ipLocalCidr, "up")
-	if err != nil {
-		err = shared.ExecCmd("ifconfig", w.Interface.Name(), ipLocalCidr, ipPeer.String(), "up")
-	}
-
+	err := shared.ExecCmd("ifconfig", w.Interface.Name(), ipLocalCidr, ipPeer.String(), "up")
 	if err != nil {
 		return err
 	}
 
-	return w.addPeerRoute(ipNetSize, ipPeer)
+	return w.addSubnetRoute(ipNetSize, ipNet, ipPeer)
 }
 
 func (w *WaterInterfaceWrapper) AddInterfaceRoute(ipNet *net.IPNet) error {

@@ -33,7 +33,7 @@ func (w *WaterInterfaceWrapper) Configure(ipLocal net.IP, ipNet *shared.VPNNet, 
 		return err
 	}
 
-	return w.addPeerRoute(ipNetSize, ipPeer)
+	return w.addSubnetRoute(ipNetSize, ipNet, ipPeer)
 }
 
 func (w *WaterInterfaceWrapper) AddInterfaceRoute(ipNet *net.IPNet) error {

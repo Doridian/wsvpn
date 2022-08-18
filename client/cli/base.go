@@ -103,6 +103,7 @@ func reloadConfig(configPtr *string, client *clients.Client) error {
 	client.SetDefaultGateway = config.Tunnel.SetDefaultGateway
 	client.ServerUrl = dest
 	client.InterfaceConfig = &config.Interface
+	client.InterfaceConfig.OneInterfacePerConnection = false
 	client.AutoReconnectDelay = config.Client.AutoReconnectDelay
 	client.LoadEventConfig(&config.Scripts)
 

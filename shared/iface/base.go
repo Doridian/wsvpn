@@ -52,7 +52,7 @@ func (w *WaterInterfaceWrapper) addPeerRoute(ipNetSize int, ipPeer net.IP) error
 
 func getInterfaceNameOrPrefix(ifaceConfig *InterfaceConfig) string {
 	if ifaceConfig.OneInterfacePerConnection && ifaceConfig.Name != "" {
-		return shared.FindLowestNetworkInterfaceByPrefix(ifaceConfig.Name)
+		return FindLowestNetworkInterfaceByPrefix(ifaceConfig.Name)
 	}
 
 	return ifaceConfig.Name

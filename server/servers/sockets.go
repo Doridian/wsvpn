@@ -6,15 +6,16 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Doridian/water"
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
 	"github.com/Doridian/wsvpn/shared/features"
+	"github.com/Doridian/wsvpn/shared/iface"
 	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 	"github.com/google/uuid"
 	"github.com/lucas-clemente/quic-go"
 	"github.com/lucas-clemente/quic-go/http3"
-	"github.com/songgao/water"
 )
 
 func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
@@ -107,7 +108,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	clientLogger.Printf("Command serialization: %s", commands.SerializationTypeToString(adapter.GetCommandSerializationType()))
 
 	var ifaceManaged bool
-	var iface *water.Interface
+	var localIface *iface.WaterInterfaceWrapper
 
 	if s.InterfaceConfig.OneInterfacePerConnection {
 		ifaceManaged = true
@@ -116,35 +117,42 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		ifaceConfig := water.Config{
 			DeviceType: s.Mode.ToWaterDeviceType(),
 		}
-		err = s.getPlatformSpecifics(&ifaceConfig)
+		err = iface.GetPlatformSpecifics(&ifaceConfig, s.InterfaceConfig)
 		if err != nil {
 			s.ifaceCreationMutex.Unlock()
 			clientLogger.Printf("Error extending iface config: %v", err)
 			return
 		}
 
-		iface, err = water.New(ifaceConfig)
+		localIfaceW, err := water.New(ifaceConfig)
 		s.ifaceCreationMutex.Unlock()
 		if err != nil {
 			clientLogger.Printf("Error creating new iface: %v", err)
 			return
 		}
 
-		defer iface.Close()
+		localIface = iface.NewInterfaceWrapper(localIfaceW)
 
-		clientLogger.Printf("Assigned interface %s", iface.Name())
+		defer localIface.Close()
 
-		err = s.configIface(iface, ipClient)
+		clientLogger.Printf("Assigned interface %s", localIfaceW.Name())
+
+		err = localIface.Configure(s.VPNNet.GetServerIP(), nil, ipClient)
 		if err != nil {
 			clientLogger.Printf("Error configuring interface: %v", err)
 			return
 		}
+		err = localIface.SetMTU(s.mtu)
+		if err != nil {
+			clientLogger.Printf("Error setting interface MTU: %v", err)
+			return
+		}
 	} else {
 		ifaceManaged = false
-		iface = s.mainIface
+		localIface = s.mainIface
 	}
 
-	socket := sockets.MakeSocket(clientLogger, adapter, iface, ifaceManaged)
+	socket := sockets.MakeSocket(clientLogger, adapter, localIface, ifaceManaged)
 	defer socket.Close()
 
 	s.socketsLock.Lock()
@@ -183,7 +191,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	socket.WaitReady()
 
 	remoteNetStr := fmt.Sprintf("%s/%d", ipClient.String(), s.VPNNet.GetSize())
-	ifaceName := iface.Name()
+	ifaceName := localIface.Interface.Name()
 
 	doRunEventScript := func(event string) {
 		err := s.RunEventScript(event, remoteNetStr, ifaceName, authUsername)

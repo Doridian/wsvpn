@@ -7,3 +7,4 @@ __pycache__
 /client.yml
 /server.yml
 *.pem
+/shared/iface/wintun

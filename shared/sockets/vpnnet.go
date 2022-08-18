@@ -4,10 +4,10 @@ import (
 	"errors"
 
 	"github.com/Doridian/wsvpn/shared"
-	"github.com/songgao/water"
+	"github.com/Doridian/wsvpn/shared/iface"
 )
 
-func (s *Socket) SetInterface(iface *water.Interface) error {
+func (s *Socket) SetInterface(iface *iface.WaterInterfaceWrapper) error {
 	if s.iface != nil {
 		return errors.New("cannot re-define interface: Already set")
 	}
@@ -20,7 +20,7 @@ func (s *Socket) SetMTU(mtu int) {
 	s.packetBufferSize = shared.GetPacketBufferSizeByMTU(mtu)
 }
 
-func (s *Socket) GetInterfaceIfManaged() *water.Interface {
+func (s *Socket) GetInterfaceIfManaged() *iface.WaterInterfaceWrapper {
 	if !s.ifaceManaged {
 		return nil
 	}
@@ -43,7 +43,7 @@ func (s *Socket) tryServeIfaceRead() {
 				packet = make([]byte, s.packetBufferSize)
 			}
 
-			n, err := s.iface.Read(packet)
+			n, err := s.iface.Interface.Read(packet)
 			if err != nil {
 				s.log.Printf("Error reading packet from tun: %v", err)
 				return

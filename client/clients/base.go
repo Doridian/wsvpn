@@ -11,9 +11,9 @@ import (
 	"github.com/Doridian/wsvpn/client/connectors"
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/features"
+	"github.com/Doridian/wsvpn/shared/iface"
 	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
-	"github.com/songgao/water"
 )
 
 type Client struct {
@@ -25,7 +25,7 @@ type Client struct {
 	Headers            http.Header
 	SetDefaultGateway  bool
 	SocketConfigurator sockets.SocketConfigurator
-	InterfaceConfig    *shared.InterfaceConfig
+	InterfaceConfig    *iface.InterfaceConfig
 	AutoReconnectDelay time.Duration
 
 	log        *log.Logger
@@ -33,7 +33,7 @@ type Client struct {
 	serverID   string
 	mtu        int
 	doIpConfig bool
-	iface      *water.Interface
+	iface      *iface.WaterInterfaceWrapper
 	remoteNet  *shared.VPNNet
 	socket     *sockets.Socket
 	adapter    adapters.SocketAdapter
@@ -162,7 +162,7 @@ func (c *Client) closeInternal() {
 func (c *Client) doRunEventScript(event string) {
 	ifaceName := ""
 	if c.iface != nil {
-		ifaceName = c.iface.Name()
+		ifaceName = c.iface.Interface.Name()
 	}
 	remoteNetStr := ""
 	if c.remoteNet != nil {

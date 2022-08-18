@@ -18,6 +18,7 @@ import (
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/cli"
 	"github.com/Doridian/wsvpn/shared/features"
+	"github.com/Doridian/wsvpn/shared/iface"
 	"github.com/google/uuid"
 )
 
@@ -32,9 +33,10 @@ func getTlsCert(_ *tls.ClientHelloInfo) (*tls.Certificate, error) {
 }
 
 func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool) error {
-	var err error
-
-	config := Load(*configPtr)
+	config, err := Load(*configPtr)
+	if err != nil {
+		return err
+	}
 
 	newVPNNet, err := shared.ParseVPNNet(config.Tunnel.Subnet)
 	if err != nil {
@@ -208,14 +210,18 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 
 	shared.PrintVersion()
 
+	err := iface.InitializeWater()
+	if err != nil {
+		log.Printf("Could not initialize network interface library (this may cause crashes): %v", err)
+	}
+
 	server := servers.NewServer()
 
-	shutdown := func() {
+	cli.RegisterShutdownSignals(func() {
 		server.Close()
 		os.Exit(0)
-	}
-	cli.RegisterShutdownSignals(shutdown)
-	defer shutdown()
+	})
+	defer server.Close()
 
 	serverUUID, err := uuid.NewRandom()
 	if err != nil {

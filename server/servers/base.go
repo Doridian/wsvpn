@@ -12,8 +12,8 @@ import (
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
 	"github.com/Doridian/wsvpn/shared/features"
+	"github.com/Doridian/wsvpn/shared/iface"
 	"github.com/Doridian/wsvpn/shared/sockets"
-	"github.com/songgao/water"
 )
 
 var errNone = errors.New("none")
@@ -32,7 +32,7 @@ type Server struct {
 	Authenticator      authenticators.Authenticator
 	Mode               shared.VPNMode
 	SocketConfigurator sockets.SocketConfigurator
-	InterfaceConfig    *shared.InterfaceConfig
+	InterfaceConfig    *iface.InterfaceConfig
 
 	upgraders          []upgraders.SocketUpgrader
 	slotMutex          *sync.Mutex
@@ -40,7 +40,7 @@ type Server struct {
 	usedSlots          map[uint64]bool
 	packetBufferSize   int
 	mtu                int
-	mainIface          *water.Interface
+	mainIface          *iface.WaterInterfaceWrapper
 	log                *log.Logger
 	serverId           string
 
@@ -96,7 +96,7 @@ func (s *Server) setServeError(err error) {
 }
 
 func (s *Server) Serve() error {
-	err := s.verifyPlatformFlags()
+	err := iface.VerifyPlatformFlags(s.InterfaceConfig, s.Mode)
 	if err != nil {
 		return err
 	}
@@ -146,36 +146,33 @@ func (s *Server) SetMTU(mtu int) error {
 		return nil
 	}
 
-	oldMtu := s.mtu
-	s.mtu = mtu
-
 	if s.mainIface != nil {
-		err := s.configureInterfaceMTU(s.mainIface)
+		err := s.mainIface.SetMTU(mtu)
 		if err != nil {
-			s.mtu = oldMtu
 			return err
 		}
 	}
 
-	s.packetBufferSize = shared.GetPacketBufferSizeByMTU(s.mtu)
+	s.packetBufferSize = shared.GetPacketBufferSizeByMTU(mtu)
 
 	s.socketsLock.Lock()
 	defer s.socketsLock.Unlock()
 
 	for sock := range s.sockets {
-		sock.SetMTU(s.mtu)
+		sock.SetMTU(mtu)
 		iface := sock.GetInterfaceIfManaged()
 		if iface != nil {
-			err := s.configureInterfaceMTU(iface)
+			err := iface.SetMTU(mtu)
 			if err != nil {
-				s.mtu = oldMtu
 				return err
 			}
 		}
 		sock.MakeAndSendCommand(&commands.SetMtuParameters{
-			MTU: s.mtu,
+			MTU: mtu,
 		})
 	}
+
+	s.mtu = mtu
 
 	return nil
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/Doridian/wsvpn/shared"
 	shared_cli "github.com/Doridian/wsvpn/shared/cli"
 	"github.com/Doridian/wsvpn/shared/features"
+	"github.com/Doridian/wsvpn/shared/iface"
 )
 
 //go:embed client.example.yml
@@ -21,7 +22,7 @@ type Config struct {
 		Features          features.FeaturesConfig `yaml:"features"`
 	} `yaml:"tunnel"`
 
-	Interface shared.InterfaceConfig `yaml:"interface"`
+	Interface iface.InterfaceConfig `yaml:"interface"`
 
 	Scripts shared.EventConfig `yaml:"scripts"`
 
@@ -40,21 +41,21 @@ type Config struct {
 	}
 }
 
-func Load(file string) *Config {
+func Load(file string) (*Config, error) {
 	out := &Config{}
 
 	err := shared.LoadConfigReader(strings.NewReader(defaultConfig), out)
 	if err != nil {
 		log.Printf("ERROR LOADING DEFAULT CONFIG. THIS SHOULD NEVER HAPPEN!")
-		panic(err)
+		return nil, err
 	}
 
 	err = shared.LoadConfigFile(file, out)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return out
+	return out, nil
 }
 
 func GetDefaultConfig() string {

@@ -16,10 +16,14 @@ import (
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/cli"
 	"github.com/Doridian/wsvpn/shared/features"
+	"github.com/Doridian/wsvpn/shared/iface"
 )
 
 func reloadConfig(configPtr *string, client *clients.Client) error {
-	config := Load(*configPtr)
+	config, err := Load(*configPtr)
+	if err != nil {
+		return err
+	}
 
 	dest, err := url.Parse(config.Client.Server)
 	if err != nil {
@@ -99,6 +103,7 @@ func reloadConfig(configPtr *string, client *clients.Client) error {
 	client.SetDefaultGateway = config.Tunnel.SetDefaultGateway
 	client.ServerUrl = dest
 	client.InterfaceConfig = &config.Interface
+	client.InterfaceConfig.OneInterfacePerConnection = false
 	client.AutoReconnectDelay = config.Client.AutoReconnectDelay
 	client.LoadEventConfig(&config.Scripts)
 
@@ -113,18 +118,21 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 
 	shared.PrintVersion()
 
+	err := iface.InitializeWater()
+	if err != nil {
+		log.Printf("Could not initialize network interface library (this may cause crashes): %v", err)
+	}
+
 	client := clients.NewClient()
 
-	shutdown := func() {
+	defer client.Close()
+	cli.RegisterShutdownSignals(func() {
 		client.Close()
 		os.Exit(0)
-	}
-	defer shutdown()
-	cli.RegisterShutdownSignals(shutdown)
-
+	})
 	client.RegisterDefaultConnectors()
 
-	err := reloadConfig(configPtr, client)
+	err = reloadConfig(configPtr, client)
 	if err != nil {
 		panic(err)
 	}

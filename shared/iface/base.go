@@ -2,6 +2,7 @@ package iface
 
 import (
 	"fmt"
+	"log"
 	"net"
 
 	"github.com/Doridian/water"
@@ -35,10 +36,16 @@ func (w *WaterInterfaceWrapper) addPeerRoute(ipNetSize int, ipPeer net.IP) error
 	if ipNetSize != 32 {
 		return nil
 	}
-	return w.AddInterfaceRoute(&net.IPNet{
+	err := w.AddInterfaceRoute(&net.IPNet{
 		IP:   ipPeer,
 		Mask: net.CIDRMask(32, 32),
 	})
+
+	if err != nil {
+		log.Printf("Error adding peer route %s for %s: %v", ipPeer.String(), w.Interface.Name(), err)
+	}
+
+	return nil
 }
 
 func getInterfaceNameOrPrefix(ifaceConfig *InterfaceConfig) string {

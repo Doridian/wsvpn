@@ -142,7 +142,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 			clientLogger.Printf("Error configuring interface: %v", err)
 			return
 		}
-		err = s.mainIface.SetMTU(s.mtu)
+		err = localIface.SetMTU(s.mtu)
 		if err != nil {
 			clientLogger.Printf("Error setting interface MTU: %v", err)
 			return

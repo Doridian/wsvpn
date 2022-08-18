@@ -10,19 +10,33 @@ import (
 )
 
 type WaterInterfaceWrapper struct {
-	Interface *water.Interface
-	ifIndex   int
+	Interface    *water.Interface
+	netInterface *net.Interface
 }
 
 func NewInterfaceWrapper(iface *water.Interface) *WaterInterfaceWrapper {
 	return &WaterInterfaceWrapper{
-		Interface: iface,
-		ifIndex:   -1,
+		Interface:    iface,
+		netInterface: nil,
 	}
 }
 
 func (w *WaterInterfaceWrapper) Close() error {
+	w.netInterface = nil
 	return w.Interface.Close()
+}
+
+func (w *WaterInterfaceWrapper) getNetInterface() (*net.Interface, error) {
+	if w.netInterface != nil {
+		return w.netInterface, nil
+	}
+
+	iface, err := net.InterfaceByName(w.Interface.Name())
+	if err != nil {
+		return nil, err
+	}
+	w.netInterface = iface
+	return iface, nil
 }
 
 func (w *WaterInterfaceWrapper) splitSubnet(ipNet *shared.VPNNet, ipLocal net.IP) (ipNetSize int, ipLocalCidr string) {

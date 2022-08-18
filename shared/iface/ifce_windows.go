@@ -7,8 +7,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
 
 	"github.com/Doridian/water"
 	"github.com/Doridian/wsvpn/shared"
@@ -38,18 +36,11 @@ func (w *WaterInterfaceWrapper) Configure(ipLocal net.IP, ipNet *shared.VPNNet, 
 }
 
 func (w *WaterInterfaceWrapper) AddInterfaceRoute(ipNet *net.IPNet) error {
-	if w.ifIndex < 0 {
-		stdout, err := shared.ExecCmdGetStdOut("powershell", "(Get-NetAdapter -Name \"WaterWinTunInterface\").ifIndex")
-		if err != nil {
-			return err
-		}
-		ifIndex, err := strconv.Atoi(strings.Trim(stdout, " \r\n\t"))
-		if err != nil {
-			return err
-		}
-		w.ifIndex = ifIndex
+	iface, err := w.getNetInterface()
+	if err != nil {
+		return err
 	}
-	return shared.ExecCmd("route", "ADD", ipNet.String(), "0.0.0.0", "IF", fmt.Sprintf("%d", w.ifIndex))
+	return shared.ExecCmd("route", "ADD", ipNet.String(), "0.0.0.0", "IF", fmt.Sprintf("%d", iface.Index))
 }
 
 func (w *WaterInterfaceWrapper) AddIPRoute(ipNet *net.IPNet, gateway net.IP) error {

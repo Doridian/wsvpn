@@ -2,15 +2,19 @@
 
 import argparse
 from dataclasses import dataclass
+from io import BytesIO
 from os.path import join, exists
 from platform import machine, system
+from tempfile import NamedTemporaryFile, TemporaryFile, mkdtemp
 from threading import Condition, Thread
 from subprocess import DEVNULL, call, check_call, check_output
 from os import environ, listdir, mkdir, remove
 import os
 from traceback import print_exc
 from typing import Optional
-from shutil import which
+from shutil import rmtree, which
+from zipfile import ZipFile
+from requests import get
 
 _version_cache = None
 def get_version():
@@ -321,6 +325,26 @@ def main():
         print("Preparing Docker buildx...")
         call(["docker", "buildx", "create", "--name", "multiarch"], stdout=DEVNULL, stderr=DEVNULL)
         check_call(["docker", "buildx", "use", "multiarch"])
+
+
+    if "windows" in platforms:
+        url = "https://www.wintun.net/builds/wintun-0.14.1.zip"
+        print(f"Downloading WinTun from \"{url}\"...")
+
+        with BytesIO() as stream:
+            res = get(url)
+            res.raise_for_status()
+            stream.write(res.content)
+            stream.flush()
+
+            outdir = "shared/iface/wintun"
+            try:
+                mkdir(outdir)
+            except FileExistsError:
+                pass
+            zip = ZipFile(stream)
+            zip.extractall(outdir)
+
 
     print("Generating all build tasks...")
     tasks: list = []

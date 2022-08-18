@@ -1,5 +1,3 @@
-//go:build windows
-
 package iface
 
 import (
@@ -7,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -76,5 +76,22 @@ func VerifyPlatformFlags(ifaceConfig *InterfaceConfig, mode shared.VPNMode) erro
 }
 
 func InitializeWater() error {
+	if len(wintunDll) < 1 {
+		return errors.New("could not find embedded wintun.dll")
+	}
+
+	execFileName, err := os.Executable()
+	if err != nil {
+		return err
+	}
+
+	execFilePath := filepath.Dir(execFileName)
+
+	fh, err := os.Create(filepath.Join(execFilePath, "wintun.dll"))
+	if err != nil {
+		return err
+	}
+	fh.Write(wintunDll)
+	fh.Close()
 	return nil
 }

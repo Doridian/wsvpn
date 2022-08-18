@@ -32,19 +32,19 @@ func (w *WaterInterfaceWrapper) Configure(ipLocal net.IP, ipNet *shared.VPNNet, 
 		return err
 	}
 
-	return w.addPeerRoute(ipNetSize, ipPeer)
+	return w.addSubnetRoute(ipNetSize, ipNet, ipPeer)
 }
 
 func (w *WaterInterfaceWrapper) AddInterfaceRoute(ipNet *net.IPNet) error {
-	iface, err := w.getNetInterface()
-	if err != nil {
-		return err
-	}
-	return shared.ExecCmd("route", "ADD", ipNet.String(), "0.0.0.0", "IF", fmt.Sprintf("%d", iface.Index))
+	return w.AddIPRoute(ipNet, net.IPv4(0, 0, 0, 0))
 }
 
 func (w *WaterInterfaceWrapper) AddIPRoute(ipNet *net.IPNet, gateway net.IP) error {
-	return shared.ExecCmd("route", "ADD", ipNet.String(), gateway.String())
+	iface, err := w.GetNetInterface()
+	if err != nil {
+		return err
+	}
+	return shared.ExecCmd("route", "ADD", ipNet.String(), gateway.String(), "IF", fmt.Sprintf("%d", iface.Index))
 }
 
 func GetPlatformSpecifics(config *water.Config, ifaceConfig *InterfaceConfig) error {

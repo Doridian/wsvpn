@@ -7,6 +7,7 @@ import (
 	"github.com/Doridian/water"
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
+	"github.com/Doridian/wsvpn/shared/iface"
 )
 
 func (c *Client) registerCommandHandlers() {
@@ -27,7 +28,7 @@ func (c *Client) registerCommandHandlers() {
 			return err
 		}
 
-		err = c.addRoute(routeNet)
+		err = c.iface.AddIPRoute(routeNet, c.remoteNet.GetServerIP())
 		if err != nil {
 			c.log.Printf("Error adding subnet route (not fatal): %v", err)
 		}
@@ -69,30 +70,30 @@ func (c *Client) registerCommandHandlers() {
 			DeviceType: mode.ToWaterDeviceType(),
 		}
 
-		err = c.getPlatformSpecifics(&ifconfig, c.InterfaceConfig)
+		err = iface.GetPlatformSpecifics(&ifconfig, c.InterfaceConfig)
 		if err != nil {
 			return err
 		}
 
-		c.iface, err = water.New(ifconfig)
+		localIface, err := water.New(ifconfig)
 		if err != nil {
 			return err
 		}
 
-		c.log.Printf("Opened interface %s", c.iface.Name())
+		c.iface = iface.NewInterfaceWrapper(localIface)
 
-		c.setMTUNoInterface(parameters.MTU)
-		err = c.configureInterface()
-		if err != nil {
-			return err
-		}
+		c.log.Printf("Opened interface %s", c.iface.Interface.Name())
 
 		if c.doIpConfig {
-			err = c.addRoute(c.remoteNet.GetSubnet())
-			if err != nil {
-				c.log.Printf("Error adding subnet route (not fatal): %v", err)
-			}
+			err = c.iface.Configure(c.remoteNet.GetRawIP(), c.remoteNet, c.remoteNet.GetServerIP())
+		} else {
+			err = c.iface.Configure(nil, c.remoteNet, c.remoteNet.GetServerIP())
 		}
+		if err != nil {
+			return err
+		}
+
+		c.SetMTU(parameters.MTU)
 
 		err = c.socket.SetInterface(c.iface)
 		if err != nil {

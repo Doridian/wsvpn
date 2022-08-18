@@ -8,6 +8,7 @@ import (
 	"github.com/Doridian/wsvpn/shared"
 	shared_cli "github.com/Doridian/wsvpn/shared/cli"
 	"github.com/Doridian/wsvpn/shared/features"
+	"github.com/Doridian/wsvpn/shared/iface"
 )
 
 //go:embed server.example.yml
@@ -31,7 +32,7 @@ type Config struct {
 		Ping shared_cli.PingConfig `yaml:"ping"`
 	} `yaml:"tunnel"`
 
-	Interface shared.InterfaceConfig `yaml:"interface"`
+	Interface iface.InterfaceConfig `yaml:"interface"`
 
 	Scripts shared.EventConfig `yaml:"scripts"`
 

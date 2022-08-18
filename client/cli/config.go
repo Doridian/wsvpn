@@ -9,6 +9,7 @@ import (
 	"github.com/Doridian/wsvpn/shared"
 	shared_cli "github.com/Doridian/wsvpn/shared/cli"
 	"github.com/Doridian/wsvpn/shared/features"
+	"github.com/Doridian/wsvpn/shared/iface"
 )
 
 //go:embed client.example.yml
@@ -21,7 +22,7 @@ type Config struct {
 		Features          features.FeaturesConfig `yaml:"features"`
 	} `yaml:"tunnel"`
 
-	Interface shared.InterfaceConfig `yaml:"interface"`
+	Interface iface.InterfaceConfig `yaml:"interface"`
 
 	Scripts shared.EventConfig `yaml:"scripts"`
 

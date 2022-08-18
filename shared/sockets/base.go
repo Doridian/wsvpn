@@ -5,10 +5,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Doridian/water"
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
 	"github.com/Doridian/wsvpn/shared/features"
+	"github.com/Doridian/wsvpn/shared/iface"
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 )
 
@@ -32,7 +32,7 @@ type Socket struct {
 	remoteProtocolVersion int
 
 	adapter          adapters.SocketAdapter
-	iface            *water.Interface
+	iface            *iface.WaterInterfaceWrapper
 	ifaceManaged     bool
 	wg               *sync.WaitGroup
 	readyWait        *sync.Cond
@@ -54,7 +54,7 @@ type Socket struct {
 	usedFeatures   map[features.Feature]bool
 }
 
-func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *water.Interface, ifaceManaged bool) *Socket {
+func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *iface.WaterInterfaceWrapper, ifaceManaged bool) *Socket {
 	return &Socket{
 		AssignedIP: shared.DefaultIPv4,
 

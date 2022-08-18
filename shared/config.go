@@ -7,13 +7,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type InterfaceConfig struct {
-	Name                      string `yaml:"name"`
-	Persist                   bool   `yaml:"persist"`
-	ComponentId               string `yaml:"component-id"`
-	OneInterfacePerConnection bool   `yaml:"one-interface-per-connection"`
-}
-
 func LoadConfigFile(file string, out interface{}) error {
 	fh, err := os.Open(file)
 	if err != nil {

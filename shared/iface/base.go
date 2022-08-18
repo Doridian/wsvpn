@@ -11,11 +11,13 @@ import (
 
 type WaterInterfaceWrapper struct {
 	Interface *water.Interface
+	ifIndex   int
 }
 
 func NewInterfaceWrapper(iface *water.Interface) *WaterInterfaceWrapper {
 	return &WaterInterfaceWrapper{
 		Interface: iface,
+		ifIndex:   -1,
 	}
 }
 

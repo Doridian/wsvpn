@@ -1,6 +1,8 @@
 package shared
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"net"
 	"os"
@@ -32,6 +34,18 @@ func ExecCmd(cmd string, arg ...string) error {
 		return nil
 	}
 	return fmt.Errorf("command %s %s: %v", cmd, strings.Join(arg, " "), err)
+}
+
+func ExecCmdGetStdOut(cmd string, arg ...string) (string, error) {
+	stdoutBuffer := &bytes.Buffer{}
+	cmdO := exec.Command(cmd, arg...)
+	cmdO.Stdout = bufio.NewWriter(stdoutBuffer)
+	cmdO.Stderr = os.Stderr
+	err := cmdO.Run()
+	if err == nil {
+		return stdoutBuffer.String(), nil
+	}
+	return "", fmt.Errorf("command %s %s: %v", cmd, strings.Join(arg, " "), err)
 }
 
 func GetSrcMAC(packet []byte) MacAddr {

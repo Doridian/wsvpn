@@ -42,7 +42,7 @@ func (w *WaterInterfaceWrapper) AddIPRoute(ipNet *net.IPNet, gateway net.IP) err
 func GetPlatformSpecifics(config *water.Config, ifaceConfig *InterfaceConfig) error {
 	setName := getInterfaceNameOrPrefix(ifaceConfig)
 	if setName != "" {
-		config.Name = ifaceConfig.Name
+		config.Name = setName
 	}
 
 	return nil

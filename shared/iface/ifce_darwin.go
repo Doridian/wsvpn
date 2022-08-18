@@ -53,3 +53,7 @@ func GetPlatformSpecifics(config *water.Config, ifaceConfig *InterfaceConfig) er
 func VerifyPlatformFlags(ifaceConfig *InterfaceConfig, mode shared.VPNMode) error {
 	return nil
 }
+
+func InitializeWater() error {
+	return nil
+}

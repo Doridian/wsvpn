@@ -74,3 +74,7 @@ func VerifyPlatformFlags(ifaceConfig *InterfaceConfig, mode shared.VPNMode) erro
 
 	return nil
 }
+
+func InitializeWater() error {
+	return nil
+}

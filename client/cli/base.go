@@ -16,6 +16,7 @@ import (
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/cli"
 	"github.com/Doridian/wsvpn/shared/features"
+	"github.com/Doridian/wsvpn/shared/iface"
 )
 
 func reloadConfig(configPtr *string, client *clients.Client) error {
@@ -116,6 +117,11 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 
 	shared.PrintVersion()
 
+	err := iface.InitializeWater()
+	if err != nil {
+		panic(err)
+	}
+
 	client := clients.NewClient()
 
 	defer client.Close()
@@ -125,7 +131,7 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 	})
 	client.RegisterDefaultConnectors()
 
-	err := reloadConfig(configPtr, client)
+	err = reloadConfig(configPtr, client)
 	if err != nil {
 		panic(err)
 	}

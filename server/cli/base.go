@@ -18,6 +18,7 @@ import (
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/cli"
 	"github.com/Doridian/wsvpn/shared/features"
+	"github.com/Doridian/wsvpn/shared/iface"
 	"github.com/google/uuid"
 )
 
@@ -208,6 +209,11 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 	}
 
 	shared.PrintVersion()
+
+	err := iface.InitializeWater()
+	if err != nil {
+		panic(err)
+	}
 
 	server := servers.NewServer()
 

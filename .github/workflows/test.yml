@@ -17,8 +17,6 @@ jobs:
           go-version-file: 'go.mod'
           check-latest: true
           cache: true
-      - name: Install slimfat
-        run: pip3 install slimfat
       - name: Build all platforms, but only single architecture
         run: ./build.py --architecture local
       - run: ./test.sh

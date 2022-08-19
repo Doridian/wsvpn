@@ -18,19 +18,8 @@ jobs:
           go-version-file: 'go.mod'
           check-latest: true
           cache: true
-      - name: Cache LLVM and Clang
-        id: cache-llvm
-        uses: actions/cache@v2
-        with:
-          path: |
-            C:/Program Files/LLVM
-            ./llvm
-          key: llvm-10
-      - name: Install LLVM and Clang
-        uses: KyleMayes/install-llvm-action@v1
-        with:
-          version: "10"
-          cached: ${{ steps.cache-llvm.outputs.cache-hit }}
+      - name: Install slimfat
+        run: pip3 install slimfat
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:

@@ -90,7 +90,7 @@ def add_arch(arch: Arch):
         KNOWN_ARCHITECTURE_ALIASES[arch.docker_name] = arch.name
 
 add_arch(Arch(name="amd64", docker_name="amd64", goarch="amd64", upx_supported=True, goenv={}, platforms=["windows", "linux", "darwin"]))
-KNOWN_ARCHITECTURE_ALIASES["amd64"] = "x86_64"
+KNOWN_ARCHITECTURE_ALIASES["x86_64"] = "amd64"
 add_arch(Arch(name="386", docker_name="i386", goarch="386", upx_supported=True, goenv={}, platforms=["windows", "linux"]))
 
 add_arch(Arch(name="arm64", docker_name="arm64", goarch="arm64", upx_supported=True, goenv={}, platforms=["windows", "linux", "darwin"]))

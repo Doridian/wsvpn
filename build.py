@@ -173,12 +173,13 @@ class BuildTask(Thread):
             raise self.exc
 
 class GoBuildTask(BuildTask):
-    def __init__(self, proj: str, arch: Arch, goos: str, exesuffix: str, cgo: bool) -> None:
+    def __init__(self, proj: str, arch: Arch, goos: str, exesuffix: str, cgo: bool, gocmd: str) -> None:
         super().__init__(dependencies=[proj], outputs=[f"dist/{proj}-{goos}-{arch.name}{exesuffix}"], name=f"Go build {proj}-{goos}-{arch.name}{exesuffix}")
         self.arch = arch
         self.goos = goos
         self.proj = proj
         self.cgo = cgo
+        self.gocmd = gocmd
 
     def _run(self) -> None:
         env = {
@@ -190,7 +191,7 @@ class GoBuildTask(BuildTask):
             env[k] = v
 
         ldflags = f"-w -s -X 'github.com/Doridian/wsvpn/shared.Version={get_version()}'"
-        check_call_addenv(["go", "build", "-trimpath", "-ldflags", ldflags, "-o", self.outputs[0], f"./{self.proj}"], env=env)
+        check_call_addenv([self.gocmd, "build", "-trimpath", "-ldflags", ldflags, "-o", self.outputs[0], f"./{self.proj}"], env=env)
 
 class CompressTask(BuildTask):
     def __init__(self, input: str) -> None:
@@ -264,6 +265,7 @@ def main():
     parser.add_argument("--docker-push", default=False, action="store_true", help="Whether to push Docker images to the registry")
     parser.add_argument("--jobs", "-j", default=ncpus(), type=int, help="How many jobs to run in parallel")
     parser.add_argument("--cgo", default=False, action="store_true", help="Will enable CGO in all builds")
+    parser.add_argument("--gocmd", default="go", type=str, help="Use this command instead of go to build")
     flags = parser.parse_args()
     
     platforms = None
@@ -304,7 +306,7 @@ def main():
         remove(join("dist", distfile))
 
     print("Downloading Go modules...")
-    check_call(["go", "mod", "download"])
+    check_call([flags.gocmd, "mod", "download"])
 
     if flags.docker:
         print("Preparing Docker buildx...")
@@ -345,7 +347,7 @@ def main():
                 if platform not in arch.platforms:
                     continue
 
-                task = GoBuildTask(proj=proj, arch=arch, goos=platform, exesuffix=exesuffix, cgo=flags.cgo)
+                task = GoBuildTask(proj=proj, arch=arch, goos=platform, exesuffix=exesuffix, cgo=flags.cgo, gocmd=flags.gocmd)
                 platform_tasks.append(task)
 
                 tasks.append(task)

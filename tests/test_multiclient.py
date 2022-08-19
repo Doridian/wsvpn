@@ -55,5 +55,5 @@ def test_run_e2e_manyiface_tun(svbin: GoBin, clbin: GoBin, clbin2: GoBin) -> Non
     runtest(svbin, [clbin, clbin2], True, "TUN")
 
 def test_run_e2e_manyiface_customname(svbin: GoBin, clbin: GoBin, clbin2: GoBin) -> None:
-    svbin.cfg["interface"]["name"] = "wsserver"
+    svbin.cfg["interface"]["name"] = "utun6"
     runtest(svbin, [clbin, clbin2], True, "TUN")

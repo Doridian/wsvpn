@@ -5,14 +5,13 @@ from dataclasses import dataclass
 from io import BytesIO
 from os.path import join, exists
 from platform import machine, system
-from tempfile import NamedTemporaryFile, TemporaryFile, mkdtemp
 from threading import Condition, Thread
 from subprocess import DEVNULL, call, check_call, check_output
 from os import environ, listdir, mkdir, remove
 import os
 from traceback import print_exc
 from typing import Optional
-from shutil import rmtree, which
+from shutil import which
 from zipfile import ZipFile
 from requests import get
 
@@ -77,7 +76,6 @@ def ncpus():
 class Arch():
     name: str
     docker_name: str
-    darwin_name: str
     goarch: str
     goenv: map
     upx_supported: bool
@@ -90,25 +88,24 @@ def add_arch(arch: Arch):
     KNOWN_ARCHITECTURES[arch.name] = arch
     if arch.docker_name:
         KNOWN_ARCHITECTURE_ALIASES[arch.docker_name] = arch.name
-    if arch.darwin_name:
-        KNOWN_ARCHITECTURE_ALIASES[arch.darwin_name] = arch.name
 
-add_arch(Arch(name="amd64", docker_name="amd64", darwin_name="x86_64", goarch="amd64", upx_supported=True, goenv={}, platforms=["windows", "linux", "darwin"]))
-add_arch(Arch(name="386", docker_name="i386", darwin_name="", goarch="386", upx_supported=True, goenv={}, platforms=["windows", "linux"]))
+add_arch(Arch(name="amd64", docker_name="amd64", goarch="amd64", upx_supported=True, goenv={}, platforms=["windows", "linux", "darwin"]))
+KNOWN_ARCHITECTURE_ALIASES["x86_64"] = "amd64"
+add_arch(Arch(name="386", docker_name="i386", goarch="386", upx_supported=True, goenv={}, platforms=["windows", "linux"]))
 
-add_arch(Arch(name="arm64", docker_name="arm64", darwin_name="arm64", goarch="arm64", upx_supported=True, goenv={}, platforms=["windows", "linux", "darwin"]))
+add_arch(Arch(name="arm64", docker_name="arm64", goarch="arm64", upx_supported=True, goenv={}, platforms=["windows", "linux", "darwin"]))
 KNOWN_ARCHITECTURE_ALIASES["aarch64"] = "arm64"
 
-add_arch(Arch(name="armv5", docker_name="", darwin_name="", goarch="arm", upx_supported=True, goenv={"GOARM": "5"}, platforms=["linux"]))
-add_arch(Arch(name="armv6", docker_name="arm/v6", darwin_name="", goarch="arm", upx_supported=True, goenv={"GOARM": "6"}, platforms=["linux"]))
-add_arch(Arch(name="armv7", docker_name="arm/v7", darwin_name="", goarch="arm", upx_supported=True, goenv={"GOARM": "7"}, platforms=["linux"]))
+add_arch(Arch(name="armv5", docker_name="", goarch="arm", upx_supported=True, goenv={"GOARM": "5"}, platforms=["linux"]))
+add_arch(Arch(name="armv6", docker_name="arm/v6", goarch="arm", upx_supported=True, goenv={"GOARM": "6"}, platforms=["linux"]))
+add_arch(Arch(name="armv7", docker_name="arm/v7", goarch="arm", upx_supported=True, goenv={"GOARM": "7"}, platforms=["linux"]))
 
-add_arch(Arch(name="mips", docker_name="", darwin_name="", goarch="mips", upx_supported=True, goenv={}, platforms=["linux"]))
-add_arch(Arch(name="mips-softfloat", docker_name="", darwin_name="", goarch="mips", upx_supported=True, goenv={"GOMIPS": "softfloat"}, platforms=["linux"]))
-add_arch(Arch(name="mipsle", docker_name="", darwin_name="", goarch="mipsle", upx_supported=True, goenv={}, platforms=["linux"]))
-add_arch(Arch(name="mipsle-softfloat", docker_name="", darwin_name="", goarch="mipsle", upx_supported=True, goenv={"GOMIPS": "softfloat"}, platforms=["linux"]))
-add_arch(Arch(name="mips64", docker_name="", darwin_name="", goarch="mips64", upx_supported=False, goenv={}, platforms=["linux"]))
-add_arch(Arch(name="mips64le", docker_name="", darwin_name="", goarch="mips64le", upx_supported=False, goenv={}, platforms=["linux"]))
+add_arch(Arch(name="mips", docker_name="", goarch="mips", upx_supported=True, goenv={}, platforms=["linux"]))
+add_arch(Arch(name="mips-softfloat", docker_name="", goarch="mips", upx_supported=True, goenv={"GOMIPS": "softfloat"}, platforms=["linux"]))
+add_arch(Arch(name="mipsle", docker_name="", goarch="mipsle", upx_supported=True, goenv={}, platforms=["linux"]))
+add_arch(Arch(name="mipsle-softfloat", docker_name="", goarch="mipsle", upx_supported=True, goenv={"GOMIPS": "softfloat"}, platforms=["linux"]))
+add_arch(Arch(name="mips64", docker_name="", goarch="mips64", upx_supported=False, goenv={}, platforms=["linux"]))
+add_arch(Arch(name="mips64le", docker_name="", goarch="mips64le", upx_supported=False, goenv={}, platforms=["linux"]))
 
 
 def try_resolve_arch(name: str) -> Optional[str]:
@@ -249,23 +246,11 @@ class LipoTask(BuildTask):
                 raise ValueError("LipoTask is only for Darwin targets")
             if gobin.proj != self.proj:
                 raise ValueError("LipoTask can only build one project at a time!")
-            if not gobin.arch.docker_name:
-                raise ValueError("Only supply archs to LipoTask that have a valid Darwin arch associated!")
     
     def _run(self) -> None:
-        args = [must_find_executable("lipo", ["lipo", "llvm-lipo"]), "-create"]
+        from slimfat import make_fat
+        make_fat(self.outputs[0], [gobin.outputs[0] for gobin in self.gobins])
 
-        for gobin in self.gobins:
-            darwin_name = gobin.arch.darwin_name
-            if not darwin_name:
-                continue
-            args.append("-arch")
-            args.append(darwin_name)
-            args.append(gobin.outputs[0])
-
-        args.append("-output")
-        args.append(self.outputs[0])
-        check_call(args)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -371,7 +356,7 @@ def main():
                 tasks.append(DockerBuildTask([task for task in platform_tasks if task.arch.docker_name], tag_latest=flags.docker_tag_latest, push=flags.docker_push))
 
             if platform == "darwin" and flags.lipo:
-                tasks.append(LipoTask([task for task in platform_tasks if task.arch.darwin_name]))
+                tasks.append(LipoTask([task for task in platform_tasks if task.goos == "darwin"]))
 
     print("Executing build tasks...")
     def pick_task() -> Optional[BuildTask]:

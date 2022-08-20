@@ -3,7 +3,6 @@ package iface
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"path/filepath"
@@ -11,11 +10,6 @@ import (
 	"github.com/Doridian/water"
 	"github.com/Doridian/wsvpn/shared"
 )
-
-func (w *WaterInterfaceWrapper) SetMTU(mtu int) error {
-	log.Printf("ForceMTU(): %v", w.Interface.ForceMTU(mtu))
-	return shared.ExecCmd("netsh", "interface", "ipv4", "set", "subinterface", w.Interface.Name(), fmt.Sprintf("mtu=%d", mtu))
-}
 
 func (w *WaterInterfaceWrapper) Configure(ipLocal net.IP, ipNet *shared.VPNNet, ipPeer net.IP) error {
 	if ipLocal == nil {

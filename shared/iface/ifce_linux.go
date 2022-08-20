@@ -1,16 +1,11 @@
 package iface
 
 import (
-	"fmt"
 	"net"
 
 	"github.com/Doridian/water"
 	"github.com/Doridian/wsvpn/shared"
 )
-
-func (w *WaterInterfaceWrapper) SetMTU(mtu int) error {
-	return shared.ExecCmd("ip", "link", "set", "dev", w.Interface.Name(), "mtu", fmt.Sprintf("%d", mtu))
-}
 
 func (w *WaterInterfaceWrapper) Configure(ipLocal net.IP, ipNet *shared.VPNNet, ipPeer net.IP) error {
 	err := shared.ExecCmd("ip", "link", "set", "dev", w.Interface.Name(), "up")

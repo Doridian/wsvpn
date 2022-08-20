@@ -3,7 +3,7 @@ module github.com/Doridian/wsvpn
 go 1.19
 
 require (
-	github.com/Doridian/water v0.0.0-20220817150712-73de66e386b6
+	github.com/Doridian/water v0.0.0-20220820003326-d06ad7a0274b
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
@@ -14,6 +14,7 @@ require (
 )
 
 require (
+	github.com/google/gopacket v1.1.19 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20211104114900-415007cec224 // indirect
 	golang.zx2c4.com/wireguard v0.0.0-20220703234212-c31a7b1ab478 // indirect
 )
@@ -34,7 +35,7 @@ require (
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/net v0.0.0-20220812174116-3211cb980234 // indirect
-	golang.org/x/sys v0.0.0-20220817070843-5a390386f1f2 // indirect
+	golang.org/x/sys v0.0.0-20220818161305-2296e01440c6 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect

@@ -1,10 +1,6 @@
-from fcntl import ioctl
-from platform import system
-from socket import AF_INET, SOCK_DGRAM, socket
-from struct import pack
-from subprocess import check_call
 from build import get_local_platform
 from tests.bins import GoBin
+from getmac import get_mac_address
 
 import scapy.layers.all as scapy_layers
 import scapy.plist as scapy_plist
@@ -30,15 +26,6 @@ def packet_equal(self, other):
             return False
 
     return packet_equal(self.payload, other.payload)
-
-
-# https://stackoverflow.com/a/4789267
-def get_mac(ifname):
-    print(ifname)
-    check_call(["ifconfig", ifname])
-    s = socket(AF_INET, SOCK_DGRAM)
-    info = ioctl(s.fileno(), 0x8927,  pack('256s', bytes(ifname, 'utf-8')[:15]))
-    return ':'.join('%02x' % b for b in info[18:24])
 
 
 class PacketTest:
@@ -98,8 +85,8 @@ class PacketTest:
 
                 eth_layer = pkt.getlayer(scapy_layers.Ether)
                 if eth_layer:
-                    eth_layer.src = get_mac(src_iface)
-                    eth_layer.dst = get_mac(dst_iface)
+                    eth_layer.src = get_mac_address(interface=src_iface)
+                    eth_layer.dst = get_mac_address(interface=dst_iface)
 
                 res: scapy_plist.PacketList = scapy_sendrecv.sniff(iface=dst_iface, started_callback=sendpkt, filter="ip" if get_local_platform() == "linux" else None, count=1, store=1, timeout=2)
                 assert len(res.res) > 0

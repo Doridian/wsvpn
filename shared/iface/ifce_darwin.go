@@ -1,16 +1,11 @@
 package iface
 
 import (
-	"fmt"
 	"net"
 
 	"github.com/Doridian/water"
 	"github.com/Doridian/wsvpn/shared"
 )
-
-func (w *WaterInterfaceWrapper) SetMTU(mtu int) error {
-	return shared.ExecCmd("ifconfig", w.Interface.Name(), "mtu", fmt.Sprintf("%d", mtu))
-}
 
 func (w *WaterInterfaceWrapper) Configure(ipLocal net.IP, ipNet *shared.VPNNet, ipPeer net.IP) error {
 	if ipLocal == nil {
@@ -19,7 +14,12 @@ func (w *WaterInterfaceWrapper) Configure(ipLocal net.IP, ipNet *shared.VPNNet, 
 
 	ipNetSize, ipLocalCidr := w.splitSubnet(ipNet, ipLocal)
 
-	err := shared.ExecCmd("ifconfig", w.Interface.Name(), ipLocalCidr, ipPeer.String(), "up")
+	var err error
+	if w.Interface.IsTUN() {
+		err = shared.ExecCmd("ifconfig", w.Interface.Name(), ipLocalCidr, ipPeer.String(), "up")
+	} else {
+		err = shared.ExecCmd("ifconfig", w.Interface.Name(), ipLocalCidr, "up")
+	}
 	if err != nil {
 		return err
 	}

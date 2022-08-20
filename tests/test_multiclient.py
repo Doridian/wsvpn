@@ -17,7 +17,7 @@ def runtest(svbin: GoBin, clbins: list, one_iface: bool, mode: str) -> None:
     if mode == "TAP" and not svbin.is_tap_supported():
         pytest.skip("TAP not supported on this platform")
 
-    if one_iface and not svbin.is_one_interface_per_connection_supported():
+    if one_iface and not svbin.is_one_interface_per_connection_supported(mode):
         pytest.skip("One-Interface-Per-Connection not supported on this platform")
 
 

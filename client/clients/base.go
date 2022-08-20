@@ -145,10 +145,6 @@ func (c *Client) closeInternal() {
 		c.sentUpEvent = false
 	}
 
-	if c.iface != nil {
-		c.iface.Close()
-		c.iface = nil
-	}
 	if c.socket != nil {
 		c.socket.Close()
 		c.socket = nil
@@ -156,6 +152,10 @@ func (c *Client) closeInternal() {
 	if c.adapter != nil {
 		c.adapter.Close()
 		c.adapter = nil
+	}
+	if c.iface != nil {
+		c.iface.Close()
+		c.iface = nil
 	}
 }
 

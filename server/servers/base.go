@@ -121,12 +121,7 @@ func (s *Server) Serve() error {
 
 	<-s.serveErrorChannel
 
-	s.closerLock.Lock()
-	for _, closer := range s.closers {
-		closer.Close()
-	}
-	s.closers = make([]io.Closer, 0)
-	s.closerLock.Unlock()
+	s.closeAll()
 
 	if s.serveError == errNone {
 		return nil
@@ -134,7 +129,18 @@ func (s *Server) Serve() error {
 	return s.serveError
 }
 
+func (s *Server) closeAll() {
+	s.closerLock.Lock()
+	defer s.closerLock.Unlock()
+
+	for _, closer := range s.closers {
+		closer.Close()
+	}
+	s.closers = make([]io.Closer, 0)
+}
+
 func (s *Server) Close() {
+	s.closeAll()
 	s.setServeError(errNone)
 }
 

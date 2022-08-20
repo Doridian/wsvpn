@@ -93,7 +93,10 @@ func (c *Client) registerCommandHandlers() {
 			return err
 		}
 
-		c.SetMTU(parameters.MTU)
+		err = c.SetMTU(parameters.MTU)
+		if err != nil {
+			return err
+		}
 
 		err = c.socket.SetInterface(c.iface)
 		if err != nil {

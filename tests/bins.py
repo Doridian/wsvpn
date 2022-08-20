@@ -79,11 +79,11 @@ class GoBin(Thread):
 
 
     def is_tap_supported(self) -> bool:
-        return get_local_platform() != "darwin"
+        return True
 
 
-    def is_one_interface_per_connection_supported(self) -> bool:
-        return get_local_platform() != "windows"
+    def is_one_interface_per_connection_supported(self, mode: str) -> bool:
+        return get_local_platform() != "windows" or mode == "TUN"
 
 
     def connect_to(self, server: GoBin, user: str = "", password: str = "", protocol: str = "AUTO") -> None:
@@ -152,7 +152,7 @@ class GoBin(Thread):
             self.proc.send_signal(SIGTERM)
 
         if self.is_alive():
-            self.join(timeout=1)
+            self.join(timeout=5)
             if self.proc is not None:
                 self.proc.kill()
             self.join()

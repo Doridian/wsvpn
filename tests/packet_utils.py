@@ -2,6 +2,7 @@ from fcntl import ioctl
 from platform import system
 from socket import AF_INET, SOCK_DGRAM, socket
 from struct import pack
+from subprocess import check_call
 from build import get_local_platform
 from tests.bins import GoBin
 
@@ -33,6 +34,8 @@ def packet_equal(self, other):
 
 # https://stackoverflow.com/a/4789267
 def get_mac(ifname):
+    print(ifname)
+    check_call(["ifconfig", ifname])
     s = socket(AF_INET, SOCK_DGRAM)
     info = ioctl(s.fileno(), 0x8927,  pack('256s', bytes(ifname, 'utf-8')[:15]))
     return ':'.join('%02x' % b for b in info[18:24])

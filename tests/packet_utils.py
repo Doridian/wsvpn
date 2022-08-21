@@ -1,9 +1,8 @@
+from dataclasses import dataclass
 from build import get_local_platform
 from tests.bins import GoBin
-from getmac import get_mac_address
 
 import scapy.layers.all as scapy_layers
-import scapy.plist as scapy_plist
 import scapy.packet as scapy_packet
 import scapy.sendrecv as scapy_sendrecv
 
@@ -27,6 +26,56 @@ def packet_equal(self, other):
 
     return packet_equal(self.payload, other.payload)
 
+@dataclass
+class PktTuple:
+    iface: str
+    ip: str
+    mac: str
+
+
+class PacketTestRun:
+    def __init__(self, pkts: list, src: PktTuple, dst: PktTuple) -> None:
+        self.src = src
+        self.dst = dst
+
+        self.pkts = []
+
+        for pkt_in in pkts:
+            pkt = pkt_in.copy()
+
+            ip_layer = pkt.getlayer(scapy_layers.IP)
+            ip_layer.src = self.src.ip
+            ip_layer.dst = self.dst.ip
+
+            eth_layer = pkt.getlayer(scapy_layers.Ether)
+            if eth_layer:
+                eth_layer.src = self.src.mac
+                eth_layer.dst = self.dst.mac
+
+            self.pkts.append(pkt)
+
+        self._expected_packets = None
+
+
+    def _send_packets(self):
+        for pkt in self.pkts:
+            scapy_sendrecv.sendp(pkt, iface=self.src.iface, count=1, return_packets=False)
+
+
+    def _handle_packet(self, pkt):
+        for i, expected_pkt in enumerate(self._expected_packets):
+            if packet_equal(pkt, expected_pkt):
+                self._expected_packets.pop(i)
+                break
+
+        return len(self._expected_packets) == 0
+
+
+    def run(self):
+        self._expected_packets = self.pkts[:]
+        scapy_sendrecv.sniff(iface=self.dst.iface, started_callback=self._send_packets, stop_filter=self._handle_packet, count=0, store=False, timeout=2)
+        assert len(self._expected_packets) == 0
+
 
 class PacketTest:
     def __init__(self, svbin: GoBin, clbin: GoBin) -> None:
@@ -40,7 +89,7 @@ class PacketTest:
     def pkt_add(self, pkt):
         if self.ethernet:
             pkt = scapy_layers.Ether()/pkt
-        self.pkts.append((pkt, pkt))
+        self.pkts.append(pkt)
 
 
     def simple_pkt(self, pktlen: int):
@@ -69,57 +118,21 @@ class PacketTest:
         self.svbin.assert_ready_ok()
         self.clbin.assert_ready_ok()
 
-        for pkt, raw_pkt in self.pkts:
-            src_iface = None
-            dst_iface = None
-            src_ip = None
-            dst_ip = None
+        server_iface = self.svbin.get_interface_for(self.clbin)
+        client_iface = self.clbin.get_interface_for()
+        server_ip = self.svbin.get_ip()
+        client_ip = self.clbin.get_ip()
+        server_mac = self.svbin.get_mac_for(self.clbin)
+        client_mac = self.clbin.get_mac_for()
 
-            def sendpkt():
-                scapy_sendrecv.sendp(raw_pkt, iface=src_iface, count=1, return_packets=True)
+        server_tuple = PktTuple(iface=server_iface, ip=server_ip, mac=server_mac)
+        client_tuple = PktTuple(iface=client_iface, ip=client_ip, mac=client_mac)
 
-            def dosniff() -> scapy_plist.PacketList:
-                ip_layer = pkt.getlayer(scapy_layers.IP)
-                ip_layer.src = src_ip
-                ip_layer.dst = dst_ip
+        test = PacketTestRun(self.pkts, src=client_tuple, dst=server_tuple)
+        test.run()
 
-                eth_layer = pkt.getlayer(scapy_layers.Ether)
-                if eth_layer:
-                    eth_layer.src = get_mac_address(interface=src_iface)
-                    eth_layer.dst = get_mac_address(interface=dst_iface)
-
-                res: scapy_plist.PacketList = scapy_sendrecv.sniff(iface=dst_iface, started_callback=sendpkt, filter="ip" if get_local_platform() == "linux" else None, count=1, store=1, timeout=2)
-                assert len(res.res) > 0
-
-                actual_pkt = res.res[0]
-
-                try:
-                    assert packet_equal(pkt, actual_pkt)
-                except Exception:
-                    print("Expected packet:")
-                    pkt.show()
-
-                    print("Actual packet:")
-                    actual_pkt.show()
-
-                    raise
-
-            server_iface = self.svbin.get_interface_for(self.clbin)
-            client_iface = self.clbin.get_interface_for()
-            server_ip = self.svbin.get_ip()
-            client_ip = self.clbin.get_ip()
-
-            src_iface = client_iface
-            dst_iface = server_iface
-            src_ip = client_ip
-            dst_ip = server_ip
-            dosniff()
-
-            src_iface = server_iface
-            dst_iface = client_iface
-            src_ip = server_ip
-            dst_ip = client_ip
-            dosniff()
+        test = PacketTestRun(self.pkts, src=server_tuple, dst=client_tuple)
+        test.run()
 
 
 def basic_traffic_test(svbin: GoBin, clbin: GoBin, minimal: bool = False) -> None:

@@ -58,8 +58,7 @@ class PacketTestRun:
 
 
     def _send_packets(self):
-        for pkt in self.pkts:
-            scapy_sendrecv.sendp(pkt, iface=self.src.iface, count=1, return_packets=False)
+        scapy_sendrecv.sendp(self.pkts, iface=self.src.iface, count=1, return_packets=False)
 
 
     def _handle_packet(self, pkt):

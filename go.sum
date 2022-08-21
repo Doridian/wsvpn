@@ -8,8 +8,8 @@ dmitri.shuralyov.com/service/change v0.0.0-20181023043359-a85b471d5412/go.mod h1
 dmitri.shuralyov.com/state v0.0.0-20180228185332-28bcc343414c/go.mod h1:0PRwlb0D6DFvNNtx+9ybjezNCa8XF0xaYcETyp6rHWU=
 git.apache.org/thrift.git v0.0.0-20180902110319-2566ecd5d999/go.mod h1:fPE2ZNJGynbRyZ4dJvy6G277gSllfV2HJqblrnkyeyg=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/Doridian/water v0.0.0-20220820223058-4cca8c414a48 h1:fF3fmTi9uyn5iM8TFd3QwE0hQGld0aEfvt2w4QCOj+0=
-github.com/Doridian/water v0.0.0-20220820223058-4cca8c414a48/go.mod h1:KzZfp+7DKnyZk73a7H/yDGtosy5ardMndDvikybvgu4=
+github.com/Doridian/water v0.0.0-20220821040152-6a92ca1924d3 h1:BuKZi7gX+hYiUAjdRf3dHTcD+amuVnlhz1iya1PO3Io=
+github.com/Doridian/water v0.0.0-20220821040152-6a92ca1924d3/go.mod h1:KzZfp+7DKnyZk73a7H/yDGtosy5ardMndDvikybvgu4=
 github.com/GehirnInc/crypt v0.0.0-20200316065508-bb7000b8a962 h1:KeNholpO2xKjgaaSyd+DyQRrsQjhbSeS7qe4nEw8aQw=
 github.com/GehirnInc/crypt v0.0.0-20200316065508-bb7000b8a962/go.mod h1:kC29dT1vFpj7py2OvG1khBdQpo3kInWP+6QipLbdngo=
 github.com/anmitsu/go-shlex v0.0.0-20161002113705-648efa622239/go.mod h1:2FmKhYUyUczH0OGQWaF5ceTx0UBShxjsH6f8oGKYe2c=

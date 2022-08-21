@@ -12,6 +12,7 @@ from time import sleep
 from typing import Any, Optional
 from yaml import dump as yaml_dump, safe_load as yaml_load
 from ipaddress import IPv4Address
+from getmac import get_mac_address
 
 from build import get_local_arch, get_local_platform
 from tests.tls_utils import TLSCertSet
@@ -72,6 +73,7 @@ class GoBin(Thread):
         
         self.iface_names = {}
         self.auth_names = {}
+        self.iface_macs = {}
         self.startup_timeout = None
 
         self.http_auth_enabled = False
@@ -211,6 +213,15 @@ class GoBin(Thread):
 
         client_ip = clbin.get_ip()
         return self.iface_names[client_ip]
+
+
+    def get_mac_for(self, clbin: GoBin = None) -> str:
+        iface = self.get_interface_for(clbin=clbin)
+        if not iface:
+            return None
+        if iface not in self.iface_macs:
+            self.iface_macs[iface] = get_mac_address(interface=iface)
+        return self.iface_macs[iface]
 
 
     def _notify_ready(self, ok: bool) -> None:

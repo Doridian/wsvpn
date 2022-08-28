@@ -1,4 +1,5 @@
 from email.generator import Generator
+from build import get_local_platform
 from tests.bins import GoBin, new_clbin
 from tests.packet_utils import basic_traffic_test
 import pytest
@@ -19,6 +20,12 @@ def runtest(svbin: GoBin, clbins: list, one_iface: bool, mode: str) -> None:
 
     if one_iface and not svbin.is_one_interface_per_connection_supported(mode):
         pytest.skip("One-Interface-Per-Connection not supported on this platform")
+
+
+    if get_local_platform() == "windows":
+        svbin.cfg["interface"]["name"] = "%s0" % mode
+        for i, clbin in enumerate(clbins):
+            clbin.cfg["interface"]["name"] = "%s%d" % (mode, (i + 1))
 
 
     try:

@@ -40,7 +40,7 @@ func (w *WaterInterfaceWrapper) GetNetInterface() (*net.Interface, error) {
 }
 
 func (w *WaterInterfaceWrapper) splitSubnet(ipNet *shared.VPNNet, ipLocal net.IP) (ipNetSize int, ipLocalCidr string) {
-	ipNetSize = 32
+	ipNetSize = len(ipLocal) * 8
 	if ipNet != nil {
 		ipNetSize = ipNet.GetSize()
 	}
@@ -65,13 +65,18 @@ func (w *WaterInterfaceWrapper) addSubnetRoute(ipNetSize int, ipNet *shared.VPNN
 }
 
 func (w *WaterInterfaceWrapper) addPeerRoute(ipNetSize int, ipPeer net.IP) error {
-	if ipNetSize != 32 {
+	ipPeerV4 := ipPeer.To4()
+	if ipPeerV4 != nil {
+		ipPeer = ipPeerV4
+	}
+
+	if ipNetSize != len(ipPeer)*8 {
 		return nil
 	}
 
 	err := w.AddInterfaceRoute(&net.IPNet{
 		IP:   ipPeer,
-		Mask: net.CIDRMask(32, 32),
+		Mask: net.CIDRMask(ipNetSize, ipNetSize),
 	})
 
 	if err != nil {

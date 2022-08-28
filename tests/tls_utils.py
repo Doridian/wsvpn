@@ -14,7 +14,7 @@ class TLSCertSet:
 
 
 def tls_cert_set(cn: str, conf: str) -> TLSCertSet:
-    args = ["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", "key.pem", "-out", "cert.pem", "-sha256", "-days", "365", "-subj", f"/CN={cn}/"]
+    args = ["openssl", "req", "-x509", "-newkey", "rsa:1024", "-nodes", "-keyout", "key.pem", "-out", "cert.pem", "-sha256", "-days", "365", "-subj", f"/CN={cn}/"]
     if conf:
         args.append("-config")
         args.append(conf)

@@ -32,11 +32,13 @@ interface:
 
 
 scripts:
-  # These scripts get run as "script operation subnet interface user"
+  # These scripts get run as "args... operation subnet interface user"
+  # Pass in an array, first argument is the executable, further arguments
+  # are used before WSVPN provided arguments
   # User will not be present if no authentication is enabled
   # Example: "./handler.sh" might be called like "./handler.sh up 192.168.3.2/24 tun0 user"
-  up: ""
-  down: ""
+  up: []
+  down: []
 
 server:
   listen: 127.0.0.1:9000

@@ -9,8 +9,8 @@ ENV TARGETVARIANT ${TARGETVARIANT}
 USER root
 
 RUN apt update && \
-    apt -y --no-install-recommends install python3 python3-yaml python3-pytest iproute2 openssl python3-scapy python3-requests python3-pip tcpdump && \
-    pip3 install pytest-github-actions-annotate-failures getmac
+    apt -y --no-install-recommends install python3 python3-pip iproute2 openssl tcpdump && \
+    pip3 install wheel pytest-github-actions-annotate-failures getmac scapy requests pytest pyyaml
 
 VOLUME "/mnt"
 WORKDIR /mnt

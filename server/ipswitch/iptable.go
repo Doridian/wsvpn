@@ -23,10 +23,10 @@ func (g *IPSwitch) broadcastDataMessage(data []byte, skip *sockets.Socket) {
 }
 
 func (g *IPSwitch) findSocketByIP(ip net.IP) *sockets.Socket {
-	ip4 := ipToIPAddr(ip)
+	ipAddr := ipToIPAddr(ip)
 
 	g.ipLock.RLock()
 	defer g.ipLock.RUnlock()
 
-	return g.ipTable[ip4]
+	return g.ipTable[ipAddr]
 }

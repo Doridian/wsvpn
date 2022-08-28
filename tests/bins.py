@@ -228,7 +228,7 @@ class GoBin(Thread):
         if not iface:
             return None
         if iface not in self.iface_macs:
-            self.iface_macs[iface] = get_mac_address(interface=iface)
+            self.iface_macs[iface] = get_mac_address(interface=iface, network_request=False)
         return self.iface_macs[iface]
 
 

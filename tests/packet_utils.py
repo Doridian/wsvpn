@@ -136,8 +136,11 @@ class PacketTest:
         client_iface = self.clbin.get_interface_for()
         server_ip = self.svbin.get_ip()
         client_ip = self.clbin.get_ip()
-        server_mac = self.svbin.get_mac_for(self.clbin)
-        client_mac = self.clbin.get_mac_for()
+        server_mac = None
+        client_mac = None
+        if self.ethernet:
+            server_mac = self.svbin.get_mac_for(self.clbin)
+            client_mac = self.clbin.get_mac_for()
 
         server_tuple = PktTuple(iface=server_iface, ip=server_ip, mac=server_mac)
         client_tuple = PktTuple(iface=client_iface, ip=client_ip, mac=client_mac)

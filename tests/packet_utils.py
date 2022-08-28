@@ -1,15 +1,22 @@
 from dataclasses import dataclass
+from threading import Thread
+
 from build import get_local_platform
 from tests.bins import GoBin
 
 import scapy.layers.all as scapy_layers
 import scapy.packet as scapy_packet
 import scapy.sendrecv as scapy_sendrecv
+from scapy.interfaces import ifaces as scapy_ifaces
+
+
+def is_ignored_payload(self):
+    return isinstance(self, scapy_packet.NoPayload) or isinstance(self, scapy_packet.Padding)
 
 # This is essentially the __eq__ function from Scapy, except it ignores values that are None in either item
 def packet_equal(self, other):
-    if isinstance(self, scapy_packet.NoPayload):
-        return self == other
+    if is_ignored_payload(self):
+        return is_ignored_payload(other)
 
     if not isinstance(other, self.__class__):
         return False
@@ -58,13 +65,15 @@ class PacketTestRun:
 
 
     def _send_packets(self):
-        scapy_sendrecv.sendp(self.pkts, iface=self.src.iface, count=1, return_packets=False)
+        scapy_sendrecv.sendp(self.pkts, iface=self.src.iface, realtime=False, count=1, return_packets=False)
 
 
     def _handle_packet(self, pkt):
+        was_expected = False
         for i, expected_pkt in enumerate(self._expected_packets):
             if packet_equal(pkt, expected_pkt):
                 self._expected_packets.pop(i)
+                was_expected = True
                 break
 
         return len(self._expected_packets) == 0
@@ -72,7 +81,11 @@ class PacketTestRun:
 
     def run(self):
         self._expected_packets = self.pkts[:]
-        scapy_sendrecv.sniff(iface=self.dst.iface, started_callback=self._send_packets, stop_filter=self._handle_packet, count=0, store=False, timeout=2)
+
+        t = Thread(target=self._send_packets)
+        scapy_sendrecv.sniff(iface=self.dst.iface, started_callback=t.start, stop_filter=self._handle_packet, count=0, store=False, timeout=2)
+        t.join()
+
         assert len(self._expected_packets) == 0
 
 
@@ -105,10 +118,10 @@ class PacketTest:
 
 
     def add_defaults(self, minimal: bool):
-        self.simple_pkt(10)
+        self.simple_pkt(1)
         if minimal:
             return
-        self.simple_pkt(0)
+        self.simple_pkt(10)
         self.simple_pkt(1000)
         self.simple_pkt(1300)
 
@@ -116,6 +129,8 @@ class PacketTest:
     def run(self):
         self.svbin.assert_ready_ok()
         self.clbin.assert_ready_ok()
+
+        scapy_ifaces.reload()
 
         server_iface = self.svbin.get_interface_for(self.clbin)
         client_iface = self.clbin.get_interface_for()

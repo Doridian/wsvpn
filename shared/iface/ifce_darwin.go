@@ -14,11 +14,17 @@ func (w *WaterInterfaceWrapper) Configure(ipLocal net.IP, ipNet *shared.VPNNet, 
 
 	ipNetSize, ipLocalCidr := w.splitSubnet(ipNet, ipLocal)
 
+	isIPv4 := ipLocal.To4()
+	inetType := "inet"
+	if isIPv4 == nil {
+		inetType = "inet6"
+	}
+
 	var err error
 	if w.Interface.IsTUN() {
-		err = shared.ExecCmd("ifconfig", w.Interface.Name(), ipLocalCidr, ipPeer.String(), "up")
+		err = shared.ExecCmd("ifconfig", w.Interface.Name(), inetType, ipLocalCidr, "up")
 	} else {
-		err = shared.ExecCmd("ifconfig", w.Interface.Name(), ipLocalCidr, "up")
+		err = shared.ExecCmd("ifconfig", w.Interface.Name(), inetType, ipLocalCidr, ipPeer.String(), "up")
 	}
 	if err != nil {
 		return err

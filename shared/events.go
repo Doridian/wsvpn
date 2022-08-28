@@ -10,17 +10,17 @@ const (
 )
 
 type EventConfigHolder struct {
-	UpScript   string
-	DownScript string
+	UpScript   []string
+	DownScript []string
 }
 
 type EventConfig struct {
-	Up   string `yaml:"up"`
-	Down string `yaml:"down"`
+	Up   []string `yaml:"up"`
+	Down []string `yaml:"down"`
 }
 
 func (c *EventConfigHolder) RunEventScript(op string, remoteNet string, iface string, args ...string) error {
-	script := ""
+	var script []string
 
 	switch op {
 	case EventUp:
@@ -31,13 +31,17 @@ func (c *EventConfigHolder) RunEventScript(op string, remoteNet string, iface st
 		return fmt.Errorf("invalid event %s", op)
 	}
 
-	if script == "" {
+	if len(script) == 0 {
 		return nil
 	}
 
-	all_args := []string{op, remoteNet, iface}
+	all_args := []string{}
+	if len(script) > 1 {
+		all_args = append(all_args, script[1:]...)
+	}
+	all_args = append(all_args, op, remoteNet, iface)
 	all_args = append(all_args, args...)
-	return ExecCmd(script, all_args...)
+	return ExecCmd(script[0], all_args...)
 }
 
 func (c *EventConfigHolder) LoadEventConfig(config *EventConfig) {

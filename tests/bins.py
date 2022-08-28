@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from copy import deepcopy
-from os.path import join, dirname
+from os.path import join, dirname, realpath
 from os import remove
 from signal import SIGTERM
 from subprocess import Popen, check_output, DEVNULL, PIPE
@@ -13,6 +13,7 @@ from typing import Any, Optional
 from yaml import dump as yaml_dump, safe_load as yaml_load
 from ipaddress import IPv4Address
 from getmac import get_mac_address
+from sys import executable
 
 from build import get_local_arch, get_local_platform
 from tests.tls_utils import TLSCertSet
@@ -20,19 +21,21 @@ from tests.tls_utils import TLSCertSet
 LOCAL_ARCH = get_local_arch()
 LOCAL_PLATFORM = get_local_platform()
 
-BIN_DIR = join(dirname(__file__), "../dist/")
+BIN_DIR = join(dirname(__file__), "..", "dist")
 
 SCRIPT_HDL = join(dirname(__file__), "script_hdl.py")
+
+SUBNET_ID = 0
 
 _default_configs: map = {}
 def _get_default_config(binf: str) -> Any:
     if binf in _default_configs:
         return _default_configs[binf]
-    cfg_str = check_output([binf, "--print-default-config"])
+    cfg_str = check_output(args=[binf, "--print-default-config"], executable=binf)
     cfg = yaml_load(cfg_str)
     
-    cfg["scripts"]["down"] = SCRIPT_HDL
-    cfg["scripts"]["up"] = SCRIPT_HDL
+    cfg["scripts"]["down"] = [executable, SCRIPT_HDL]
+    cfg["scripts"]["up"] = [executable, SCRIPT_HDL]
 
     _default_configs[binf] = cfg
     return cfg
@@ -49,7 +52,7 @@ class GoBin(Thread):
         super().__init__(daemon=True)
 
         self.proj = proj
-        self.bin = join(BIN_DIR, f"{proj}-{LOCAL_PLATFORM}-{LOCAL_ARCH}")
+        self.bin = realpath(join(BIN_DIR, f"{proj}-{LOCAL_PLATFORM}-{LOCAL_ARCH}{self.executable_suffix()}"))
         self.cfg = deepcopy(_get_default_config(self.bin))
 
         self.is_server = proj == "server"
@@ -60,8 +63,11 @@ class GoBin(Thread):
             port = LAST_PORT
             LAST_PORT += 1
 
-            tmp_ip = split_ip(self.cfg["tunnel"]["subnet"])
+            subnet = "10.%d.%d.0/24" % ((port & 0xFF), ((port >> 8)) & 0xFF)
+            self.cfg["tunnel"]["subnet"] = subnet
+            tmp_ip = split_ip(subnet)
             self.ip = (IPv4Address(tmp_ip) + 1).exploded
+
             self.cfg["server"]["listen"] = f"127.0.0.1:{port}"
         else:
             self.ip = None
@@ -85,7 +91,13 @@ class GoBin(Thread):
 
 
     def is_one_interface_per_connection_supported(self, mode: str) -> bool:
-        return get_local_platform() != "windows" or mode == "TUN"
+        return get_local_platform() != "windows"
+
+
+    def executable_suffix(self) -> str:
+        if get_local_platform() == "windows":
+            return ".exe"
+        return ""
 
 
     def connect_to(self, server: GoBin, user: str = "", password: str = "", protocol: str = "AUTO") -> None:
@@ -142,7 +154,7 @@ class GoBin(Thread):
     
     def start(self) -> None:
         def startup_wait():
-            sleep(5)
+            sleep(10)
             self._notify_ready(False)
         self.startup_timeout = Thread(daemon=True, target=startup_wait)
         super().start()
@@ -174,6 +186,7 @@ class GoBin(Thread):
                 if self.is_client:
                     self.iface_names["server"] = lspl[2]
                     self.ip = ip
+                    print("Setting client IP to", ip)
                     self._notify_ready(True)
 
                 if self.is_server:
@@ -247,7 +260,7 @@ class GoBin(Thread):
             cfgfile = f.name
 
         try:
-            self.proc = Popen([self.bin, "-config", cfgfile], stdin=DEVNULL, stderr=PIPE, text=True)
+            self.proc = Popen(args=[self.bin, "-config", cfgfile], stdin=DEVNULL, stderr=PIPE, text=True, executable=self.bin)
 
             while self.proc.returncode is None:
                 res = self.proc.stderr.readline()

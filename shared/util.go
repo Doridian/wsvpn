@@ -35,8 +35,11 @@ func ExecCmdGetStdOut(cmd string, arg ...string) (string, error) {
 }
 
 func IPNetGetNetMask(ipNet *net.IPNet) string {
-	mask := ipNet.Mask
-	return fmt.Sprintf("%d.%d.%d.%d", mask[0], mask[1], mask[2], mask[3])
+	return IPMaskGetNetMask(ipNet.Mask)
+}
+
+func IPMaskGetNetMask(mask net.IPMask) string {
+	return net.IP(mask).String()
 }
 
 func BoolToString(val bool, trueval string, falseval string) string {
@@ -63,4 +66,3 @@ func MakeSimpleCond() *sync.Cond {
 }
 
 var DefaultMac = net.HardwareAddr{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
-var DefaultIPv4 = net.IPv4(255, 255, 255, 255)

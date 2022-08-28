@@ -16,12 +16,21 @@ func (w *WaterInterfaceWrapper) Configure(ipLocal net.IP, ipNet *shared.VPNNet, 
 		return shared.ExecCmd("netsh", "interface", "ip", "set", "address", "source=dhcp", fmt.Sprintf("name=%s", w.Interface.Name()))
 	}
 
+	ipLocalV4 := ipLocal.To4()
+	if ipLocalV4 != nil {
+		ipLocal = ipLocalV4
+	}
 	ipNetSize, _ := w.splitSubnet(ipNet, ipLocal)
-	ipMask := net.CIDRMask(ipNetSize, 32)
-	ipMaskStr := fmt.Sprintf("%d.%d.%d.%d", ipMask[0], ipMask[1], ipMask[2], ipMask[3])
 
-	err := shared.ExecCmd("netsh", "interface", "ip", "set", "address", "source=static", "gateway=none", fmt.Sprintf("addr=%s", ipLocal), fmt.Sprintf("name=%s", w.Interface.Name()), fmt.Sprintf("mask=%s", ipMaskStr))
+	var err error
+	if ipLocalV4 != nil {
+		ipMask := net.CIDRMask(ipNetSize, len(ipLocal)*8)
+		ipMaskStr := shared.IPMaskGetNetMask(ipMask)
 
+		err = shared.ExecCmd("netsh", "interface", "ipv4", "set", "address", "store=active", "source=static", "gateway=none", fmt.Sprintf("addr=%s", ipLocal), fmt.Sprintf("name=%s", w.Interface.Name()), fmt.Sprintf("mask=%s", ipMaskStr))
+	} else {
+		err = shared.ExecCmd("netsh", "interface", "ipv6", "set", "address", "store=active", fmt.Sprintf("addr=%s", ipLocal), fmt.Sprintf("interface=%s", w.Interface.Name()))
+	}
 	if err != nil {
 		return err
 	}
@@ -30,7 +39,12 @@ func (w *WaterInterfaceWrapper) Configure(ipLocal net.IP, ipNet *shared.VPNNet, 
 }
 
 func (w *WaterInterfaceWrapper) AddInterfaceRoute(ipNet *net.IPNet) error {
-	return w.AddIPRoute(ipNet, net.IPv4(0, 0, 0, 0))
+	ipNetV4 := ipNet.IP.To4()
+	if ipNetV4 != nil {
+		return w.AddIPRoute(ipNet, net.IPv4zero)
+	} else {
+		return w.AddIPRoute(ipNet, net.IPv6zero)
+	}
 }
 
 func (w *WaterInterfaceWrapper) AddIPRoute(ipNet *net.IPNet, gateway net.IP) error {
@@ -53,8 +67,8 @@ func GetPlatformSpecifics(config *water.Config, ifaceConfig *InterfaceConfig) er
 }
 
 func VerifyPlatformFlags(ifaceConfig *InterfaceConfig, mode shared.VPNMode) error {
-	if !ifaceConfig.OneInterfacePerConnection && mode == shared.VPN_MODE_TAP {
-		return errors.New("Windows can not use one-interface-per-connection with TAP")
+	if ifaceConfig.OneInterfacePerConnection {
+		return errors.New("Windows can not support one-interface-per-connection")
 	}
 
 	return nil

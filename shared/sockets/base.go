@@ -57,7 +57,8 @@ type Socket struct {
 
 func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *iface.WaterInterfaceWrapper, ifaceManaged bool) *Socket {
 	return &Socket{
-		AssignedIP: shared.DefaultIPv4,
+		AssignedIP: net.IPv6unspecified,
+		mac:        shared.DefaultMac,
 
 		adapter:               adapter,
 		iface:                 iface,
@@ -67,7 +68,6 @@ func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *iface
 		handlers:              make(map[commands.CommandName]CommandHandler),
 		closechan:             make(chan bool),
 		closechanopen:         true,
-		mac:                   shared.DefaultMac,
 		remoteProtocolVersion: UndeterminedProtocolVersion,
 		packetBufferSize:      2000,
 		log:                   logger,

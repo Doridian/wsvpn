@@ -13,10 +13,12 @@ interface:
   component-id: root\tap0901 # Windows only. Defaults: root\tap0901 or tap0901
 
 scripts:
-  # These scripts get run as "script operation subnet interface"
+  # These scripts get run as "args... operation subnet interface"
+  # Pass in an array, first argument is the executable, further arguments
+  # are used before WSVPN provided arguments
   # Example: "./handler.sh up 192.168.3.2/24 tun0"
-  up: ""
-  down: ""
+  up: []
+  down: []
 
 client:
   server: "" # Examples: ws://example.com:9000 wss://secure.example.com:9000

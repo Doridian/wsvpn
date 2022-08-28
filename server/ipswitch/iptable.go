@@ -1,7 +1,8 @@
 package ipswitch
 
 import (
-	"github.com/Doridian/wsvpn/shared"
+	"net"
+
 	"github.com/Doridian/wsvpn/shared/sockets"
 )
 
@@ -21,9 +22,11 @@ func (g *IPSwitch) broadcastDataMessage(data []byte, skip *sockets.Socket) {
 	}
 }
 
-func (g *IPSwitch) findSocketByIP(ip shared.IPv4) *sockets.Socket {
+func (g *IPSwitch) findSocketByIP(ip net.IP) *sockets.Socket {
+	ip4 := ipToIPv4(ip)
+
 	g.ipLock.RLock()
 	defer g.ipLock.RUnlock()
 
-	return g.ipTable[ip]
+	return g.ipTable[ip4]
 }

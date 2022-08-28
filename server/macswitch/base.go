@@ -1,15 +1,27 @@
 package macswitch
 
 import (
+	"net"
 	"sync"
 	"time"
 
-	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/sockets"
 	lru "github.com/hashicorp/golang-lru"
 )
 
 type socketToMacs = *lru.Cache
+
+type macAddr [6]byte
+
+func hwAddrToMac(hw net.HardwareAddr) macAddr {
+	var out macAddr
+	copy(out[:], hw)
+	return out
+}
+
+func hwAddrIsUnicast(hw net.HardwareAddr) bool {
+	return (hw[0] & 0b00000001) == 0
+}
 
 type MACSwitch struct {
 	AllowClientToClient      bool
@@ -19,7 +31,7 @@ type MACSwitch struct {
 	AllowedMacsPerConnection int
 	MacTableTimeout          time.Duration
 
-	macTable     map[shared.MacAddr]*sockets.Socket
+	macTable     map[macAddr]*sockets.Socket
 	socketTable  map[*sockets.Socket]socketToMacs
 	macLock      *sync.RWMutex
 	cleanupTimer *time.Timer
@@ -34,7 +46,7 @@ func MakeMACSwitch() *MACSwitch {
 		AllowMacChanging:         true,
 		AllowedMacsPerConnection: 1,
 		MacTableTimeout:          time.Duration(600 * time.Second),
-		macTable:                 make(map[shared.MacAddr]*sockets.Socket),
+		macTable:                 make(map[macAddr]*sockets.Socket),
 		socketTable:              make(map[*sockets.Socket]socketToMacs),
 		macLock:                  &sync.RWMutex{},
 		cleanupTimer:             time.NewTimer(time.Duration(30 * time.Second)),

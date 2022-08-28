@@ -169,7 +169,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		socket.SetLocalFeature(feat, en)
 	}
 
-	socket.AssignedIP = shared.NetIPToIPv4(ipClient)
+	socket.AssignedIP = ipClient
 
 	if s.SocketConfigurator != nil {
 		err := s.SocketConfigurator.ConfigureSocket(socket)

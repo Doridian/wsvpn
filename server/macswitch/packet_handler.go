@@ -1,7 +1,7 @@
 package macswitch
 
 import (
-	"github.com/Doridian/wsvpn/shared"
+	"github.com/Doridian/water/waterutil"
 	"github.com/Doridian/wsvpn/shared/sockets"
 	lru "github.com/hashicorp/golang-lru"
 )
@@ -13,8 +13,8 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 		return !g.AllowUnknownEtherTypes, nil
 	}
 
-	etherType := shared.GetEtherType(packet)
-	if !g.AllowUnknownEtherTypes && etherType != shared.ETHTYPE_ARP && etherType != shared.ETHTYPE_IPV4 {
+	etherType := waterutil.MACEthertype(packet)
+	if !g.AllowUnknownEtherTypes && etherType != waterutil.ARP && etherType != waterutil.IPv4 {
 		return true, nil
 	}
 
@@ -23,25 +23,25 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 			return true, nil
 		}
 
-		if !g.AllowIpSpoofing && etherType == shared.ETHTYPE_IPV4 {
+		if !g.AllowIpSpoofing && etherType == waterutil.IPv4 {
 			if len(packet) < ETH_LEN+20 {
 				return !g.AllowUnknownEtherTypes, nil
 			}
 
-			srcIp := shared.GetSrcIPv4(packet, ETH_LEN)
-			if srcIp != socket.AssignedIP {
+			srcIp := waterutil.IPv4Source(packet[ETH_LEN:])
+			if !srcIp.Equal(socket.AssignedIP) {
 				return true, nil
 			}
 		}
 	}
 
 	if socket == nil || g.AllowClientToClient {
-		dest := shared.GetDestMAC(packet)
+		destMac := waterutil.MACDestination(packet)
 
-		if shared.MACIsUnicast(dest) {
-			socket_dest := g.findSocketByMAC(dest)
-			if socket_dest != nil {
-				socket_dest.WritePacket(packet)
+		if hwAddrIsUnicast(destMac) {
+			socketDest := g.findSocketByMAC(destMac)
+			if socketDest != nil {
+				socketDest.WritePacket(packet)
 				return true, nil
 			}
 		} else {
@@ -53,7 +53,7 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 }
 
 func (g *MACSwitch) onMACEvicted(key interface{}, value interface{}) {
-	macAddr := key.(shared.MacAddr)
+	macAddr := key.(macAddr)
 
 	g.macLock.Lock()
 	defer g.macLock.Unlock()
@@ -83,7 +83,7 @@ func (g *MACSwitch) UnregisterSocket(socket *sockets.Socket) {
 	socketMacs := socketTbl.Keys()
 
 	for _, mac := range socketMacs {
-		delete(g.macTable, mac.(shared.MacAddr))
+		delete(g.macTable, mac.(macAddr))
 	}
 
 	delete(g.socketTable, socket)

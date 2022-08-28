@@ -2,9 +2,10 @@ package macswitch
 
 import (
 	"errors"
+	"net"
 	"time"
 
-	"github.com/Doridian/wsvpn/shared"
+	"github.com/Doridian/water/waterutil"
 	"github.com/Doridian/wsvpn/shared/sockets"
 	lru "github.com/hashicorp/golang-lru"
 )
@@ -25,7 +26,9 @@ func (g *MACSwitch) broadcastDataMessage(data []byte, skip *sockets.Socket) {
 	}
 }
 
-func (g *MACSwitch) findSocketByMAC(mac shared.MacAddr) *sockets.Socket {
+func (g *MACSwitch) findSocketByMAC(hwAddr net.HardwareAddr) *sockets.Socket {
+	mac := hwAddrToMac(hwAddr)
+
 	g.macLock.RLock()
 	defer g.macLock.RUnlock()
 
@@ -64,10 +67,12 @@ func (g *MACSwitch) cleanupMACs(macTable *lru.Cache) {
 }
 
 func (g *MACSwitch) setMACFrom(socket *sockets.Socket, msg []byte) bool {
-	srcMac := shared.GetSrcMAC(msg)
-	if !shared.MACIsUnicast(srcMac) {
+	srcMac := waterutil.MACSource(msg)
+	if !hwAddrIsUnicast(srcMac) {
 		return false
 	}
+
+	srcMacAddr := hwAddrToMac(srcMac)
 
 	g.macLock.RLock()
 	socketMacs := g.socketTable[socket]
@@ -77,8 +82,8 @@ func (g *MACSwitch) setMACFrom(socket *sockets.Socket, msg []byte) bool {
 		return false
 	}
 
-	if socketMacs.Contains(srcMac) {
-		socketMacs.Add(srcMac, time.Now())
+	if socketMacs.Contains(srcMacAddr) {
+		socketMacs.Add(srcMacAddr, time.Now())
 		return true
 	}
 
@@ -87,16 +92,16 @@ func (g *MACSwitch) setMACFrom(socket *sockets.Socket, msg []byte) bool {
 	}
 
 	g.macLock.Lock()
-	if g.macTable[srcMac] != nil {
+	if g.macTable[srcMacAddr] != nil {
 		g.macLock.Unlock()
 		socket.CloseError(errors.New("MAC collision"))
 		return false
 	}
 
-	g.macTable[srcMac] = socket
+	g.macTable[srcMacAddr] = socket
 	g.macLock.Unlock()
 
-	socketMacs.Add(srcMac, time.Now())
+	socketMacs.Add(srcMacAddr, time.Now())
 
 	return true
 }

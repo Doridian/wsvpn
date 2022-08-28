@@ -2,6 +2,7 @@ package sockets
 
 import (
 	"log"
+	"net"
 	"sync"
 	"time"
 
@@ -18,7 +19,7 @@ const fragmentationNegotiatedMinProtocol = 11
 const featureFieldMinProtocol = 12
 
 type Socket struct {
-	AssignedIP shared.IPv4
+	AssignedIP net.IP
 
 	lastFragmentId        uint32
 	lastFragmentCleanup   time.Time
@@ -39,7 +40,7 @@ type Socket struct {
 	handlers         map[string]CommandHandler
 	closechan        chan bool
 	closechanopen    bool
-	mac              shared.MacAddr
+	mac              net.HardwareAddr
 	packetBufferSize int
 	packetHandler    PacketHandler
 	log              *log.Logger

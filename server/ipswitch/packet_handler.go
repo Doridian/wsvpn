@@ -3,7 +3,7 @@ package ipswitch
 import (
 	"errors"
 
-	"github.com/Doridian/wsvpn/shared"
+	"github.com/Doridian/water/waterutil"
 	"github.com/Doridian/wsvpn/shared/sockets"
 )
 
@@ -15,19 +15,19 @@ func (g *IPSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, er
 	}
 
 	if socket != nil {
-		srcIp := shared.GetSrcIPv4(packet, 0)
-		if srcIp != socket.AssignedIP {
+		srcIp := waterutil.IPv4Source(packet)
+		if !srcIp.Equal(socket.AssignedIP) {
 			return true, nil
 		}
 	}
 
 	if socket == nil || g.AllowClientToClient {
-		dest := shared.GetDestIPv4(packet, 0)
+		destIp := waterutil.IPv4Destination(packet)
 
-		if shared.IPv4IsUnicast(dest) {
-			socket_dest := g.findSocketByIP(dest)
-			if socket_dest != nil {
-				socket_dest.WritePacket(packet)
+		if destIp.IsGlobalUnicast() {
+			socketDest := g.findSocketByIP(destIp)
+			if socketDest != nil {
+				socketDest.WritePacket(packet)
 			} else {
 				return false, nil
 			}
@@ -42,9 +42,11 @@ func (g *IPSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, er
 }
 
 func (g *IPSwitch) RegisterSocket(socket *sockets.Socket) {
+	ip4 := ipToIPv4(socket.AssignedIP)
+
 	g.ipLock.Lock()
-	oldSocket, ok := g.ipTable[socket.AssignedIP]
-	g.ipTable[socket.AssignedIP] = socket
+	oldSocket, ok := g.ipTable[ip4]
+	g.ipTable[ip4] = socket
 	g.ipLock.Unlock()
 
 	if ok {
@@ -53,13 +55,15 @@ func (g *IPSwitch) RegisterSocket(socket *sockets.Socket) {
 }
 
 func (g *IPSwitch) UnregisterSocket(socket *sockets.Socket) {
+	ip4 := ipToIPv4(socket.AssignedIP)
+
 	g.ipLock.Lock()
 	defer g.ipLock.Unlock()
 
-	ourSocket, ok := g.ipTable[socket.AssignedIP]
+	ourSocket, ok := g.ipTable[ip4]
 	if !ok || ourSocket != socket {
 		return
 	}
 
-	delete(g.ipTable, socket.AssignedIP)
+	delete(g.ipTable, ip4)
 }

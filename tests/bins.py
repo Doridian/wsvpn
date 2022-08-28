@@ -60,16 +60,11 @@ class GoBin(Thread):
 
         if self.is_server:
             global LAST_PORT
-            port = LAST_PORT
+            self.port = LAST_PORT
             LAST_PORT += 1
-
-            subnet = "10.%d.%d.0/24" % ((port & 0xFF), ((port >> 8)) & 0xFF)
-            self.cfg["tunnel"]["subnet"] = subnet
-            tmp_ip = split_ip(subnet)
-            self.ip = (IPv4Address(tmp_ip) + 1).exploded
-
-            self.cfg["server"]["listen"] = f"127.0.0.1:{port}"
+            self.cfg["server"]["listen"] = f"127.0.0.1:{self.port}"
         else:
+            self.port = None
             self.ip = None
 
         self.proc_wait_cond = Condition()
@@ -254,6 +249,15 @@ class GoBin(Thread):
 
 
     def run(self) -> None:
+        if self.is_server:
+            subnet_index = self.port
+            if self.cfg["tunnel"]["mode"] == "TAP":
+                subnet_index |= 0b10000000_00000000
+            subnet = "10.%d.%d.0/24" % ((subnet_index & 0xFF), ((subnet_index >> 8)) & 0xFF)
+            self.cfg["tunnel"]["subnet"] = subnet
+            tmp_ip = split_ip(subnet)
+            self.ip = (IPv4Address(tmp_ip) + 1).exploded
+
         cfgfile = None
         with NamedTemporaryFile(mode="w", delete=False) as f:
             yaml_dump(self.cfg, f)

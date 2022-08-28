@@ -21,10 +21,11 @@ func (w *WaterInterfaceWrapper) Configure(ipLocal net.IP, ipNet *shared.VPNNet, 
 	}
 
 	var err error
+	// TODO: On IPv6 there is no longer a peer...
 	if w.Interface.IsTUN() {
-		err = shared.ExecCmd("ifconfig", w.Interface.Name(), inetType, ipLocalCidr, "up")
-	} else {
 		err = shared.ExecCmd("ifconfig", w.Interface.Name(), inetType, ipLocalCidr, ipPeer.String(), "up")
+	} else {
+		err = shared.ExecCmd("ifconfig", w.Interface.Name(), inetType, ipLocalCidr, "up")
 	}
 	if err != nil {
 		return err

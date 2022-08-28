@@ -1,4 +1,5 @@
 import pytest
+from build import get_local_platform
 
 from tests.bins import GoBin
 from tests.tls_utils import TLSCertSet
@@ -57,6 +58,11 @@ def test_run_e2e_tap(svbin: GoBin, clbin: GoBin) -> None:
         pytest.skip("TAP not supported on this platform")
 
     svbin.cfg["tunnel"]["mode"] = "TAP"
+
+    if get_local_platform() == "windows":
+        svbin.cfg["interface"]["name"] = "TAP0"
+        clbin.cfg["interface"]["name"] = "TAP1"
+
     clbin.connect_to(svbin)
 
     svbin.start()

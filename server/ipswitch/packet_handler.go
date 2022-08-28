@@ -42,7 +42,7 @@ func (g *IPSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, er
 }
 
 func (g *IPSwitch) RegisterSocket(socket *sockets.Socket) {
-	ip4 := ipToIPv4(socket.AssignedIP)
+	ip4 := ipToIPAddr(socket.AssignedIP)
 
 	g.ipLock.Lock()
 	oldSocket, ok := g.ipTable[ip4]
@@ -55,7 +55,7 @@ func (g *IPSwitch) RegisterSocket(socket *sockets.Socket) {
 }
 
 func (g *IPSwitch) UnregisterSocket(socket *sockets.Socket) {
-	ip4 := ipToIPv4(socket.AssignedIP)
+	ip4 := ipToIPAddr(socket.AssignedIP)
 
 	g.ipLock.Lock()
 	defer g.ipLock.Unlock()

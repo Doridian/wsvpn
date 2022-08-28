@@ -7,25 +7,25 @@ import (
 	"github.com/Doridian/wsvpn/shared/sockets"
 )
 
-type ipv4 [4]byte
+type ipaddr [net.IPv6len]byte
 
-func ipToIPv4(ip net.IP) ipv4 {
-	var out ipv4
-	copy(out[:], ip.To4())
+func ipToIPAddr(ip net.IP) ipaddr {
+	var out ipaddr
+	copy(out[:], ip.To16())
 	return out
 }
 
 type IPSwitch struct {
 	AllowClientToClient bool
 
-	ipTable map[ipv4]*sockets.Socket
+	ipTable map[ipaddr]*sockets.Socket
 	ipLock  *sync.RWMutex
 }
 
 func MakeIPSwitch() *IPSwitch {
 	return &IPSwitch{
 		AllowClientToClient: false,
-		ipTable:             make(map[ipv4]*sockets.Socket),
+		ipTable:             make(map[ipaddr]*sockets.Socket),
 		ipLock:              &sync.RWMutex{},
 	}
 }

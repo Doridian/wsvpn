@@ -11,7 +11,7 @@ from threading import Thread, Condition
 from time import sleep
 from typing import Any, Optional
 from yaml import dump as yaml_dump, safe_load as yaml_load
-from ipaddress import IPv4Address
+from ipaddress import ip_address
 from getmac import get_mac_address
 from sys import executable
 
@@ -63,6 +63,7 @@ class GoBin(Thread):
             self.port = LAST_PORT
             LAST_PORT += 1
             self.cfg["server"]["listen"] = f"127.0.0.1:{self.port}"
+            self.cfg["tunnel"]["subnet"] = None
         else:
             self.port = None
             self.ip = None
@@ -250,13 +251,14 @@ class GoBin(Thread):
 
     def run(self) -> None:
         if self.is_server:
-            subnet_index = self.port
-            if self.cfg["tunnel"]["mode"] == "TAP":
-                subnet_index |= 0b10000000_00000000
-            subnet = "10.%d.%d.0/24" % ((subnet_index & 0xFF), ((subnet_index >> 8)) & 0xFF)
-            self.cfg["tunnel"]["subnet"] = subnet
-            tmp_ip = split_ip(subnet)
-            self.ip = (IPv4Address(tmp_ip) + 1).exploded
+            if not self.cfg["tunnel"]["subnet"]:
+                subnet_index = self.port
+                if self.cfg["tunnel"]["mode"] == "TAP":
+                    subnet_index |= 0b10000000_00000000
+                self.cfg["tunnel"]["subnet"] = "10.%d.%d.0/24" % ((subnet_index & 0xFF), ((subnet_index >> 8)) & 0xFF)
+
+            tmp_ip = split_ip(self.cfg["tunnel"]["subnet"])
+            self.ip = (ip_address(tmp_ip) + 1).exploded
 
         cfgfile = None
         with NamedTemporaryFile(mode="w", delete=False) as f:

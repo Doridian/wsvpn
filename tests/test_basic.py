@@ -72,3 +72,18 @@ def test_run_e2e_tap(svbin: GoBin, clbin: GoBin) -> None:
     clbin.assert_ready_ok()
 
     basic_traffic_test(svbin=svbin, clbin=clbin)
+
+
+def test_run_ipv6_tun(svbin: GoBin, clbin: GoBin) -> None:
+    svbin.cfg["tunnel"]["mode"] = "TUN"
+    svbin.cfg["tunnel"]["subnet"] = "fde4:c709:f856:eac2::/64"
+
+    clbin.connect_to(svbin)
+
+    svbin.start()
+    svbin.assert_ready_ok()
+
+    clbin.start()
+    clbin.assert_ready_ok()
+
+    basic_traffic_test(svbin=svbin, clbin=clbin, ip_version=6)

@@ -1,11 +1,20 @@
 package iface
 
 import (
+	"fmt"
 	"net"
 
 	"github.com/Doridian/water"
 	"github.com/Doridian/wsvpn/shared"
 )
+
+func inetFamily(ip net.IP) string {
+	isIPv4 := ip.To4()
+	if isIPv4 == nil {
+		return "inet6"
+	}
+	return "inet"
+}
 
 func (w *WaterInterfaceWrapper) Configure(ipLocal net.IP, ipNet *shared.VPNNet, ipPeer net.IP) error {
 	if ipLocal == nil {
@@ -14,15 +23,10 @@ func (w *WaterInterfaceWrapper) Configure(ipLocal net.IP, ipNet *shared.VPNNet, 
 
 	ipNetSize, ipLocalCidr := w.splitSubnet(ipNet, ipLocal)
 
-	isIPv4 := ipLocal.To4()
-	inetType := "inet"
-	if isIPv4 == nil {
-		inetType = "inet6"
-	}
+	inetType := inetFamily(ipLocal)
 
 	var err error
-	// TODO: On IPv6 there is no longer a peer...
-	if w.Interface.IsTUN() {
+	if w.Interface.IsTUN() && inetType == "inet" {
 		err = shared.ExecCmd("ifconfig", w.Interface.Name(), inetType, ipLocalCidr, ipPeer.String(), "up")
 	} else {
 		err = shared.ExecCmd("ifconfig", w.Interface.Name(), inetType, ipLocalCidr, "up")
@@ -35,11 +39,13 @@ func (w *WaterInterfaceWrapper) Configure(ipLocal net.IP, ipNet *shared.VPNNet, 
 }
 
 func (w *WaterInterfaceWrapper) AddInterfaceRoute(ipNet *net.IPNet) error {
-	return shared.ExecCmd("route", "add", "-net", ipNet.String(), "-interface", w.Interface.Name())
+	inetType := inetFamily(ipNet.IP)
+	return shared.ExecCmd("route", "add", fmt.Sprintf("-%s", inetType), "-net", ipNet.String(), "-interface", w.Interface.Name())
 }
 
 func (w *WaterInterfaceWrapper) AddIPRoute(ipNet *net.IPNet, gateway net.IP) error {
-	return shared.ExecCmd("route", "add", "-net", ipNet.String(), gateway.String())
+	inetType := inetFamily(ipNet.IP)
+	return shared.ExecCmd("route", "add", fmt.Sprintf("-%s", inetType), "-net", ipNet.String(), gateway.String())
 }
 
 func GetPlatformSpecifics(config *water.Config, ifaceConfig *InterfaceConfig) error {

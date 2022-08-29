@@ -1,1 +1,6 @@
-pytest-github-actions-annotate-failures getmac scapy requests pytest pyyaml
+pytest-github-actions-annotate-failures
+getmac
+scapy
+requests
+pytest
+pyyaml

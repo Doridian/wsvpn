@@ -17,9 +17,16 @@ jobs:
           go-version-file: 'go.mod'
           check-latest: true
           cache: true
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      - name: Install required Python packages
+        run: pip install wheel pytest-github-actions-annotate-failures getmac scapy requests pytest pyyaml
       - name: Build local binaries (Build all from Linux to ensure releases work)
         run: ./build.py --architecture local
-      - run: ./test.sh
+      - name: Run tests
+        run: pytest -p no:cacheprovider ./tests
   test-windows:
     runs-on: windows-latest
     steps:
@@ -29,11 +36,16 @@ jobs:
           go-version-file: 'go.mod'
           check-latest: true
           cache: true
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10' 
+          cache: 'pip'
       - name: Install required Python packages
-        run: pip3 install wheel pytest-github-actions-annotate-failures getmac scapy requests pytest pyyaml
+        run: pip install wheel pytest-github-actions-annotate-failures getmac scapy requests pytest pyyaml
       - name: Build local binaries
         run: ./build.py --architecture local --platform local
-      - run: pytest -p no:cacheprovider ./tests
+      - name: Run tests
+        run: pytest -p no:cacheprovider ./tests
   test-darwin:
     runs-on: macos-latest
     steps:
@@ -43,8 +55,12 @@ jobs:
           go-version-file: 'go.mod'
           check-latest: true
           cache: true
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10' 
+          cache: 'pip'
       - name: Install required Python packages
-        run: pip3 install wheel pytest-github-actions-annotate-failures getmac scapy requests pytest pyyaml
+        run: pip install wheel pytest-github-actions-annotate-failures getmac scapy requests pytest pyyaml
       - name: Build local binaries
         run: ./build.py --architecture local --platform local
       - run: sudo pytest -p no:cacheprovider ./tests

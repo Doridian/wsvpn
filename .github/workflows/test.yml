@@ -22,7 +22,7 @@ jobs:
           python-version: '3.10'
           cache: 'pip'
       - name: Install required Python packages
-        run: pip install wheel pytest-github-actions-annotate-failures getmac scapy requests pytest pyyaml
+        run: pip install -r requirements.txt
       - name: Build local binaries (Build all from Linux to ensure releases work)
         run: ./build.py --architecture local
       - name: Run tests
@@ -41,7 +41,7 @@ jobs:
           python-version: '3.10' 
           cache: 'pip'
       - name: Install required Python packages
-        run: pip install wheel pytest-github-actions-annotate-failures getmac scapy requests pytest pyyaml
+        run: pip install -r requirements.txt
       - name: Build local binaries
         run: ./build.py --architecture local --platform local
       - name: Run tests
@@ -60,7 +60,7 @@ jobs:
           python-version: '3.10' 
           cache: 'pip'
       - name: Install required Python packages
-        run: pip install wheel pytest-github-actions-annotate-failures getmac scapy requests pytest pyyaml
+        run: pip install -r requirements.txt
       - name: Build local binaries
         run: ./build.py --architecture local --platform local
       - run: sudo pytest -p no:cacheprovider ./tests

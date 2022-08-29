@@ -22,11 +22,11 @@ jobs:
           python-version: '3.10'
           cache: 'pip'
       - name: Install required Python packages
-        run: sudo pip install -r requirements.txt
+        run: pip install -r requirements.txt
       - name: Build local binaries (Build all from Linux to ensure releases work)
         run: ./build.py --architecture local
       - name: Run tests
-        run: sudo -E python -m pytest -p no:cacheprovider ./tests
+        run: sudo -H -E python -m pytest -p no:cacheprovider ./tests
   test-windows:
     runs-on: windows-latest
     steps:

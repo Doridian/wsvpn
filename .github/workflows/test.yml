@@ -29,6 +29,8 @@ jobs:
           go-version-file: 'go.mod'
           check-latest: true
           cache: true
+      - name: Install required Python packages
+        run: pip3 install wheel pytest-github-actions-annotate-failures getmac scapy requests pytest pyyaml
       - name: Build local binaries
         run: ./build.py --architecture local --platform local
       - run: pytest -p no:cacheprovider ./tests
@@ -41,6 +43,8 @@ jobs:
           go-version-file: 'go.mod'
           check-latest: true
           cache: true
+      - name: Install required Python packages
+        run: pip3 install wheel pytest-github-actions-annotate-failures getmac scapy requests pytest pyyaml
       - name: Build local binaries
         run: ./build.py --architecture local --platform local
       - run: sudo pytest -p no:cacheprovider ./tests

@@ -8,7 +8,7 @@ on:
 name: Test
 
 jobs:
-  test:
+  test-linux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -17,6 +17,30 @@ jobs:
           go-version-file: 'go.mod'
           check-latest: true
           cache: true
-      - name: Build all platforms, but only single architecture
+      - name: Build local binaries (Build all from Linux to ensure releases work)
         run: ./build.py --architecture local
       - run: ./test.sh
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+          check-latest: true
+          cache: true
+      - name: Build local binaries
+        run: ./build.py --architecture local --platform local
+      - run: pytest -p no:cacheprovider ./tests
+  test-darwin:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+          check-latest: true
+          cache: true
+      - name: Build local binaries
+        run: ./build.py --architecture local --platform local
+      - run: sudo pytest -p no:cacheprovider ./tests

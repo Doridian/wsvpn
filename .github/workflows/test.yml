@@ -38,12 +38,12 @@ jobs:
           cache: true
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.10' 
+          python-version: '3.10'
           cache: 'pip'
       - name: Install required Python packages
         run: pip install -r requirements.txt
       - name: Build local binaries
-        run: ./build.py --architecture local --platform local
+        run: python ./build.py --architecture local --platform local
       - name: Run tests
         run: pytest -p no:cacheprovider ./tests
   test-darwin:
@@ -57,7 +57,7 @@ jobs:
           cache: true
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.10' 
+          python-version: '3.10'
           cache: 'pip'
       - name: Install required Python packages
         run: pip install -r requirements.txt

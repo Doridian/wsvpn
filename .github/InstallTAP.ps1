@@ -22,8 +22,9 @@ function MakeTAP([Parameter(Mandatory=$true)]$Name)
 # DownloadFile "$OpenVPNMSI" "openvpn.msi"
 
 Write-Host "Installing OpenVPN..."
-Start-Process msiexec -ArgumentList "/i `"$WorkingDir\openvpn.msi`" ADDLOCAL=Drivers,Drivers.TAPWindows6,OpenVPN /quiet /norestart" -Wait
+Start-Process msiexec -ArgumentList "/i `"$WorkingDir\openvpn.msi`" ADDLOCAL=Drivers,Drivers.TAPWindows6,OpenVPN /quiet /norestart /log openvpn-install.log" -Wait
 @{$true = Write-Host "[OK]"}[$?]
+cat openvpn-install.log
 
 MakeTAP "TAP0"
 MakeTAP "TAP1"

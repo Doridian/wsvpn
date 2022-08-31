@@ -7,22 +7,22 @@ $WorkingDir = Convert-Path .
 function DownloadFile([Parameter(Mandatory=$true)]$Link, [Parameter(Mandatory=$true)]$OutFile)
 {
     Write-Host "Downloading $OutFile... "
-    Invoke-WebRequest $Link -UseBasicParsing -OutFile $WorkingDir"\$OutFile"
+    Invoke-WebRequest $Link -UseBasicParsing -OutFile "$WorkingDir\$OutFile"
     @{$true = Write-Host "[OK]"}[$?]
 }
 
 function MakeTAP([Parameter(Mandatory=$true)]$Name)
 {
     Write-Host "Creating TAP $Name..."
-    . "C:\Program Files\OpenVPN\bin\tapctl.exe" create --name "$Name"
+    Start-Process "C:\Program Files\OpenVPN\bin\tapctl.exe" -ArgumentList "create --name `"$Name`"" -Wait
     @{$true = Write-Host "[OK]"}[$?]
 
 }
 
-DownloadFile "$OpenVPNMSI" "openvpn.msi"
+# DownloadFile "$OpenVPNMSI" "openvpn.msi"
 
 Write-Host "Installing OpenVPN..."
-msiexec .\openvpn.msi /S /SELECT_SHURTCUTS=0 /SELECT_OPENVPN=0 /SELECT_SERVICE=0 /SELECT_TAP=1 /SELECT_OPENVPNGUI=0 /SELECT_ASSOCIATIONS=0 /SELECT_LAUNCH=0
+Start-Process msiexec -ArgumentList "/i `"$WorkingDir\openvpn.msi`" ADDLOCAL=Drivers,Drivers.TAPWindows6,OpenVPN /quiet /norestart" -Wait
 @{$true = Write-Host "[OK]"}[$?]
 
 MakeTAP "TAP0"

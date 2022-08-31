@@ -21,7 +21,9 @@ function MakeTAP([Parameter(Mandatory=$true)]$Name)
 
 DownloadFile "$OpenVPNMSI" "openvpn.msi"
 
-.\openvpn.msi /S /SELECT_SHURTCUTS=0 /SELECT_OPENVPN=0 /SELECT_SERVICE=0 /SELECT_TAP=1 /SELECT_OPENVPNGUI=0 /SELECT_ASSOCIATIONS=0 /SELECT_LAUNCH=0
+Write-Host "Installing OpenVPN..."
+msiexec .\openvpn.msi /S /SELECT_SHURTCUTS=0 /SELECT_OPENVPN=0 /SELECT_SERVICE=0 /SELECT_TAP=1 /SELECT_OPENVPNGUI=0 /SELECT_ASSOCIATIONS=0 /SELECT_LAUNCH=0
+@{$true = Write-Host "[OK]"}[$?]
 
 MakeTAP "TAP0"
 MakeTAP "TAP1"

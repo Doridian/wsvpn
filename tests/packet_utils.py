@@ -14,6 +14,8 @@ def is_ignored_payload(self):
     return isinstance(self, scapy_packet.NoPayload) or isinstance(self, scapy_packet.Padding)
 
 # This is essentially the __eq__ function from Scapy, except it ignores values that are None in either item
+
+
 def packet_equal(self, other):
     if is_ignored_payload(self):
         return is_ignored_payload(other)
@@ -24,7 +26,7 @@ def packet_equal(self, other):
     for f in self.fields_desc:
         if f not in other.fields_desc:
             return False
-        
+
         self_val = self.getfieldval(f.name)
         other_val = other.getfieldval(f.name)
 
@@ -54,7 +56,8 @@ class PacketTestRun:
         self.dst = dst
 
         if src.ip_version != dst.ip_version:
-            raise ValueError(f"ip_version mismatch src={src.ip_version} dst={dst.ip_version}")
+            raise ValueError(
+                f"ip_version mismatch src={src.ip_version} dst={dst.ip_version}")
 
         self.ip_version = src.ip_version
         self.pkts = []
@@ -80,10 +83,9 @@ class PacketTestRun:
 
         self._expected_packets = None
 
-
     def _send_packets(self):
-        scapy_sendrecv.sendp(self.pkts, iface=self.src.iface, realtime=False, count=1, return_packets=False)
-
+        scapy_sendrecv.sendp(self.pkts, iface=self.src.iface,
+                             realtime=False, count=1, return_packets=False)
 
     def _handle_packet(self, pkt):
         # Scapy likes decoding IPv6 payloads on TUN as IPv4...
@@ -97,12 +99,12 @@ class PacketTestRun:
 
         return len(self._expected_packets) == 0
 
-
     def run(self):
         self._expected_packets = self.pkts[:]
 
         t = Thread(target=self._send_packets)
-        scapy_sendrecv.sniff(iface=self.dst.iface, started_callback=t.start, stop_filter=self._handle_packet, count=0, store=False, timeout=2)
+        scapy_sendrecv.sniff(iface=self.dst.iface, started_callback=t.start,
+                             stop_filter=self._handle_packet, count=0, store=False, timeout=2)
         t.join()
 
         assert len(self._expected_packets) == 0
@@ -115,20 +117,19 @@ class PacketTest:
         self.ethernet = svbin.cfg["tunnel"]["mode"] == "TAP"
         self.pkts = []
         self.ip_version = ip_version
-        self.need_dummy_layer = (not self.ethernet) and (get_local_platform() == "darwin")
-
+        self.need_dummy_layer = (not self.ethernet) and (
+            get_local_platform() == "darwin")
 
     def pkt_add(self, pkt):
         if self.ethernet:
             pkt = scapy_layers.Ether()/pkt
         self.pkts.append(pkt)
 
-
     def simple_pkt(self, pktlen: int):
         payload = scapy_layers.UDP(sport=124, dport=125)
         if pktlen > 0:
             payload = payload / scapy_packet.Raw(bytes(b"A"*pktlen))
-        
+
         if self.ip_version == 4:
             pkt = scapy_layers.IP(version=4) / payload
         elif self.ip_version == 6:
@@ -137,10 +138,10 @@ class PacketTest:
             raise ValueError(f"Invalid ip_version {self.ip_version}")
 
         if self.need_dummy_layer:
-            pkt = scapy_layers.Loopback(type=0x1e if self.ip_version == 6 else 0x2) / pkt
+            pkt = scapy_layers.Loopback(
+                type=0x1e if self.ip_version == 6 else 0x2) / pkt
 
         self.pkt_add(pkt)
-
 
     def add_defaults(self, minimal: bool):
         self.simple_pkt(1)
@@ -149,7 +150,6 @@ class PacketTest:
         self.simple_pkt(10)
         self.simple_pkt(1000)
         self.simple_pkt(1300)
-
 
     def run(self):
         self.svbin.assert_ready_ok()
@@ -167,8 +167,10 @@ class PacketTest:
             server_mac = self.svbin.get_mac_for(self.clbin)
             client_mac = self.clbin.get_mac_for()
 
-        server_tuple = PktTuple(iface=server_iface, ip=server_ip, mac=server_mac, ip_version=get_ip_version(server_ip))
-        client_tuple = PktTuple(iface=client_iface, ip=client_ip, mac=client_mac, ip_version=get_ip_version(client_ip))
+        server_tuple = PktTuple(iface=server_iface, ip=server_ip,
+                                mac=server_mac, ip_version=get_ip_version(server_ip))
+        client_tuple = PktTuple(iface=client_iface, ip=client_ip,
+                                mac=client_mac, ip_version=get_ip_version(client_ip))
 
         print("CLIENT SENDING, SERVER RECEIVING")
         test = PacketTestRun(self.pkts, src=client_tuple, dst=server_tuple)

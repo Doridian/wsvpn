@@ -40,7 +40,7 @@ def tls_cert_server_noip() -> Generator:
 
 def test_run_tls_wss_invalid_ca(svbin: GoBin, clbin: GoBin, tls_cert_server: TLSCertSet, tls_cert_server_noip: TLSCertSet) -> None:
     svbin.enable_tls(tls_cert_server)
-    clbin.enable_tls(tls_cert_server_noip) # This is for having an invalid CA
+    clbin.enable_tls(tls_cert_server_noip)  # This is for having an invalid CA
     clbin.connect_to(svbin, protocol="wss")
 
     svbin.start()
@@ -52,7 +52,7 @@ def test_run_tls_wss_invalid_ca(svbin: GoBin, clbin: GoBin, tls_cert_server: TLS
 
 def test_run_tls_webtransport_invalid_ca(svbin: GoBin, clbin: GoBin, tls_cert_server: TLSCertSet, tls_cert_server_noip: TLSCertSet) -> None:
     svbin.enable_tls(tls_cert_server)
-    clbin.enable_tls(tls_cert_server_noip) # This is for having an invalid CA
+    clbin.enable_tls(tls_cert_server_noip)  # This is for having an invalid CA
     svbin.cfg["server"]["enable-http3"] = True
     clbin.connect_to(svbin, protocol="webtransport")
 

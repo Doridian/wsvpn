@@ -25,25 +25,13 @@
 
 # TODO
 # ----
-# - next level shit:
-# https://www.autoitconsulting.com/site/scripting/autoit-cmdlets-for-windows-powershell/
-# - integrate into AppVeyor's Build Worker API
-# - get https://nmap.org/npcap/dist/npcap-sdk-0.1.zip as well
-# - $PSScriptRoot isn't a thing when a script is call from a remote server.
-# Using:
-# (Get-Item -Path ".\" -Verbose).FullName
-# (Resolve-Path .\).Path
-# $WorkingDir = Convert-Path .
-# - use try-catch-finally
-# - convert $AutoItPosh to option
-# - add $outdir option
+# - https://www.autoitconsulting.com/site/scripting/autoit-cmdlets-for-windows-powershell/
 # - honor -reinstall
 
 # Script entry-point arguments:
 param(
     [switch]$debug = $false,
-    [switch]$reinstall = $true,
-    [switch]$buildbot = $false
+    [switch]$reinstall = $true
 )
 
 # Variables (and their Initial value)
@@ -107,22 +95,8 @@ function InitializeScriptEnvironment()
     {
         $global:debug = $true # for now
         $global:reinstall = $true
-        $global:buildbot = $true
 
         Write-Host $Banner -ForegroundColor White
-
-        if($env:APPVEYOR_RE_BUILD)
-        {
-        # Always enable debug when the build was executed by the
-        # "RE-BUILD COMMIT" button on the AppVeyor web interface.
-        $global:debug = $true
-        }
-
-        # AppVeyor preserves the directory structure during deployment.
-        # So, we need to output into the current directory to upload into the correct FTP directory.
-        #$env:BUILD_OUTPUT_FOLDER = ".";
-        # $env:APPVEYOR_REPO_BRANCH = "master"
-        # $env:BUILD_OUTPUT_FOLDER = "ClientBin"
     }
     else
     {
@@ -164,12 +138,6 @@ function InstallPackage()
         Write-Host "WARNING: This may not work..." -ForegroundColor Red
     }
 
-    if($buildbot)
-    {
-        # Use --force to reinstall.
-        $ChocoFlags = "$ChocoFlags --force"
-    }
-
     if($debug)
     {
         Write-Host "Installing needed packages via Chocolatey...`t`t" -ForegroundColor Cyan
@@ -194,21 +162,6 @@ function DownloadFile([Parameter(Mandatory=$true)]$Link, [Parameter(Mandatory=$t
 {
     Write-Host "Downloading $OutFile...`t`t" -NoNewline -ForegroundColor Cyan
     Invoke-WebRequest $Link -UseBasicParsing -OutFile $WorkingDir"\$OutFile"
-    @{$true = Write-Host "[SUCCESS]" -ForegroundColor Green}[$?]
-}
-
-function DecompressZip([Parameter(Mandatory=$true)]$Archive)
-{
-    Write-Host "Decompressing $Archive...`t`t`t" -NoNewline -ForegroundColor Cyan
-    try
-    {
-        # Requires .Net Framework 4.5...
-        & { Add-Type -A 'System.IO.Compression.FileSystem'; [IO.Compression.ZipFile]::ExtractToDirectory("$Archive", "$WorkingDir"); }
-    }
-    catch
-    {
-        Expand-Archive -Force -Path $WorkingDir/$Archive -DestinationPath $WorkingDir
-    }
     @{$true = Write-Host "[SUCCESS]" -ForegroundColor Green}[$?]
 }
 
@@ -307,19 +260,6 @@ function NavigateSetup()
 function ScriptCleanup()
 {
     Write-Host "`rCleaning up...`t`t`t`t`t`t" -NoNewline -ForegroundColor Yellow
-
-    $global:ErrorActionPreference = "Continue"
-
-    if(!$buildbot)
-    {
-        Clear-Content "build\internal\kph.key" -Force -ErrorAction SilentlyContinue
-        Clear-Content "build\internal\nightly.key" -Force -ErrorAction SilentlyContinue
-
-        # Start-Sleep -Seconds 1
-        Start-Sleep -Milliseconds 500
-        Remove-Item $WorkingDir"\$Setup" -Force -ErrorAction SilentlyContinue
-    @{$true = Write-Host "[DONE]`n" -ForegroundColor Yellow}[$?]
-    }
 }
 
 function ShowExecutionTime()
@@ -343,15 +283,6 @@ function main()
         FocusSetup;
         NavigateSetup;
     }
-    # catch
-    # {
-        # if(($env:APPVEYOR) -and (!$env:APPVEYOR_RE_BUILD))
-        # {
-        # Do stuff and trigger rebuild to get debug output...
-        # }
-        # Display and/or handle error here.
-        # Write-Host "Caught Error. What's next?"
-    # }
     finally
     {
         ScriptCleanup;

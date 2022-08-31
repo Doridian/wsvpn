@@ -26,7 +26,7 @@ jobs:
       - name: Build local binaries (Build all from Linux to ensure releases work)
         run: ./build.py --architecture local
       - name: Run tests
-        run: sudo -H -E "$(which python3)" -m pytest -p no:cacheprovider ./tests
+        run: sudo -H -E "$(which pytest)" --reruns 3 --reruns-delay 1 -p no:cacheprovider ./tests
   test-windows:
     runs-on: windows-latest
     steps:
@@ -49,7 +49,7 @@ jobs:
       - name: Build local binaries
         run: python ./build.py --architecture local --platform local
       - name: Run tests
-        run: pytest -p no:cacheprovider ./tests
+        run: pytest -p no:cacheprovider ./tests --reruns 3 --reruns-delay 1
   test-darwin:
     runs-on: macos-latest
     steps:
@@ -67,4 +67,4 @@ jobs:
         run: pip3 install -r requirements.txt
       - name: Build local binaries
         run: ./build.py --architecture local --platform local
-      - run: sudo -H -E "$(which python3)" -m pytest -p no:cacheprovider ./tests
+      - run: sudo -H -E "$(which pytest)" --reruns 3 --reruns-delay 1 -p no:cacheprovider ./tests

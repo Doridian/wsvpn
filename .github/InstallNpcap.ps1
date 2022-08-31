@@ -42,7 +42,6 @@
 # Script entry-point arguments:
 param(
     [switch]$debug = $false,
-    [switch]$sdk = $false,
     [switch]$reinstall = $true,
     [switch]$buildbot = $false
 )
@@ -64,8 +63,7 @@ $ChocoFlags = "--confirm",
 $ChocoPKG   = "autoit.commandline" # add additional packages here
 $AutoItPKG  = "autoit.commandline"
 $AutoItPosh = "$env:ChocolateyInstall\lib\$AutoItPKG\tools\install\AutoItX\AutoItX.psd1"
-$Setup      = "latest-npcap-installer.exe"
-$SetupSDK   = "npcap-sdk-0.1.zip"
+$Setup      = "npcap-1.71.exe"
 
 $SetupURL = "https://nmap.org/npcap/dist/"
 
@@ -109,15 +107,9 @@ function InitializeScriptEnvironment()
     {
         $global:debug = $true # for now
         $global:reinstall = $true
-        $global:sdk = $true # for now
         $global:buildbot = $true
 
         Write-Host $Banner -ForegroundColor White
-
-        if($env:computername -ne "CALCULON")
-        {
-            Write-Host $Banner2 -ForegroundColor DarkRed
-        }
 
         if($env:APPVEYOR_RE_BUILD)
         {
@@ -137,13 +129,7 @@ function InitializeScriptEnvironment()
         # Clear the console
         Clear-Host;
         Write-Host $Banner -ForegroundColor White
-        if($env:computername -ne "CALCULON")
-        {
-            Write-Host "Me so soowy..." -NoNewline -ForegroundColor Red
-            Write-Host $Banner2 -ForegroundColor Red
-            throw  # :-P
-        }
-
+        throw
     }
 
     if($debug)
@@ -210,10 +196,6 @@ function DownloadFile([Parameter(Mandatory=$true)]$Link, [Parameter(Mandatory=$t
     Invoke-WebRequest $Link -UseBasicParsing -OutFile $WorkingDir"\$OutFile"
     @{$true = Write-Host "[SUCCESS]" -ForegroundColor Green}[$?]
 }
-
-# Write-Host "Downloading latest $SetupTitle SDK...`t" -NoNewline -ForegroundColor Cyan
-# Invoke-WebRequest $SetupURL$SDK -UseBasicParsing -OutFile $WorkingDir"\$SDK"
-# Write-Host "[SUCCESS]" -ForegroundColor Green
 
 function DecompressZip([Parameter(Mandatory=$true)]$Archive)
 {
@@ -336,11 +318,6 @@ function ScriptCleanup()
         # Start-Sleep -Seconds 1
         Start-Sleep -Milliseconds 500
         Remove-Item $WorkingDir"\$Setup" -Force -ErrorAction SilentlyContinue
-        if($sdk)
-        {
-            # Remove-Item $WorkingDir"\$SetupSDK" -Force -ErrorAction SilentlyContinue
-            # Remove-Item $WorkingDir"\npcap-sdk-0.1" -Force -Recurse -ErrorAction SilentlyContinue
-        }
     @{$true = Write-Host "[DONE]`n" -ForegroundColor Yellow}[$?]
     }
 }
@@ -362,11 +339,6 @@ function main()
             ImportPoshModule;
         }
         DownloadFile -Link "$SetupURL$Setup" -OutFile "$Setup";
-        if($sdk)
-        {
-            DownloadFile -Link "$SetupURL$SetupSDK" -OutFile "$SetupSDK";
-            DecompressZip "$SetupSDK";
-        }
         RunSetup;
         FocusSetup;
         NavigateSetup;

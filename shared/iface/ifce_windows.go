@@ -61,7 +61,7 @@ func GetPlatformSpecifics(config *water.Config, ifaceConfig *InterfaceConfig) er
 		config.InterfaceName = setName
 	}
 
-	config.ComponentID = ifaceConfig.ComponentId
+	config.ComponentID = ifaceConfig.ComponentID
 
 	return nil
 }

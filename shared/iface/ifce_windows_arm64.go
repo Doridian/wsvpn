@@ -1,6 +1,6 @@
 package iface
 
-import _ "embed"
+import _ "embed" // Required for go:embed_ "embed"
 
 //go:embed wintun/wintun/bin/arm64/wintun.dll
 var wintunDll []byte

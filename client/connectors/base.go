@@ -14,8 +14,8 @@ type SocketConnector interface {
 }
 
 type SocketConnectorConfig interface {
-	GetProxyUrl() *url.URL
+	GetProxyURL() *url.URL
 	GetTLSConfig() *tls.Config
 	GetHeaders() http.Header
-	GetServerUrl() *url.URL
+	GetServerURL() *url.URL
 }

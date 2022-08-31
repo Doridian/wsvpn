@@ -45,9 +45,9 @@ type WebTransportAdapter struct {
 	lastServeError           error
 	lastServeErrorUnexpected bool
 
-	streamId              uint64
-	quarterStreamId       uint64
-	quarterStreamIdVarint []byte
+	streamID              uint64
+	quarterStreamID       uint64
+	quarterStreamIDVarint []byte
 	maxPayloadLen         uint16
 }
 
@@ -112,20 +112,20 @@ func (s *WebTransportAdapter) setReady() {
 }
 
 func (s *WebTransportAdapter) RefreshFeatures() {
-	if s.featuresContainer.IsFeatureEnabled(features.FEATURE_DATAGRAM_ID_0) {
-		s.quarterStreamId = 0
+	if s.featuresContainer.IsFeatureEnabled(features.DatagramID0) {
+		s.quarterStreamID = 0
 	} else {
-		s.quarterStreamId = s.streamId / 4
+		s.quarterStreamID = s.streamID / 4
 	}
 
 	buf := &bytes.Buffer{}
-	quicvarint.Write(buf, s.quarterStreamId)
-	s.quarterStreamIdVarint = buf.Bytes()
+	quicvarint.Write(buf, s.quarterStreamID)
+	s.quarterStreamIDVarint = buf.Bytes()
 
-	s.maxPayloadLen = uint16(1220 - (len(s.quarterStreamIdVarint) + 3))
+	s.maxPayloadLen = uint16(1220 - (len(s.quarterStreamIDVarint) + 3))
 }
 
-func (s *WebTransportAdapter) Serve() (error, bool) {
+func (s *WebTransportAdapter) Serve() (bool, error) {
 	var err error
 
 	if s.isServer {
@@ -136,10 +136,10 @@ func (s *WebTransportAdapter) Serve() (error, bool) {
 
 	if err != nil {
 		s.setReady()
-		return err, true
+		return true, err
 	}
 
-	s.streamId = getStreamID(s.stream)
+	s.streamID = getStreamID(s.stream)
 	s.RefreshFeatures()
 
 	s.wg.Add(1)
@@ -153,7 +153,7 @@ func (s *WebTransportAdapter) Serve() (error, bool) {
 
 	s.wg.Wait()
 
-	return s.lastServeError, s.lastServeErrorUnexpected
+	return s.lastServeErrorUnexpected, s.lastServeError
 }
 
 func (s *WebTransportAdapter) handleServeError(err error, unexpected bool) {
@@ -233,12 +233,12 @@ func (s *WebTransportAdapter) serveData() {
 			break
 		}
 		buf := bytes.NewBuffer(data)
-		quarterStreamId, err := quicvarint.Read(buf)
+		quarterStreamID, err := quicvarint.Read(buf)
 		if err != nil {
 			s.handleServeError(err, true)
 			break
 		}
-		if quarterStreamId != s.quarterStreamId {
+		if quarterStreamID != s.quarterStreamID {
 			continue
 		}
 		s.dataMessageHandler(buf.Bytes())
@@ -289,7 +289,7 @@ func (s *WebTransportAdapter) WriteDataMessage(message []byte) error {
 	}
 
 	buf := &bytes.Buffer{}
-	buf.Write(s.quarterStreamIdVarint)
+	buf.Write(s.quarterStreamIDVarint)
 	buf.Write(message)
 	err := s.qconn.SendMessage(buf.Bytes())
 	if err != nil && err.Error() == "message too large" {

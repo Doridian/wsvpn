@@ -79,16 +79,16 @@ func (s *Socket) dataMessageHandler(message []byte) bool {
 
 	fragIndex := fragHeader & 0b01111111
 	isLastFragment := fragHeader&0b10000000 == 0b10000000
-	packetId := (uint32(message[1]) << 24) | (uint32(message[2]) << 16) | (uint32(message[3]) << 8) | uint32(message[4])
+	packetID := (uint32(message[1]) << 24) | (uint32(message[2]) << 16) | (uint32(message[3]) << 8) | uint32(message[4])
 
 	s.defragLock.Lock()
-	fragInfo := s.defragBuffer[packetId]
+	fragInfo := s.defragBuffer[packetID]
 	if fragInfo == nil {
 		fragInfo = &fragmentsInfo{
 			lastIndex: -1000, // Very small value as an indicator for "not set, yet"
 			data:      make(map[uint8][]byte),
 		}
-		s.defragBuffer[packetId] = fragInfo
+		s.defragBuffer[packetID] = fragInfo
 	}
 
 	fragInfo.time = time.Now()
@@ -98,7 +98,7 @@ func (s *Socket) dataMessageHandler(message []byte) bool {
 	}
 
 	if len(fragInfo.data) == fragInfo.lastIndex+1 {
-		delete(s.defragBuffer, packetId)
+		delete(s.defragBuffer, packetID)
 		s.defragLock.Unlock()
 
 		buf := &bytes.Buffer{}
@@ -175,7 +175,7 @@ func (s *Socket) WritePacket(data []byte) error {
 		return s.sendDataWithError(buf.Bytes())
 	}
 
-	packetId := atomic.AddUint32(&s.lastFragmentId, 1)
+	packetID := atomic.AddUint32(&s.lastFragmentID, 1)
 
 	maxLen -= 5 // 5 byte header (frag|LF ID ID ID ID)!
 	fragmentCount := uint16(dataLen / maxLen)
@@ -183,10 +183,10 @@ func (s *Socket) WritePacket(data []byte) error {
 		fragmentCount++
 	}
 
-	packetId1 := uint8(packetId % 0xFF)
-	packetId2 := uint8((packetId >> 8) % 0xFF)
-	packetId3 := uint8((packetId >> 16) % 0xFF)
-	packetId4 := uint8((packetId >> 24) % 0xFF)
+	packetID1 := uint8(packetID % 0xFF)
+	packetID2 := uint8((packetID >> 8) % 0xFF)
+	packetID3 := uint8((packetID >> 16) % 0xFF)
+	packetID4 := uint8((packetID >> 24) % 0xFF)
 	for frag := uint16(0); frag < fragmentCount; frag++ {
 		buf.Reset()
 
@@ -195,10 +195,10 @@ func (s *Socket) WritePacket(data []byte) error {
 			fragFlag |= 0b10000000
 		}
 		buf.WriteByte(fragFlag)
-		buf.WriteByte(packetId4)
-		buf.WriteByte(packetId3)
-		buf.WriteByte(packetId2)
-		buf.WriteByte(packetId1)
+		buf.WriteByte(packetID4)
+		buf.WriteByte(packetID3)
+		buf.WriteByte(packetID2)
+		buf.WriteByte(packetID1)
 
 		fragStart := frag * maxLen
 		fragEnd := fragStart + maxLen

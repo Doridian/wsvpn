@@ -12,5 +12,5 @@ func (a *AllowAllAuthenticator) Load(configFile string) error {
 }
 
 func (a *AllowAllAuthenticator) Authenticate(r *http.Request, w http.ResponseWriter) (AuthResult, string) {
-	return AUTH_OK, ""
+	return AuthOk, ""
 }

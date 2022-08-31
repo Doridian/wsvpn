@@ -16,12 +16,12 @@ type SocketAdapter interface {
 	Close() error
 
 	// Boolean indicating whether the error was unexpected (true) or not (false)
-	Serve() (error, bool)
+	Serve() (bool, error)
 
 	WaitReady()
 	Name() string
 
-	SetFeaturesContainer(ct features.FeaturesContainer)
+	SetFeaturesContainer(ct features.Container)
 
 	WriteControlMessage(message []byte) error
 	SetControlMessageHandler(handler MessageHandler)
@@ -48,7 +48,7 @@ type adapterBase struct {
 	controlMessageHandler MessageHandler
 	dataMessageHandler    MessageHandler
 	pongHandler           func()
-	featuresContainer     features.FeaturesContainer
+	featuresContainer     features.Container
 }
 
 func (s *adapterBase) SetControlMessageHandler(handler MessageHandler) {
@@ -63,6 +63,6 @@ func (s *adapterBase) SetPongHandler(handler func()) {
 	s.pongHandler = handler
 }
 
-func (s *adapterBase) SetFeaturesContainer(featuresContainer features.FeaturesContainer) {
+func (s *adapterBase) SetFeaturesContainer(featuresContainer features.Container) {
 	s.featuresContainer = featuresContainer
 }

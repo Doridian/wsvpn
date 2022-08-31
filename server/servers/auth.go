@@ -21,8 +21,8 @@ func (s *Server) handleSocketAuth(logger *log.Logger, w http.ResponseWriter, r *
 	}
 
 	authResult, authUsername := s.Authenticator.Authenticate(r, w)
-	if authResult != authenticators.AUTH_OK {
-		if authResult == authenticators.AUTH_FAILED_DEFAULT {
+	if authResult != authenticators.AuthOk {
+		if authResult == authenticators.AuthFailedDefault {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		}
 		logger.Printf("Client failed authenticator challenge")

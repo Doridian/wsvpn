@@ -2,10 +2,10 @@ package shared
 
 import (
 	"crypto/tls"
-	_ "unsafe"
+	_ "unsafe" // Required for go:linkname
 )
 
-func TlsVersionString(version uint16) string {
+func TLSVersionString(version uint16) string {
 	switch version {
 	case tls.VersionTLS10:
 		return "1.0"
@@ -19,7 +19,7 @@ func TlsVersionString(version uint16) string {
 	return "Invalid"
 }
 
-func TlsVersionNum(version string) uint16 {
+func TLSVersionNum(version string) uint16 {
 	switch version {
 	case "1.0":
 		return tls.VersionTLS10
@@ -36,6 +36,6 @@ func TlsVersionNum(version string) uint16 {
 //go:linkname hasAESGCMHardwareSupport crypto/tls.hasAESGCMHardwareSupport
 var hasAESGCMHardwareSupport bool
 
-func TlsSetCipherAESPreference(preferAES bool) {
+func TLSSetCipherAESPreference(preferAES bool) {
 	hasAESGCMHardwareSupport = preferAES
 }

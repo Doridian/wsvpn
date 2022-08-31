@@ -1,23 +1,23 @@
 package commands
 
-const SetMtuCommandName CommandName = "set_mtu"
+const SetMTUCommandName CommandName = "set_mtu"
 
-type SetMtuParameters struct {
+type SetMTUParameters struct {
 	MTU int `json:"mtu"`
 }
 
-func (c *SetMtuParameters) MakeCommand(id string) (*OutgoingCommand, error) {
-	return makeCommand(SetMtuCommandName, id, c)
+func (c *SetMTUParameters) MakeCommand(id string) (*OutgoingCommand, error) {
+	return makeCommand(SetMTUCommandName, id, c)
 }
 
-func (c *SetMtuParameters) MinProtocolVersion() int {
+func (c *SetMTUParameters) MinProtocolVersion() int {
 	return 7
 }
 
-func (c *SetMtuParameters) ServerCanIssue() bool {
+func (c *SetMTUParameters) ServerCanIssue() bool {
 	return true
 }
 
-func (c *SetMtuParameters) ClientCanIssue() bool {
+func (c *SetMTUParameters) ClientCanIssue() bool {
 	return false
 }

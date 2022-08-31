@@ -7,7 +7,6 @@ import (
 
 	"github.com/Doridian/wsvpn/server/upgraders"
 	"github.com/Doridian/wsvpn/shared"
-	"github.com/lucas-clemente/quic-go/http3"
 )
 
 func (s *Server) listenUpgraders() {
@@ -51,28 +50,17 @@ func (s *Server) listenPlaintext(httpHandlerFunc http.HandlerFunc) {
 
 func (s *Server) listenEncrypted(httpHandlerFunc http.HandlerFunc) {
 	if s.HTTP3Enabled {
-		quicServer := &http3.Server{
+		webtransportUpgrader := upgraders.NewWebTransportUpgrader(&upgraders.QuicServerConfig{
 			Addr:      s.ListenAddr,
 			TLSConfig: s.TLSConfig,
 			Handler:   httpHandlerFunc,
-		}
-		// s.addCloser(quicServer)
-
-		s.addUpgrader(upgraders.NewWebTransportUpgrader(quicServer))
+		})
+		s.addUpgrader(webtransportUpgrader) // This calls addCloser for us
 
 		httpHandlerFunc = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			quicServer.SetQuicHeaders(w.Header())
+			webtransportUpgrader.SetQuicHeaders(w.Header())
 			s.serveSocket(w, r)
 		})
-
-		// This should be at the end of this func, but WebTransport calls it for us, and there is no way to avoid it
-		// s.serveWaitGroup.Add(1)
-		// go func() {
-		//	err := quicServer.ListenAndServe()
-		//	if err != nil {
-		//		s.setServeError(err)
-		//	}
-		// }()
 	}
 
 	server := &http.Server{

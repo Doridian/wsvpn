@@ -51,15 +51,15 @@ func reloadConfig(configPtr *string, client *clients.Client) error {
 
 	client.SetBasicAuthFromUserInfo(userInfo)
 
-	client.TLSConfig.InsecureSkipVerify = config.Client.Tls.Config.Insecure
-	client.TLSConfig.ServerName = config.Client.Tls.ServerName
-	err = cli.TlsUseConfig(client.TLSConfig, &config.Client.Tls.Config)
+	client.TLSConfig.InsecureSkipVerify = config.Client.TLS.Config.Insecure
+	client.TLSConfig.ServerName = config.Client.TLS.ServerName
+	err = cli.TLSUseConfig(client.TLSConfig, &config.Client.TLS.Config)
 	if err != nil {
 		return err
 	}
 
-	if config.Client.Tls.Ca != "" {
-		data, err := os.ReadFile(config.Client.Tls.Ca)
+	if config.Client.TLS.CA != "" {
+		data, err := os.ReadFile(config.Client.TLS.CA)
 		if err != nil {
 			return err
 		}
@@ -71,12 +71,12 @@ func reloadConfig(configPtr *string, client *clients.Client) error {
 		client.TLSConfig.RootCAs = certPool
 	}
 
-	if config.Client.Tls.Certificate != "" || config.Client.Tls.Key != "" {
-		if config.Client.Tls.Certificate == "" || config.Client.Tls.Key == "" {
+	if config.Client.TLS.Certificate != "" || config.Client.TLS.Key != "" {
+		if config.Client.TLS.Certificate == "" || config.Client.TLS.Key == "" {
 			return errors.New("provide either both tls.key and tls.certificate or neither")
 		}
 
-		tlsClientCertX509, err := tls.LoadX509KeyPair(config.Client.Tls.Certificate, config.Client.Tls.Key)
+		tlsClientCertX509, err := tls.LoadX509KeyPair(config.Client.TLS.Certificate, config.Client.TLS.Key)
 		if err != nil {
 			return err
 		}
@@ -84,11 +84,11 @@ func reloadConfig(configPtr *string, client *clients.Client) error {
 	}
 
 	if config.Client.Proxy != "" {
-		proxyUrl, err := url.Parse(config.Client.Proxy)
+		proxyURL, err := url.Parse(config.Client.Proxy)
 		if err != nil {
 			return err
 		}
-		client.ProxyUrl = proxyUrl
+		client.ProxyURL = proxyURL
 	}
 
 	client.SocketConfigurator = &cli.PingFlagsSocketConfigurator{
@@ -101,7 +101,7 @@ func reloadConfig(configPtr *string, client *clients.Client) error {
 		client.SetLocalFeature(feat, en)
 	}
 	client.SetDefaultGateway = config.Tunnel.SetDefaultGateway
-	client.ServerUrl = dest
+	client.ServerURL = dest
 	client.InterfaceConfig = &config.Interface
 	client.InterfaceConfig.OneInterfacePerConnection = false
 	client.AutoReconnectDelay = config.Client.AutoReconnectDelay

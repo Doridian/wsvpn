@@ -27,7 +27,7 @@ func (g *MACSwitch) broadcastDataMessage(data []byte, skip *sockets.Socket) {
 }
 
 func (g *MACSwitch) findSocketByMAC(hwAddr net.HardwareAddr) *sockets.Socket {
-	mac := hwAddrToMac(hwAddr)
+	mac := hwAddrToMAC(hwAddr)
 
 	g.macLock.RLock()
 	defer g.macLock.RUnlock()
@@ -38,7 +38,7 @@ func (g *MACSwitch) findSocketByMAC(hwAddr net.HardwareAddr) *sockets.Socket {
 func (g *MACSwitch) cleanupAllMACs() {
 	for g.isRunning {
 		<-g.cleanupTimer.C
-		if !g.AllowMacChanging {
+		if !g.AllowMACChanging {
 			continue
 		}
 
@@ -59,7 +59,7 @@ func (g *MACSwitch) cleanupAllMACs() {
 func (g *MACSwitch) cleanupMACs(macTable *lru.Cache) {
 	for {
 		k, v, ok := macTable.GetOldest()
-		if !ok || time.Since(v.(time.Time)) <= g.MacTableTimeout {
+		if !ok || time.Since(v.(time.Time)) <= g.MACTableTimeout {
 			break
 		}
 		macTable.Remove(k)
@@ -67,41 +67,41 @@ func (g *MACSwitch) cleanupMACs(macTable *lru.Cache) {
 }
 
 func (g *MACSwitch) setMACFrom(socket *sockets.Socket, msg []byte) bool {
-	srcMac := waterutil.MACSource(msg)
-	if !waterutil.IsMACUnicast(srcMac) {
+	srcMAC := waterutil.MACSource(msg)
+	if !waterutil.IsMACUnicast(srcMAC) {
 		return false
 	}
 
-	srcMacAddr := hwAddrToMac(srcMac)
+	srcMACAddr := hwAddrToMAC(srcMAC)
 
 	g.macLock.RLock()
-	socketMacs := g.socketTable[socket]
+	socketMACs := g.socketTable[socket]
 	g.macLock.RUnlock()
 
-	if socketMacs == nil {
+	if socketMACs == nil {
 		return false
 	}
 
-	if socketMacs.Contains(srcMacAddr) {
-		socketMacs.Add(srcMacAddr, time.Now())
+	if socketMACs.Contains(srcMACAddr) {
+		socketMACs.Add(srcMACAddr, time.Now())
 		return true
 	}
 
-	if !g.AllowMacChanging && socketMacs.Len() > 0 {
+	if !g.AllowMACChanging && socketMACs.Len() > 0 {
 		return false
 	}
 
 	g.macLock.Lock()
-	if g.macTable[srcMacAddr] != nil {
+	if g.macTable[srcMACAddr] != nil {
 		g.macLock.Unlock()
 		socket.CloseError(errors.New("MAC collision"))
 		return false
 	}
 
-	g.macTable[srcMacAddr] = socket
+	g.macTable[srcMACAddr] = socket
 	g.macLock.Unlock()
 
-	socketMacs.Add(srcMacAddr, time.Now())
+	socketMACs.Add(srcMACAddr, time.Now())
 
 	return true
 }

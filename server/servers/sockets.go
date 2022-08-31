@@ -21,16 +21,16 @@ import (
 func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	clientIdUUID, err := uuid.NewRandom()
+	clientUUID, err := uuid.NewRandom()
 	if err != nil {
 		s.log.Printf("Error creating client ID: %v", err)
 		http.Error(w, "Error creating client ID", http.StatusInternalServerError)
 		return
 	}
 
-	clientId := clientIdUUID.String()
+	clientID := clientUUID.String()
 
-	clientLogger := shared.MakeLogger("CLIENT", clientId)
+	clientLogger := shared.MakeLogger("CLIENT", clientID)
 
 	tlsConnectionState := r.TLS
 
@@ -44,7 +44,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if tlsConnectionState != nil {
-		clientLogger.Printf("TLS %s connection established with cipher=%s", shared.TlsVersionString(tlsConnectionState.Version), tls.CipherSuiteName(tlsConnectionState.CipherSuite))
+		clientLogger.Printf("TLS %s connection established with cipher=%s", shared.TLSVersionString(tlsConnectionState.Version), tls.CipherSuiteName(tlsConnectionState.CipherSuite))
 	} else {
 		clientLogger.Printf("Unencrypted connection established")
 	}
@@ -203,13 +203,13 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	doRunEventScript(shared.EventUp)
 
 	err = socket.MakeAndSendCommand(&commands.InitParameters{
-		ClientID:            clientId,
-		ServerID:            s.serverId,
+		ClientID:            clientID,
+		ServerID:            s.serverID,
 		Mode:                s.Mode.ToString(),
-		DoIpConfig:          s.DoRemoteIpConfig,
-		IpAddress:           remoteNetStr,
+		DoIPConfig:          s.DoRemoteIPConfig,
+		IPAddress:           remoteNetStr,
 		MTU:                 s.mtu,
-		EnableFragmentation: socket.IsLocalFeature(features.FEATURE_FRAGMENTATION),
+		EnableFragmentation: socket.IsLocalFeature(features.Fragmentation),
 	})
 	if err != nil {
 		socket.CloseError(fmt.Errorf("error sending init command: %v", err))

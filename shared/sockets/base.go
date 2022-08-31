@@ -21,7 +21,7 @@ const featureFieldMinProtocol = 12
 type Socket struct {
 	AssignedIP net.IP
 
-	lastFragmentId        uint32
+	lastFragmentID        uint32
 	lastFragmentCleanup   time.Time
 	defragBuffer          map[uint32]*fragmentsInfo
 	defragLock            *sync.Mutex
@@ -58,7 +58,7 @@ type Socket struct {
 func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *iface.WaterInterfaceWrapper, ifaceManaged bool) *Socket {
 	return &Socket{
 		AssignedIP: net.IPv6unspecified,
-		mac:        shared.DefaultMac,
+		mac:        shared.DefaultMAC,
 
 		adapter:               adapter,
 		iface:                 iface,
@@ -75,7 +75,7 @@ func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *iface
 		isClosing:             false,
 		closeLock:             &sync.Mutex{},
 
-		lastFragmentId:        0,
+		lastFragmentID:        0,
 		defragBuffer:          make(map[uint32]*fragmentsInfo),
 		defragLock:            &sync.Mutex{},
 		lastFragmentCleanup:   time.Now(),
@@ -120,11 +120,11 @@ func (s *Socket) HandleInitPacketFragmentation(enabled bool) {
 		return
 	}
 
-	s.SetLocalFeature(features.FEATURE_FRAGMENTATION, true)
+	s.SetLocalFeature(features.Fragmentation, true)
 	if enabled {
-		s.remoteFeatures[features.FEATURE_FRAGMENTATION] = true
+		s.remoteFeatures[features.Fragmentation] = true
 	} else {
-		delete(s.remoteFeatures, features.FEATURE_FRAGMENTATION)
+		delete(s.remoteFeatures, features.Fragmentation)
 	}
 
 	s.featureCheck()
@@ -148,12 +148,12 @@ func (s *Socket) featureCheck() {
 	if s.remoteProtocolVersion >= fragmentationMinProtocol && s.remoteProtocolVersion < fragmentationNegotiatedMinProtocol {
 		s.fragmentationEnabled = true
 	} else if s.remoteProtocolVersion >= fragmentationNegotiatedMinProtocol && s.remoteProtocolVersion < featureFieldMinProtocol {
-		s.fragmentationEnabled = s.localFeatures[features.FEATURE_FRAGMENTATION]
+		s.fragmentationEnabled = s.localFeatures[features.Fragmentation]
 	} else {
-		s.fragmentationEnabled = s.IsFeatureEnabled(features.FEATURE_FRAGMENTATION)
+		s.fragmentationEnabled = s.IsFeatureEnabled(features.Fragmentation)
 	}
 
-	s.compressionEnabled = s.IsFeatureEnabled(features.FEATURE_COMPRESSION)
+	s.compressionEnabled = s.IsFeatureEnabled(features.Compression)
 
 	s.log.Printf("Setting fragmentation: %s", shared.BoolToEnabled(s.fragmentationEnabled))
 	// s.log.Printf("Setting compression: %s", shared.BoolToEnabled(s.compressionEnabled))
@@ -235,7 +235,7 @@ func (s *Socket) Serve() {
 	s.wg.Add(1)
 	go func() {
 		defer s.closeDone()
-		err, unexpected := s.adapter.Serve()
+		unexpected, err := s.adapter.Serve()
 		if unexpected {
 			s.log.Printf("Adapter ERROR: %v", err)
 		}

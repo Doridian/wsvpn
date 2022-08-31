@@ -3,17 +3,17 @@ package features
 type Feature = string
 
 const (
-	FEATURE_FRAGMENTATION Feature = "fragmentation"
-	FEATURE_DATAGRAM_ID_0 Feature = "datagram_id_0"
-	FEATURE_COMPRESSION   Feature = "compression"
+	Fragmentation Feature = "fragmentation"
+	DatagramID0   Feature = "datagram_id_0"
+	Compression   Feature = "compression"
 )
 
-type FeaturesConfig = map[Feature]bool
+type Config = map[Feature]bool
 
 func IsFeatureSupported(feat Feature) bool {
-	return feat == FEATURE_FRAGMENTATION || feat == FEATURE_DATAGRAM_ID_0
+	return feat == Fragmentation || feat == DatagramID0
 }
 
-type FeaturesContainer interface {
+type Container interface {
 	IsFeatureEnabled(feat Feature) bool
 }

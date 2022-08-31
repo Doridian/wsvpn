@@ -48,7 +48,7 @@ func (s *WebSocketAdapter) GetTLSConnectionState() (tls.ConnectionState, bool) {
 	return tlsConn.ConnectionState(), true
 }
 
-func (s *WebSocketAdapter) Serve() (error, bool) {
+func (s *WebSocketAdapter) Serve() (bool, error) {
 	s.conn.SetPongHandler(func(appData string) error {
 		if s.pongHandler != nil {
 			s.pongHandler()
@@ -59,7 +59,7 @@ func (s *WebSocketAdapter) Serve() (error, bool) {
 	for {
 		msgType, msg, err := s.conn.ReadMessage()
 		if err != nil {
-			return err, websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway)
+			return websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway), err
 		}
 
 		var res bool
@@ -76,7 +76,7 @@ func (s *WebSocketAdapter) Serve() (error, bool) {
 		}
 	}
 
-	return errors.New("Serve terminated"), true
+	return true, errors.New("Serve terminated")
 }
 
 func (s *WebSocketAdapter) WaitReady() {

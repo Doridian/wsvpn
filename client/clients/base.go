@@ -20,8 +20,8 @@ type Client struct {
 	shared.EventConfigHolder
 
 	TLSConfig          *tls.Config
-	ProxyUrl           *url.URL
-	ServerUrl          *url.URL
+	ProxyURL           *url.URL
+	ServerURL          *url.URL
 	Headers            http.Header
 	SetDefaultGateway  bool
 	SocketConfigurator sockets.SocketConfigurator
@@ -32,7 +32,7 @@ type Client struct {
 	clientID   string
 	serverID   string
 	mtu        int
-	doIpConfig bool
+	doIPConfig bool
 	iface      *iface.WaterInterfaceWrapper
 	remoteNet  *shared.VPNNet
 	socket     *sockets.Socket
@@ -96,7 +96,7 @@ func (c *Client) Serve() error {
 		isWarning = false
 	}
 
-	c.log.Printf("%sConnecting to %s with authentications: %s", shared.BoolIfString(isWarning, "WARNING: "), c.ServerUrl.Redacted(), authText)
+	c.log.Printf("%sConnecting to %s with authentications: %s", shared.BoolIfString(isWarning, "WARNING: "), c.ServerURL.Redacted(), authText)
 
 	err := c.connectAdapter()
 	if err != nil {

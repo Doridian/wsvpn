@@ -15,12 +15,12 @@ func addSupportedSerializationHeader(header http.Header) {
 func readSerializationType(header http.Header) commands.SerializationType {
 	res := header.Get(commands.CommandSerializationHeaderName)
 	if res == "" {
-		return commands.SerializationTypeJson
+		return commands.SerializationTypeJSON
 	}
 
 	stype := commands.SerializationTypeFromString(res)
 	if stype == commands.SerializationTypeInvalid {
-		return commands.SerializationTypeJson
+		return commands.SerializationTypeJSON
 	}
 	return stype
 }

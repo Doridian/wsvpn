@@ -1,7 +1,7 @@
 package cli
 
 import (
-	_ "embed"
+	_ "embed" // Required for go:embed
 	"log"
 	"strings"
 	"time"
@@ -17,9 +17,9 @@ var defaultConfig string
 
 type Config struct {
 	Tunnel struct {
-		SetDefaultGateway bool                    `yaml:"set-default-gateway"`
-		Ping              shared_cli.PingConfig   `yaml:"ping"`
-		Features          features.FeaturesConfig `yaml:"features"`
+		SetDefaultGateway bool                  `yaml:"set-default-gateway"`
+		Ping              shared_cli.PingConfig `yaml:"ping"`
+		Features          features.Config       `yaml:"features"`
 	} `yaml:"tunnel"`
 
 	Interface iface.InterfaceConfig `yaml:"interface"`
@@ -31,12 +31,12 @@ type Config struct {
 		Proxy              string        `yaml:"proxy"`
 		AuthFile           string        `yaml:"auth-file"`
 		AutoReconnectDelay time.Duration `yaml:"auto-reconnect-delay"`
-		Tls                struct {
-			Ca          string               `yaml:"ca"`
+		TLS                struct {
+			CA          string               `yaml:"ca"`
 			Certificate string               `yaml:"certificate"`
 			Key         string               `yaml:"key"`
 			ServerName  string               `yaml:"server-name"`
-			Config      shared_cli.TlsConfig `yaml:"config"`
+			Config      shared_cli.TLSConfig `yaml:"config"`
 		} `yaml:"tls"`
 	}
 }

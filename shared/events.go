@@ -35,13 +35,13 @@ func (c *EventConfigHolder) RunEventScript(op string, remoteNet string, iface st
 		return nil
 	}
 
-	all_args := []string{}
+	allArgs := []string{}
 	if len(script) > 1 {
-		all_args = append(all_args, script[1:]...)
+		allArgs = append(allArgs, script[1:]...)
 	}
-	all_args = append(all_args, op, remoteNet, iface)
-	all_args = append(all_args, args...)
-	return ExecCmd(script[0], all_args...)
+	allArgs = append(allArgs, op, remoteNet, iface)
+	allArgs = append(allArgs, args...)
+	return ExecCmd(script[0], allArgs...)
 }
 
 func (c *EventConfigHolder) LoadEventConfig(config *EventConfig) {

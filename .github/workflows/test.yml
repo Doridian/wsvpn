@@ -45,9 +45,9 @@ jobs:
       - name: Build local binaries
         run: python ./build.py --architecture local --platform local
       - name: Install npcap
-        run: echo TODO INSTALL NPCAP SOMEHOW HERE
-      #- name: Run tests
-      #  run: pytest -p no:cacheprovider ./tests
+        run: .\.github\InstallNpcap.ps1
+      - name: Run tests
+        run: pytest -p no:cacheprovider ./tests
   test-darwin:
     runs-on: macos-latest
     steps:

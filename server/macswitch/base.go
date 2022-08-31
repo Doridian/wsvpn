@@ -19,10 +19,6 @@ func hwAddrToMac(hw net.HardwareAddr) macAddr {
 	return out
 }
 
-func hwAddrIsUnicast(hw net.HardwareAddr) bool {
-	return (hw[0] & 0b00000001) == 0
-}
-
 type MACSwitch struct {
 	AllowClientToClient      bool
 	AllowIpSpoofing          bool

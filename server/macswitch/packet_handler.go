@@ -14,7 +14,7 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 	}
 
 	etherType := waterutil.MACEthertype(packet)
-	if !g.AllowUnknownEtherTypes && etherType != waterutil.ARP && etherType != waterutil.IPv4 {
+	if !g.AllowUnknownEtherTypes && etherType != waterutil.ARP && etherType != waterutil.IPv4 && etherType != waterutil.IPv6 {
 		return true, nil
 	}
 
@@ -23,14 +23,31 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 			return true, nil
 		}
 
-		if !g.AllowIpSpoofing && etherType == waterutil.IPv4 {
-			if len(packet) < ETH_LEN+20 {
-				return !g.AllowUnknownEtherTypes, nil
+		if !g.AllowIpSpoofing {
+			expectedIPVersion := byte(0)
+			expectedMinLen := 0
+			switch etherType {
+			case waterutil.IPv4:
+				expectedIPVersion = 4
+				expectedMinLen = 20
+			case waterutil.IPv6:
+				expectedIPVersion = 6
+				expectedMinLen = 40
 			}
 
-			srcIp := waterutil.IPv4Source(packet[ETH_LEN:])
-			if !srcIp.Equal(socket.AssignedIP) {
-				return true, nil
+			if expectedIPVersion > 0 {
+				if len(packet) < ETH_LEN+expectedMinLen {
+					return true, nil
+				}
+
+				if waterutil.IPVersion(packet[ETH_LEN:]) != expectedIPVersion {
+					return true, nil
+				}
+
+				srcIp := waterutil.IPSource(packet[ETH_LEN:])
+				if !srcIp.Equal(socket.AssignedIP) {
+					return true, nil
+				}
 			}
 		}
 	}
@@ -38,7 +55,7 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 	if socket == nil || g.AllowClientToClient {
 		destMac := waterutil.MACDestination(packet)
 
-		if hwAddrIsUnicast(destMac) {
+		if waterutil.IsMACUnicast(destMac) {
 			socketDest := g.findSocketByMAC(destMac)
 			if socketDest != nil {
 				socketDest.WritePacket(packet)

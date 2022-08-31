@@ -68,7 +68,7 @@ func (g *MACSwitch) cleanupMACs(macTable *lru.Cache) {
 
 func (g *MACSwitch) setMACFrom(socket *sockets.Socket, msg []byte) bool {
 	srcMac := waterutil.MACSource(msg)
-	if !hwAddrIsUnicast(srcMac) {
+	if !waterutil.IsMACUnicast(srcMac) {
 		return false
 	}
 

@@ -24,7 +24,7 @@ def authenticator_config() -> Generator:
     with NamedTemporaryFile(mode="w", delete=False) as f:
         f.write(f"{TEST_USER}:{TEST_PASSWORD}\n")
         aconf = f.name
-    
+
     yield aconf
     remove(aconf)
 

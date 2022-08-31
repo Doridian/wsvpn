@@ -10,7 +10,7 @@ import (
 	"github.com/Doridian/wsvpn/shared"
 )
 
-type TlsConfig struct {
+type TLSConfig struct {
 	MinVersion       string `yaml:"min-version"`
 	MaxVersion       string `yaml:"max-version"`
 	KeyLogFile       string `yaml:"key-log-file"`
@@ -18,9 +18,9 @@ type TlsConfig struct {
 	CipherPreference string `yaml:"cipher-preference"`
 }
 
-func TlsUseConfig(tlsConfig *tls.Config, fileConfig *TlsConfig) error {
-	tlsConfig.MinVersion = shared.TlsVersionNum(fileConfig.MinVersion)
-	tlsConfig.MaxVersion = shared.TlsVersionNum(fileConfig.MaxVersion)
+func TLSUseConfig(tlsConfig *tls.Config, fileConfig *TLSConfig) error {
+	tlsConfig.MinVersion = shared.TLSVersionNum(fileConfig.MinVersion)
+	tlsConfig.MaxVersion = shared.TLSVersionNum(fileConfig.MaxVersion)
 
 	if fileConfig.KeyLogFile != "" {
 		fh, err := os.OpenFile(fileConfig.KeyLogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
@@ -33,9 +33,9 @@ func TlsUseConfig(tlsConfig *tls.Config, fileConfig *TlsConfig) error {
 
 	switch strings.ToUpper(fileConfig.CipherPreference) {
 	case "AES":
-		shared.TlsSetCipherAESPreference(true)
+		shared.TLSSetCipherAESPreference(true)
 	case "CHACHA":
-		shared.TlsSetCipherAESPreference(false)
+		shared.TLSSetCipherAESPreference(false)
 	case "":
 		break
 	default:

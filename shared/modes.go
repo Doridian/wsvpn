@@ -5,16 +5,16 @@ import "github.com/Doridian/water"
 type VPNMode int
 
 const (
-	VPN_MODE_TUN VPNMode = iota
-	VPN_MODE_TAP
-	VPN_MODE_INVALID
+	VPNModeTUN VPNMode = iota
+	VPNModeTAP
+	VPNModeInvalid
 )
 
 func (m VPNMode) ToString() string {
 	switch m {
-	case VPN_MODE_TAP:
+	case VPNModeTAP:
 		return "TAP"
-	case VPN_MODE_TUN:
+	case VPNModeTUN:
 		return "TUN"
 	}
 	return "Invalid"
@@ -22,9 +22,9 @@ func (m VPNMode) ToString() string {
 
 func (m VPNMode) ToWaterDeviceType() water.DeviceType {
 	switch m {
-	case VPN_MODE_TAP:
+	case VPNModeTAP:
 		return water.TAP
-	case VPN_MODE_TUN:
+	case VPNModeTUN:
 		return water.TUN
 	}
 	return -1
@@ -33,9 +33,9 @@ func (m VPNMode) ToWaterDeviceType() water.DeviceType {
 func VPNModeFromString(mode string) VPNMode {
 	switch mode {
 	case "TAP":
-		return VPN_MODE_TAP
+		return VPNModeTAP
 	case "TUN":
-		return VPN_MODE_TUN
+		return VPNModeTUN
 	}
-	return VPN_MODE_INVALID
+	return VPNModeInvalid
 }

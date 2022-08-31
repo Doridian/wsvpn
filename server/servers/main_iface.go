@@ -63,9 +63,9 @@ func (s *Server) createMainIface() error {
 		vpnNet = nil
 	}
 
-	serverIp := vpnNet.GetServerIP()
+	serverIP := vpnNet.GetServerIP()
 
-	err = s.mainIface.Configure(serverIp, vpnNet, serverIp)
+	err = s.mainIface.Configure(serverIP, vpnNet, serverIP)
 	if err != nil {
 		return err
 	}

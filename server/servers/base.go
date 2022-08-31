@@ -24,8 +24,8 @@ type Server struct {
 
 	PacketHandler      sockets.PacketHandler
 	VPNNet             *shared.VPNNet
-	DoLocalIpConfig    bool
-	DoRemoteIpConfig   bool
+	DoLocalIPConfig    bool
+	DoRemoteIPConfig   bool
 	TLSConfig          *tls.Config
 	ListenAddr         string
 	HTTP3Enabled       bool
@@ -42,7 +42,7 @@ type Server struct {
 	mtu                int
 	mainIface          *iface.WaterInterfaceWrapper
 	log                *log.Logger
-	serverId           string
+	serverID           string
 
 	closers     []io.Closer
 	sockets     map[*sockets.Socket]bool
@@ -72,9 +72,9 @@ func NewServer() *Server {
 	}
 }
 
-func (s *Server) SetServerID(serverId string) {
-	s.serverId = serverId
-	shared.UpdateLogger(s.log, "SERVER", s.serverId)
+func (s *Server) SetServerID(serverID string) {
+	s.serverID = serverID
+	shared.UpdateLogger(s.log, "SERVER", s.serverID)
 }
 
 func (s *Server) addCloser(closer io.Closer) {
@@ -173,7 +173,7 @@ func (s *Server) SetMTU(mtu int) error {
 				return err
 			}
 		}
-		sock.MakeAndSendCommand(&commands.SetMtuParameters{
+		sock.MakeAndSendCommand(&commands.SetMTUParameters{
 			MTU: mtu,
 		})
 	}

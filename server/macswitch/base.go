@@ -9,11 +9,11 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 )
 
-type socketToMacs = *lru.Cache
+type socketToMACs = *lru.Cache
 
 type macAddr [6]byte
 
-func hwAddrToMac(hw net.HardwareAddr) macAddr {
+func hwAddrToMAC(hw net.HardwareAddr) macAddr {
 	var out macAddr
 	copy(out[:], hw)
 	return out
@@ -21,14 +21,14 @@ func hwAddrToMac(hw net.HardwareAddr) macAddr {
 
 type MACSwitch struct {
 	AllowClientToClient      bool
-	AllowIpSpoofing          bool
+	AllowIPSpoofing          bool
 	AllowUnknownEtherTypes   bool
-	AllowMacChanging         bool
-	AllowedMacsPerConnection int
-	MacTableTimeout          time.Duration
+	AllowMACChanging         bool
+	AllowedMACsPerConnection int
+	MACTableTimeout          time.Duration
 
 	macTable     map[macAddr]*sockets.Socket
-	socketTable  map[*sockets.Socket]socketToMacs
+	socketTable  map[*sockets.Socket]socketToMACs
 	macLock      *sync.RWMutex
 	cleanupTimer *time.Timer
 	isRunning    bool
@@ -37,13 +37,13 @@ type MACSwitch struct {
 func MakeMACSwitch() *MACSwitch {
 	sw := &MACSwitch{
 		AllowClientToClient:      false,
-		AllowIpSpoofing:          false,
+		AllowIPSpoofing:          false,
 		AllowUnknownEtherTypes:   false,
-		AllowMacChanging:         true,
-		AllowedMacsPerConnection: 1,
-		MacTableTimeout:          time.Duration(600 * time.Second),
+		AllowMACChanging:         true,
+		AllowedMACsPerConnection: 1,
+		MACTableTimeout:          time.Duration(600 * time.Second),
 		macTable:                 make(map[macAddr]*sockets.Socket),
-		socketTable:              make(map[*sockets.Socket]socketToMacs),
+		socketTable:              make(map[*sockets.Socket]socketToMACs),
 		macLock:                  &sync.RWMutex{},
 		cleanupTimer:             time.NewTimer(time.Duration(30 * time.Second)),
 		isRunning:                true,
@@ -63,7 +63,7 @@ func (g *MACSwitch) ConfigUpdate() {
 	g.macLock.RUnlock()
 
 	for _, table := range tables {
-		table.Resize(g.AllowedMacsPerConnection)
+		table.Resize(g.AllowedMACsPerConnection)
 	}
 }
 

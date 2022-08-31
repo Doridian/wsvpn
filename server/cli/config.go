@@ -1,7 +1,7 @@
 package cli
 
 import (
-	_ "embed"
+	_ "embed" // Required for go:embed
 	"log"
 	"strings"
 
@@ -16,16 +16,16 @@ var defaultConfig string
 
 type Config struct {
 	Tunnel struct {
-		Mtu                      int                     `yaml:"mtu"`
-		Subnet                   string                  `yaml:"subnet"`
-		Mode                     string                  `yaml:"mode"`
-		AllowClientToClient      bool                    `yaml:"allow-client-to-client"`
-		AllowIpSpoofing          bool                    `yaml:"allow-ip-spoofing"`
-		AllowUnknownEtherTypes   bool                    `yaml:"allow-unknown-ether-types"`
-		AllowMacChanging         bool                    `yaml:"allow-mac-changing"`
-		AllowedMacsPerConnection int                     `yaml:"allowed-macs-per-connection"`
-		Features                 features.FeaturesConfig `yaml:"features"`
-		IpConfig                 struct {
+		MTU                      int             `yaml:"mtu"`
+		Subnet                   string          `yaml:"subnet"`
+		Mode                     string          `yaml:"mode"`
+		AllowClientToClient      bool            `yaml:"allow-client-to-client"`
+		AllowIPSpoofing          bool            `yaml:"allow-ip-spoofing"`
+		AllowUnknownEtherTypes   bool            `yaml:"allow-unknown-ether-types"`
+		AllowMACChanging         bool            `yaml:"allow-mac-changing"`
+		AllowedMACsPerConnection int             `yaml:"allowed-macs-per-connection"`
+		Features                 features.Config `yaml:"features"`
+		IPConfig                 struct {
 			Local  bool `yaml:"local"`
 			Remote bool `yaml:"remote"`
 		} `yaml:"ip-config"`
@@ -39,11 +39,11 @@ type Config struct {
 	Server struct {
 		Listen      string `yaml:"listen"`
 		EnableHTTP3 bool   `yaml:"enable-http3"`
-		Tls         struct {
-			ClientCa    string               `yaml:"client-ca"`
+		TLS         struct {
+			ClientCA    string               `yaml:"client-ca"`
 			Certificate string               `yaml:"certificate"`
 			Key         string               `yaml:"key"`
-			Config      shared_cli.TlsConfig `yaml:"config"`
+			Config      shared_cli.TLSConfig `yaml:"config"`
 		} `yaml:"tls"`
 		Authenticator struct {
 			Type   string `yaml:"type"`

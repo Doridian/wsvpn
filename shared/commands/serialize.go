@@ -11,7 +11,7 @@ type SerializationType = int
 
 const (
 	SerializationTypeInvalid SerializationType = iota
-	SerializationTypeJson
+	SerializationTypeJSON
 )
 
 var serializationTypeMap map[string]SerializationType
@@ -33,7 +33,7 @@ func initSerializationTypeMaps() {
 	serializationTypeReverseMap = make(map[SerializationType]string)
 	serializationTypePriorityMap = make(map[SerializationType]int)
 
-	addSerializationType(SerializationTypeJson, "json", 1)
+	addSerializationType(SerializationTypeJSON, "json", 1)
 }
 
 func initSerializationTypeMapsOnce() {
@@ -84,7 +84,7 @@ func GetSupportedSerializationTypeNames() []string {
 
 func (c *OutgoingCommand) Serialize(serializationType SerializationType) ([]byte, error) {
 	switch serializationType {
-	case SerializationTypeJson:
+	case SerializationTypeJSON:
 		return json.Marshal(c)
 	}
 	return []byte{}, errors.New("unknown serialization type")
@@ -98,7 +98,7 @@ func DeserializeCommand(message []byte, serializationType SerializationType) (*I
 	var command IncomingCommand
 	var err error
 	switch serializationType {
-	case SerializationTypeJson:
+	case SerializationTypeJSON:
 		err = json.Unmarshal(message, &command)
 	default:
 		err = errors.New("unknown serialization type")

@@ -16,10 +16,10 @@ func handleHTTPSerializationHeaders(w http.ResponseWriter, r *http.Request) comm
 func determineBestSerialization(header http.Header) commands.SerializationType {
 	res := header.Get(commands.SupportedCommandSerializationsHeaderName)
 	if res == "" {
-		return commands.SerializationTypeJson
+		return commands.SerializationTypeJSON
 	}
 
-	bestSerializationType := commands.SerializationTypeJson
+	bestSerializationType := commands.SerializationTypeJSON
 	bestSerializationTypePriority := -1
 
 	serializations := strings.Split(res, ",")

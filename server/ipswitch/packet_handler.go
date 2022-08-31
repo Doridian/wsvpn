@@ -24,20 +24,20 @@ func (g *IPSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, er
 		return true, nil
 	}
 
-	srcIp := waterutil.IPSource(packet)
-	destIp := waterutil.IPDestination(packet)
+	srcIP := waterutil.IPSource(packet)
+	destIP := waterutil.IPDestination(packet)
 
-	if srcIp == nil || destIp == nil {
+	if srcIP == nil || destIP == nil {
 		return true, nil
 	}
 
-	if socket != nil && !srcIp.Equal(socket.AssignedIP) {
+	if socket != nil && !srcIP.Equal(socket.AssignedIP) {
 		return true, nil
 	}
 
 	if socket == nil || g.AllowClientToClient {
-		if destIp.IsGlobalUnicast() {
-			socketDest := g.findSocketByIP(destIp)
+		if destIP.IsGlobalUnicast() {
+			socketDest := g.findSocketByIP(destIP)
 			if socketDest != nil {
 				socketDest.WritePacket(packet)
 			} else {

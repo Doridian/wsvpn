@@ -20,17 +20,17 @@ func NewWebSocketConnector() *WebSocketConnector {
 func (c *WebSocketConnector) Dial(config SocketConnectorConfig) (adapters.SocketAdapter, error) {
 	dialer := websocket.Dialer{}
 
-	proxyUrl := config.GetProxyUrl()
-	if proxyUrl != nil {
+	proxyURL := config.GetProxyURL()
+	if proxyURL != nil {
 		dialer.Proxy = func(_ *http.Request) (*url.URL, error) {
-			return proxyUrl, nil
+			return proxyURL, nil
 		}
 	}
 	dialer.TLSClientConfig = config.GetTLSConfig()
 
 	headers := config.GetHeaders()
 	addSupportedSerializationHeader(headers)
-	conn, resp, err := dialer.Dial(config.GetServerUrl().String(), headers)
+	conn, resp, err := dialer.Dial(config.GetServerURL().String(), headers)
 	if err != nil {
 		return nil, err
 	}

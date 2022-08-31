@@ -6,10 +6,10 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 )
 
-const ETH_LEN = 14
+const EthernetLength = 14
 
 func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, error) {
-	if len(packet) < ETH_LEN {
+	if len(packet) < EthernetLength {
 		return !g.AllowUnknownEtherTypes, nil
 	}
 
@@ -23,7 +23,7 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 			return true, nil
 		}
 
-		if !g.AllowIpSpoofing {
+		if !g.AllowIPSpoofing {
 			expectedIPVersion := byte(0)
 			expectedMinLen := 0
 			switch etherType {
@@ -36,16 +36,16 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 			}
 
 			if expectedIPVersion > 0 {
-				if len(packet) < ETH_LEN+expectedMinLen {
+				if len(packet) < EthernetLength+expectedMinLen {
 					return true, nil
 				}
 
-				if waterutil.IPVersion(packet[ETH_LEN:]) != expectedIPVersion {
+				if waterutil.IPVersion(packet[EthernetLength:]) != expectedIPVersion {
 					return true, nil
 				}
 
-				srcIp := waterutil.IPSource(packet[ETH_LEN:])
-				if !srcIp.Equal(socket.AssignedIP) {
+				srcIP := waterutil.IPSource(packet[EthernetLength:])
+				if !srcIP.Equal(socket.AssignedIP) {
 					return true, nil
 				}
 			}
@@ -53,10 +53,10 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 	}
 
 	if socket == nil || g.AllowClientToClient {
-		destMac := waterutil.MACDestination(packet)
+		destMAC := waterutil.MACDestination(packet)
 
-		if waterutil.IsMACUnicast(destMac) {
-			socketDest := g.findSocketByMAC(destMac)
+		if waterutil.IsMACUnicast(destMAC) {
+			socketDest := g.findSocketByMAC(destMAC)
 			if socketDest != nil {
 				socketDest.WritePacket(packet)
 				return true, nil
@@ -83,7 +83,7 @@ func (g *MACSwitch) RegisterSocket(socket *sockets.Socket) {
 	defer g.macLock.Unlock()
 
 	var err error
-	g.socketTable[socket], err = lru.NewWithEvict(g.AllowedMacsPerConnection, g.onMACEvicted)
+	g.socketTable[socket], err = lru.NewWithEvict(g.AllowedMACsPerConnection, g.onMACEvicted)
 	if err != nil {
 		go socket.CloseError(err)
 	}
@@ -97,9 +97,9 @@ func (g *MACSwitch) UnregisterSocket(socket *sockets.Socket) {
 		g.macLock.Unlock()
 		return
 	}
-	socketMacs := socketTbl.Keys()
+	socketMACs := socketTbl.Keys()
 
-	for _, mac := range socketMacs {
+	for _, mac := range socketMACs {
 		delete(g.macTable, mac.(macAddr))
 	}
 

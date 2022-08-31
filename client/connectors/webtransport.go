@@ -19,8 +19,8 @@ func NewWebTransportConnector() *WebTransportConnector {
 }
 
 func (c *WebTransportConnector) Dial(config SocketConnectorConfig) (adapters.SocketAdapter, error) {
-	serverUrl := *config.GetServerUrl()
-	serverUrl.Scheme = "https"
+	serverURL := *config.GetServerURL()
+	serverURL.Scheme = "https"
 
 	var dialer webtransport.Dialer
 	if dialer.RoundTripper == nil {
@@ -28,13 +28,13 @@ func (c *WebTransportConnector) Dial(config SocketConnectorConfig) (adapters.Soc
 	}
 	dialer.TLSClientConfig = config.GetTLSConfig()
 
-	if config.GetProxyUrl() != nil {
+	if config.GetProxyURL() != nil {
 		return nil, errors.New("proxy is not support for WebTransport at the moment")
 	}
 
 	headers := config.GetHeaders()
 	addSupportedSerializationHeader(headers)
-	resp, conn, err := dialer.Dial(context.Background(), serverUrl.String(), headers)
+	resp, conn, err := dialer.Dial(context.Background(), serverURL.String(), headers)
 	if err != nil {
 		return nil, err
 	}

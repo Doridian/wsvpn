@@ -7,7 +7,7 @@ import (
 )
 
 type InterfaceMode = string
-type IpAddressWithCIDR = string
+type IPAddressWithCIDR = string
 
 type CommandID = string
 type CommandName = string

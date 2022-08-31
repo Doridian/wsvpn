@@ -7,9 +7,9 @@ import (
 type AuthResult int
 
 const (
-	AUTH_OK             AuthResult = iota // Authentication succeeded
-	AUTH_FAILED_DEFAULT                   // Authentication failed, provide default error
-	AUTH_FAILED_CUSTOM                    // Authentication failed, custom response from authenticator
+	AuthOk            AuthResult = iota // Authentication succeeded
+	AuthFailedDefault                   // Authentication failed, provide default error
+	AuthFailedCustom                    // Authentication failed, custom response from authenticator
 )
 
 type Authenticator interface {

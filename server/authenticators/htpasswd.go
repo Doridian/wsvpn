@@ -28,14 +28,14 @@ func (a *HtpasswdAuthenticator) Authenticate(r *http.Request, w http.ResponseWri
 	username, password, ok := r.BasicAuth()
 	if !ok {
 		respondWWWAuthenticateBasic(w)
-		return AUTH_FAILED_DEFAULT, ""
+		return AuthFailedDefault, ""
 	}
 
 	authOk := a.authFile.Match(username, password)
 	if !authOk {
 		respondWWWAuthenticateBasic(w)
-		return AUTH_FAILED_DEFAULT, ""
+		return AuthFailedDefault, ""
 	}
 
-	return AUTH_OK, username
+	return AuthOk, username
 }

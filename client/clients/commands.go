@@ -55,16 +55,16 @@ func (c *Client) registerCommandHandlers() {
 
 		mode := shared.VPNModeFromString(parameters.Mode)
 
-		c.remoteNet, err = shared.ParseVPNNet(parameters.IpAddress)
+		c.remoteNet, err = shared.ParseVPNNet(parameters.IPAddress)
 		if err != nil {
 			return err
 		}
 
-		c.doIpConfig = parameters.DoIpConfig
+		c.doIPConfig = parameters.DoIPConfig
 
 		c.socket.AssignedIP = c.remoteNet.GetRawIP()
 
-		c.log.Printf("Network mode %s, Subnet %s, MTU %d, IPConfig %s", parameters.Mode, c.remoteNet.GetRaw(), parameters.MTU, shared.BoolToEnabled(c.doIpConfig))
+		c.log.Printf("Network mode %s, Subnet %s, MTU %d, IPConfig %s", parameters.Mode, c.remoteNet.GetRaw(), parameters.MTU, shared.BoolToEnabled(c.doIPConfig))
 
 		ifconfig := water.Config{
 			DeviceType: mode.ToWaterDeviceType(),
@@ -84,7 +84,7 @@ func (c *Client) registerCommandHandlers() {
 
 		c.log.Printf("Opened interface %s", c.iface.Interface.Name())
 
-		if c.doIpConfig {
+		if c.doIPConfig {
 			err = c.iface.Configure(c.remoteNet.GetRawIP(), c.remoteNet, c.remoteNet.GetServerIP())
 		} else {
 			err = c.iface.Configure(nil, c.remoteNet, c.remoteNet.GetServerIP())
@@ -111,9 +111,9 @@ func (c *Client) registerCommandHandlers() {
 		return nil
 	})
 
-	c.socket.AddCommandHandler(commands.SetMtuCommandName, func(command *commands.IncomingCommand) error {
+	c.socket.AddCommandHandler(commands.SetMTUCommandName, func(command *commands.IncomingCommand) error {
 		var err error
-		var parameters commands.SetMtuParameters
+		var parameters commands.SetMTUParameters
 		err = command.DeserializeParameters(&parameters)
 		if err != nil {
 			return err

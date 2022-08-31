@@ -24,11 +24,11 @@ import (
 
 var tlsConfig *tls.Config
 
-func getTlsConfig(_ *tls.ClientHelloInfo) (*tls.Config, error) {
+func getTLSConfig(_ *tls.ClientHelloInfo) (*tls.Config, error) {
 	return tlsConfig, nil
 }
 
-func getTlsCert(_ *tls.ClientHelloInfo) (*tls.Certificate, error) {
+func getTLSCert(_ *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	return &tlsConfig.Certificates[0], nil
 }
 
@@ -52,8 +52,8 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 	server.SocketConfigurator = &cli.PingFlagsSocketConfigurator{
 		Config: &config.Tunnel.Ping,
 	}
-	server.DoLocalIpConfig = config.Tunnel.IpConfig.Local
-	server.DoRemoteIpConfig = config.Tunnel.IpConfig.Remote
+	server.DoLocalIPConfig = config.Tunnel.IPConfig.Local
+	server.DoRemoteIPConfig = config.Tunnel.IPConfig.Remote
 	for feat, en := range config.Tunnel.Features {
 		if !features.IsFeatureSupported(feat) {
 			return fmt.Errorf("unknown feature: %s", feat)
@@ -62,12 +62,12 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 	}
 	server.LoadEventConfig(&config.Scripts)
 
-	vpnMode := shared.VPN_MODE_INVALID
+	vpnMode := shared.VPNModeInvalid
 	switch strings.ToUpper(config.Tunnel.Mode) {
 	case "TAP":
-		vpnMode = shared.VPN_MODE_TAP
+		vpnMode = shared.VPNModeTAP
 	case "TUN":
-		vpnMode = shared.VPN_MODE_TUN
+		vpnMode = shared.VPNModeTUN
 	default:
 		return errors.New("invalid VPN mode selected")
 	}
@@ -89,7 +89,7 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 		}
 	}
 
-	err = server.SetMTU(config.Tunnel.Mtu)
+	err = server.SetMTU(config.Tunnel.MTU)
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 		server.InterfaceConfig = &config.Interface
 
 		if !server.InterfaceConfig.OneInterfacePerConnection {
-			if server.Mode == shared.VPN_MODE_TAP {
+			if server.Mode == shared.VPNModeTAP {
 				var macSwitch *macswitch.MACSwitch
 				if initialConfig {
 					macSwitch = macswitch.MakeMACSwitch()
@@ -109,10 +109,10 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 					macSwitch = server.PacketHandler.(*macswitch.MACSwitch)
 				}
 				macSwitch.AllowClientToClient = config.Tunnel.AllowClientToClient
-				macSwitch.AllowIpSpoofing = config.Tunnel.AllowIpSpoofing
+				macSwitch.AllowIPSpoofing = config.Tunnel.AllowIPSpoofing
 				macSwitch.AllowUnknownEtherTypes = config.Tunnel.AllowUnknownEtherTypes
-				macSwitch.AllowMacChanging = config.Tunnel.AllowMacChanging
-				macSwitch.AllowedMacsPerConnection = config.Tunnel.AllowedMacsPerConnection
+				macSwitch.AllowMACChanging = config.Tunnel.AllowMACChanging
+				macSwitch.AllowedMACsPerConnection = config.Tunnel.AllowedMACsPerConnection
 				macSwitch.ConfigUpdate()
 			} else {
 				var ipSwitch *ipswitch.IPSwitch
@@ -145,25 +145,25 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 
 	server.Authenticator = newAuthenticator
 
-	if config.Server.Tls.Certificate != "" || config.Server.Tls.Key != "" || config.Server.Tls.ClientCa != "" {
-		if config.Server.Tls.Certificate == "" && config.Server.Tls.Key == "" {
+	if config.Server.TLS.Certificate != "" || config.Server.TLS.Key != "" || config.Server.TLS.ClientCA != "" {
+		if config.Server.TLS.Certificate == "" && config.Server.TLS.Key == "" {
 			return errors.New("tls-client-ca requires tls-key and tls-cert")
 		}
 
-		if config.Server.Tls.Certificate == "" || config.Server.Tls.Key == "" {
+		if config.Server.TLS.Certificate == "" || config.Server.TLS.Key == "" {
 			return errors.New("provide either both tls-key and tls-cert or neither")
 		}
 
-		newTlsConfig := &tls.Config{}
+		newTLSConfig := &tls.Config{}
 
-		cert, err := tls.LoadX509KeyPair(config.Server.Tls.Certificate, config.Server.Tls.Key)
+		cert, err := tls.LoadX509KeyPair(config.Server.TLS.Certificate, config.Server.TLS.Key)
 		if err != nil {
 			return err
 		}
-		newTlsConfig.Certificates = []tls.Certificate{cert}
+		newTLSConfig.Certificates = []tls.Certificate{cert}
 
-		if config.Server.Tls.ClientCa != "" {
-			tlsClientCAPEM, err := os.ReadFile(config.Server.Tls.ClientCa)
+		if config.Server.TLS.ClientCA != "" {
+			tlsClientCAPEM, err := os.ReadFile(config.Server.TLS.ClientCA)
 			if err != nil {
 				return err
 			}
@@ -174,22 +174,22 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 				return errors.New("error reading tls-client-ca PEM")
 			}
 
-			newTlsConfig.ClientCAs = tlsClientCAPool
-			newTlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
+			newTLSConfig.ClientCAs = tlsClientCAPool
+			newTLSConfig.ClientAuth = tls.RequireAndVerifyClientCert
 		}
 
-		err = cli.TlsUseConfig(newTlsConfig, &config.Server.Tls.Config)
+		err = cli.TLSUseConfig(newTLSConfig, &config.Server.TLS.Config)
 		if err != nil {
 			return err
 		}
 
-		tlsConfig = newTlsConfig
+		tlsConfig = newTLSConfig
 
 		if server.TLSConfig == nil {
 			if initialConfig {
 				server.TLSConfig = &tls.Config{
-					GetConfigForClient: getTlsConfig,
-					GetCertificate:     getTlsCert,
+					GetConfigForClient: getTLSConfig,
+					GetCertificate:     getTLSCert,
 				}
 			} else {
 				log.Printf("WARNING: Ignoring enablement of TLS on reload")

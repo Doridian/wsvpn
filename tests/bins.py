@@ -28,12 +28,15 @@ SCRIPT_HDL = join(dirname(__file__), "script_hdl.py")
 SUBNET_ID = 0
 
 _default_configs: map = {}
+
+
 def _get_default_config(binf: str) -> Any:
     if binf in _default_configs:
         return _default_configs[binf]
-    cfg_str = check_output(args=[binf, "--print-default-config"], executable=binf)
+    cfg_str = check_output(
+        args=[binf, "--print-default-config"], executable=binf)
     cfg = yaml_load(cfg_str)
-    
+
     cfg["scripts"]["down"] = [executable, SCRIPT_HDL]
     cfg["scripts"]["up"] = [executable, SCRIPT_HDL]
 
@@ -47,12 +50,14 @@ def split_ip(ipsub: str) -> str:
 
 LAST_PORT = 4000
 
+
 class GoBin(Thread):
     def __init__(self, proj: str) -> None:
         super().__init__(daemon=True)
 
         self.proj = proj
-        self.bin = realpath(join(BIN_DIR, f"{proj}-{LOCAL_PLATFORM}-{LOCAL_ARCH}{self.executable_suffix()}"))
+        self.bin = realpath(
+            join(BIN_DIR, f"{proj}-{LOCAL_PLATFORM}-{LOCAL_ARCH}{self.executable_suffix()}"))
         self.cfg = deepcopy(_get_default_config(self.bin))
 
         self.is_server = proj == "server"
@@ -72,7 +77,7 @@ class GoBin(Thread):
         self.is_ready_or_done = False
         self.proc = None
         self.ready_ok = None
-        
+
         self.iface_names = {}
         self.auth_names = {}
         self.iface_macs = {}
@@ -81,20 +86,18 @@ class GoBin(Thread):
         self.http_auth_enabled = False
         self.mtls_auth_enabled = False
 
+        self.ip_version = 4
 
     def is_tap_supported(self) -> bool:
         return True
 
-
     def is_one_interface_per_connection_supported(self, mode: str) -> bool:
         return get_local_platform() != "windows"
-
 
     def executable_suffix(self) -> str:
         if get_local_platform() == "windows":
             return ".exe"
         return ""
-
 
     def connect_to(self, server: GoBin, user: str = "", password: str = "", protocol: str = "AUTO") -> None:
         if not self.is_client or not server.is_server:
@@ -121,7 +124,6 @@ class GoBin(Thread):
 
         self.cfg["client"]["server"] = f"{protocol}://{auth_str}127.0.0.1:{port}"
 
-
     def enable_tls(self, tls_cert_set: Optional[TLSCertSet]) -> None:
         if self.is_client:
             self.cfg["client"]["tls"]["ca"] = tls_cert_set.ca if tls_cert_set else None
@@ -129,7 +131,6 @@ class GoBin(Thread):
 
         self.cfg["server"]["tls"]["certificate"] = tls_cert_set.cert if tls_cert_set else None
         self.cfg["server"]["tls"]["key"] = tls_cert_set.key if tls_cert_set else None
-
 
     def enable_mtls(self, tls_cert_set: Optional[TLSCertSet]) -> None:
         self.mtls_auth_enabled = tls_cert_set is not None
@@ -141,13 +142,11 @@ class GoBin(Thread):
         self.cfg["client"]["tls"]["certificate"] = tls_cert_set.cert if tls_cert_set else None
         self.cfg["client"]["tls"]["key"] = tls_cert_set.key if tls_cert_set else None
 
-
     def wait_ready_or_done(self) -> None:
         self.proc_wait_cond.acquire()
-        self.proc_wait_cond.wait_for(predicate=lambda : self.is_ready_or_done)
+        self.proc_wait_cond.wait_for(predicate=lambda: self.is_ready_or_done)
         self.proc_wait_cond.release()
 
-    
     def start(self) -> None:
         def startup_wait():
             sleep(10)
@@ -155,7 +154,6 @@ class GoBin(Thread):
         self.startup_timeout = Thread(daemon=True, target=startup_wait)
         super().start()
         self.startup_timeout.start()
-
 
     def stop(self) -> None:
         if self.proc is not None and self.proc.returncode is None:
@@ -167,10 +165,9 @@ class GoBin(Thread):
                 self.proc.kill()
             self.join()
 
-
     def handle_line(self, line: str) -> None:
         print(line)
-    
+
         if self.is_server and "VPN server online at" in line:
             self._notify_ready(True)
 
@@ -202,10 +199,8 @@ class GoBin(Thread):
             else:
                 raise Exception(f"script called with invalid args: {lspl}")
 
-
     def get_ip(self) -> str:
         return self.ip
-
 
     def get_auth_for(self, clbin: GoBin = None) -> str:
         if not self.is_server:
@@ -213,7 +208,6 @@ class GoBin(Thread):
 
         client_ip = clbin.get_ip()
         return self.auth_names[client_ip]
-
 
     def get_interface_for(self, clbin: GoBin = None) -> str:
         if self.is_client:
@@ -223,15 +217,14 @@ class GoBin(Thread):
         client_ip = clbin.get_ip()
         return self.iface_names[client_ip]
 
-
     def get_mac_for(self, clbin: GoBin = None) -> str:
         iface = self.get_interface_for(clbin=clbin)
         if not iface:
             return None
         if iface not in self.iface_macs:
-            self.iface_macs[iface] = get_mac_address(interface=iface, network_request=False)
+            self.iface_macs[iface] = get_mac_address(
+                interface=iface, network_request=False)
         return self.iface_macs[iface]
-
 
     def _notify_ready(self, ok: bool) -> None:
         if self.is_ready_or_done:
@@ -243,11 +236,9 @@ class GoBin(Thread):
         self.proc_wait_cond.notify_all()
         self.proc_wait_cond.release()
 
-
     def assert_ready_ok(self, should: bool = True) -> None:
         self.wait_ready_or_done()
         assert self.ready_ok == should
-
 
     def run(self) -> None:
         if self.is_server:
@@ -255,7 +246,12 @@ class GoBin(Thread):
                 subnet_index = self.port
                 if self.cfg["tunnel"]["mode"] == "TAP":
                     subnet_index |= 0b10000000_00000000
-                self.cfg["tunnel"]["subnet"] = "10.%d.%d.0/24" % ((subnet_index & 0xFF), ((subnet_index >> 8)) & 0xFF)
+
+                if self.ip_version == 4:
+                    self.cfg["tunnel"]["subnet"] = "10.%d.%d.0/24" % (
+                        (subnet_index & 0xFF), ((subnet_index >> 8)) & 0xFF)
+                elif self.ip_version == 6:
+                    self.cfg["tunnel"]["subnet"] = "fd42:1337:%x::/64" % subnet_index
 
             tmp_ip = split_ip(self.cfg["tunnel"]["subnet"])
             self.ip = (ip_address(tmp_ip) + 1).exploded
@@ -266,7 +262,8 @@ class GoBin(Thread):
             cfgfile = f.name
 
         try:
-            self.proc = Popen(args=[self.bin, "-config", cfgfile], stdin=DEVNULL, stderr=PIPE, text=True, executable=self.bin)
+            self.proc = Popen(args=[self.bin, "-config", cfgfile],
+                              stdin=DEVNULL, stderr=PIPE, text=True, executable=self.bin)
 
             while self.proc.returncode is None:
                 res = self.proc.stderr.readline()
@@ -277,9 +274,10 @@ class GoBin(Thread):
             self._notify_ready(False)
             remove(cfgfile)
 
+
 def new_clbin():
     return GoBin("client")
 
+
 def new_svbin():
     return GoBin("server")
-

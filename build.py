@@ -187,13 +187,13 @@ class BuildTask(Thread):
         pass
 
     def run(self) -> None:
-        print(f"Starting: {self.name}")
+        print(f"Starting: {self.name}", flush=True)
         try:
             self._run()
         except Exception as e:
             self.exc = e
         finally:
-            print(f"Done: {self.name}")
+            print(f"Done: {self.name}", flush=True)
             build_task_cond.acquire()
             build_task_cond.notify_all()
             build_task_cond.release()
@@ -343,17 +343,17 @@ def main():
     elif flags.architectures == "local":
         architectures = [get_local_arch()]
     elif flags.architectures == "list":
-        print("Supported architectures:")
+        print("Supported architectures:", flush=True)
         for _, arch in KNOWN_ARCHITECTURES.items():
-            print(f"\t- {arch.name} (on {', '.join(arch.platforms)})")
+            print(f"\t- {arch.name} (on {', '.join(arch.platforms)})", flush=True)
         return
     else:
         architectures = [try_resolve_arch(arch)
                          for arch in flags.architectures.split(",")]
 
-    print(f"Building version: {get_version()}")
+    print(f"Building version: {get_version()}", flush=True)
 
-    print("Cleaning dist...")
+    print("Cleaning dist...", flush=True)
     try:
         mkdir("dist")
     except FileExistsError:
@@ -361,18 +361,18 @@ def main():
     for distfile in listdir("dist"):
         remove(join("dist", distfile))
 
-    print("Downloading Go modules...")
+    print("Downloading Go modules...", flush=True)
     check_call([flags.gocmd, "mod", "download"])
 
     if flags.docker:
-        print("Preparing Docker buildx...")
+        print("Preparing Docker buildx...", flush=True)
         call(["docker", "buildx", "create", "--name", "multiarch"],
              stdout=DEVNULL, stderr=DEVNULL)
         check_call(["docker", "buildx", "use", "multiarch"])
 
     if "windows" in platforms:
         url = "https://www.wintun.net/builds/wintun-0.14.1.zip"
-        print(f"Downloading WinTun from \"{url}\"...")
+        print(f"Downloading WinTun from \"{url}\"...", flush=True)
 
         with BytesIO() as stream:
             res = get(url)
@@ -388,7 +388,7 @@ def main():
             zip = ZipFile(stream)
             zip.extractall(outdir)
 
-    print("Generating all build tasks...")
+    print("Generating all build tasks...", flush=True)
     tasks: list = []
     for proj in projects:
         for platform in platforms:
@@ -418,7 +418,7 @@ def main():
                 tasks.append(
                     LipoTask([task for task in platform_tasks if task.goos == "darwin"]))
 
-    print("Executing build tasks...")
+    print("Executing build tasks...", flush=True)
 
     def pick_task() -> Optional[BuildTask]:
         for i, task in enumerate(tasks):
@@ -454,7 +454,7 @@ def main():
         try:
             task.join()
         except Exception:
-            print(f"Error: {task.name}")
+            print(f"Error: {task.name}", flush=True)
             print_exc()
             had_errors = True
 
@@ -464,7 +464,7 @@ def main():
     if len(tasks) > 0:
         raise Exception("Could not start all tasks...")
 
-    print("Build OK!")
+    print("Build OK!", flush=True)
 
 
 if __name__ == "__main__":

@@ -166,7 +166,7 @@ class GoBin(Thread):
             self.join()
 
     def handle_line(self, line: str) -> None:
-        print(line)
+        print(line, flush=True)
 
         if self.is_server and "VPN server online at" in line:
             self._notify_ready(True)
@@ -179,7 +179,7 @@ class GoBin(Thread):
                 if self.is_client:
                     self.iface_names["server"] = lspl[2]
                     self.ip = ip
-                    print("Setting client IP to", ip)
+                    print(f"Setting client IP to {ip}", flush=True)
                     self._notify_ready(True)
 
                 if self.is_server:

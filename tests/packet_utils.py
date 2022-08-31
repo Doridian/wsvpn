@@ -172,11 +172,11 @@ class PacketTest:
         client_tuple = PktTuple(iface=client_iface, ip=client_ip,
                                 mac=client_mac, ip_version=get_ip_version(client_ip))
 
-        print("CLIENT SENDING, SERVER RECEIVING")
+        print("CLIENT SENDING, SERVER RECEIVING", flush=True)
         test = PacketTestRun(self.pkts, src=client_tuple, dst=server_tuple)
         test.run()
 
-        print("SERVER SENDING, CLIENT RECEIVING")
+        print("SERVER SENDING, CLIENT RECEIVING", flush=True)
         test = PacketTestRun(self.pkts, src=server_tuple, dst=client_tuple)
         test.run()
 

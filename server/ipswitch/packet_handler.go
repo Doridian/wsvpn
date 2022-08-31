@@ -2,34 +2,33 @@ package ipswitch
 
 import (
 	"errors"
-	"net"
 
 	"github.com/Doridian/water/waterutil"
 	"github.com/Doridian/wsvpn/shared/sockets"
 )
 
-const IP_LEN = 20
-
 func (g *IPSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, error) {
-	if len(packet) < IP_LEN {
+	if len(packet) < 1 {
 		return true, nil
 	}
 
-	isIPv4 := waterutil.IsIPv4(packet)
-	isIPv6 := waterutil.IsIPv6(packet)
-	if !isIPv4 && !isIPv6 {
+	expectedMinLen := 0
+	switch waterutil.IPVersion(packet) {
+	case 4:
+		expectedMinLen = 20
+	case 6:
+		expectedMinLen = 40
+	}
+
+	if expectedMinLen < 1 || len(packet) < expectedMinLen {
 		return true, nil
 	}
 
-	var srcIp net.IP
-	var destIp net.IP
+	srcIp := waterutil.IPSource(packet)
+	destIp := waterutil.IPDestination(packet)
 
-	if isIPv4 {
-		srcIp = waterutil.IPv4Source(packet)
-		destIp = waterutil.IPv4Destination(packet)
-	} else if isIPv6 {
-		srcIp = packet[8:24]
-		destIp = packet[24:40]
+	if srcIp == nil || destIp == nil {
+		return true, nil
 	}
 
 	if socket != nil && !srcIp.Equal(socket.AssignedIP) {

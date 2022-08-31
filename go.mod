@@ -3,7 +3,7 @@ module github.com/Doridian/wsvpn
 go 1.19
 
 require (
-	github.com/Doridian/water v1.0.2
+	github.com/Doridian/water v1.1.1
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
@@ -19,7 +19,7 @@ require (
 	github.com/kr/pretty v0.3.0 // indirect
 	golang.org/x/exp v0.0.0-20220827204233-334a2380cb91 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20211104114900-415007cec224 // indirect
-	golang.zx2c4.com/wireguard v0.0.0-20220703234212-c31a7b1ab478 // indirect
+	golang.zx2c4.com/wireguard v0.0.0-20220829161405-d1d08426b27b // indirect
 )
 
 require (

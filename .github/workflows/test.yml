@@ -31,6 +31,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install OpenVPN TAP
+        run: .\.github\InstallTAP.ps1
+      - name: Install npcap
+        run: .\.github\InstallNpcap.ps1
       - uses: actions/setup-go@v3
         with:
           go-version-file: 'go.mod'
@@ -44,10 +48,8 @@ jobs:
         run: pip install -r requirements.txt
       - name: Build local binaries
         run: python ./build.py --architecture local --platform local
-      - name: Install npcap
-        run: echo TODO INSTALL NPCAP SOMEHOW HERE
-      #- name: Run tests
-      #  run: pytest -p no:cacheprovider ./tests
+      - name: Run tests
+        run: pytest -p no:cacheprovider ./tests
   test-darwin:
     runs-on: macos-latest
     steps:

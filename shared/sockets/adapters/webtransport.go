@@ -94,10 +94,10 @@ func (s *WebTransportAdapter) Close() error {
 	if s.stream != nil {
 		s.stream.CancelRead(ErrorCodeClosed)
 		s.stream.CancelWrite(ErrorCodeClosed)
-		s.stream.Close()
+		_ = s.stream.Close()
 	}
 	if s.qconn != nil {
-		s.qconn.CloseWithError(ErrorCodeClosed, "Close called")
+		_ = s.qconn.CloseWithError(ErrorCodeClosed, "Close called")
 	}
 	return s.conn.Close()
 }

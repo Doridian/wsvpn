@@ -44,7 +44,7 @@ func (s *Socket) registerControlMessageHandler() {
 		}
 
 		if command.Command != commands.ReplyCommandName {
-			s.rawMakeAndSendCommand(&commands.ReplyParameters{Message: replyStr, Ok: replyOk}, command.ID)
+			_ = s.rawMakeAndSendCommand(&commands.ReplyParameters{Message: replyStr, Ok: replyOk}, command.ID)
 		}
 		return replyOk
 	})
@@ -94,7 +94,7 @@ func (s *Socket) registerDefaultCommandHandlers() {
 	})
 }
 
-func (s *Socket) sendDefaultWelcome() error {
+func (s *Socket) sendDefaultWelcome() {
 	localFeaturesArray := make([]features.Feature, 0, len(s.localFeatures))
 
 	for feat, en := range s.localFeatures {
@@ -104,7 +104,7 @@ func (s *Socket) sendDefaultWelcome() error {
 		localFeaturesArray = append(localFeaturesArray, feat)
 	}
 
-	return s.MakeAndSendCommand(&commands.VersionParameters{
+	_ = s.MakeAndSendCommand(&commands.VersionParameters{
 		Version:         shared.Version,
 		ProtocolVersion: shared.ProtocolVersion,
 		EnabledFeatures: localFeaturesArray,

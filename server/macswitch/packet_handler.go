@@ -58,7 +58,7 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 		if waterutil.IsMACUnicast(destMAC) {
 			socketDest := g.findSocketByMAC(destMAC)
 			if socketDest != nil {
-				socketDest.WritePacket(packet)
+				_ = socketDest.WritePacket(packet)
 				return true, nil
 			}
 		} else {

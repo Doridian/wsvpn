@@ -22,7 +22,7 @@ func (g *MACSwitch) broadcastDataMessage(data []byte, skip *sockets.Socket) {
 	g.macLock.RUnlock()
 
 	for _, socket := range targetList {
-		socket.WritePacket(data)
+		_ = socket.WritePacket(data)
 	}
 }
 

@@ -58,7 +58,7 @@ func (s *Server) listenEncrypted(httpHandlerFunc http.HandlerFunc) {
 		s.addUpgrader(webtransportUpgrader) // This calls addCloser for us
 
 		httpHandlerFunc = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			webtransportUpgrader.SetQuicHeaders(w.Header())
+			_ = webtransportUpgrader.SetQuicHeaders(w.Header())
 			s.serveSocket(w, r)
 		})
 	}

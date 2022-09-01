@@ -134,7 +134,7 @@ func (s *Server) closeAll() {
 	defer s.closerLock.Unlock()
 
 	for _, closer := range s.closers {
-		closer.Close()
+		_ = closer.Close()
 	}
 	s.closers = make([]io.Closer, 0)
 }
@@ -173,7 +173,7 @@ func (s *Server) SetMTU(mtu int) error {
 				return err
 			}
 		}
-		sock.MakeAndSendCommand(&commands.SetMTUParameters{
+		_ = sock.MakeAndSendCommand(&commands.SetMTUParameters{
 			MTU: mtu,
 		})
 	}

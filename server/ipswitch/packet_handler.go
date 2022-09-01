@@ -39,7 +39,7 @@ func (g *IPSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, er
 		if destIP.IsGlobalUnicast() {
 			socketDest := g.findSocketByIP(destIP)
 			if socketDest != nil {
-				socketDest.WritePacket(packet)
+				_ = socketDest.WritePacket(packet)
 			} else {
 				return false, nil
 			}

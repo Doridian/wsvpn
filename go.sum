@@ -1,5 +1,5 @@
-github.com/Doridian/water v1.1.1 h1:2oFC+SppqU0/JmWMB3hkHXC+NXlClRSLKUYRu5CRcvg=
-github.com/Doridian/water v1.1.1/go.mod h1:KzZfp+7DKnyZk73a7H/yDGtosy5ardMndDvikybvgu4=
+github.com/Doridian/water v1.2.0 h1:qjpmvW0sgxMU0oEFs9LJC88gBSAmdO/EXXEEhhtAzWY=
+github.com/Doridian/water v1.2.0/go.mod h1:KzZfp+7DKnyZk73a7H/yDGtosy5ardMndDvikybvgu4=
 github.com/GehirnInc/crypt v0.0.0-20200316065508-bb7000b8a962 h1:KeNholpO2xKjgaaSyd+DyQRrsQjhbSeS7qe4nEw8aQw=
 github.com/GehirnInc/crypt v0.0.0-20200316065508-bb7000b8a962/go.mod h1:kC29dT1vFpj7py2OvG1khBdQpo3kInWP+6QipLbdngo=
 github.com/apparentlymart/go-cidr v1.1.0 h1:2mAhrMoF+nhXqxTzSZMUzDHkLjmIHC+Zzn4tdgBZjnU=

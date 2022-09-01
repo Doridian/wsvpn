@@ -124,7 +124,8 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		localIfaceW, err := water.New(ifaceConfig)
+		var localIfaceW *water.Interface
+		localIfaceW, err = water.New(ifaceConfig)
 		s.ifaceCreationMutex.Unlock()
 		if err != nil {
 			clientLogger.Printf("Error creating new iface: %v", err)
@@ -172,7 +173,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	socket.AssignedIP = ipClient
 
 	if s.SocketConfigurator != nil {
-		err := s.SocketConfigurator.ConfigureSocket(socket)
+		err = s.SocketConfigurator.ConfigureSocket(socket)
 		if err != nil {
 			socket.CloseError(fmt.Errorf("error configuring socket: %v", err))
 			return
@@ -194,9 +195,9 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	ifaceName := localIface.Interface.Name()
 
 	doRunEventScript := func(event string) {
-		err := s.RunEventScript(event, remoteNetStr, ifaceName, authUsername)
-		if err != nil {
-			s.log.Printf("Error in %s script: %v", event, err)
+		eventErr := s.RunEventScript(event, remoteNetStr, ifaceName, authUsername)
+		if eventErr != nil {
+			s.log.Printf("Error in %s script: %v", event, eventErr)
 		}
 	}
 

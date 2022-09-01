@@ -32,9 +32,9 @@ func reloadConfig(configPtr *string, client *clients.Client) error {
 
 	var userInfo *url.Userinfo
 	if config.Client.AuthFile != "" {
-		authData, err := os.ReadFile(config.Client.AuthFile)
-		if err != nil {
-			return err
+		authData, authErr := os.ReadFile(config.Client.AuthFile)
+		if authErr != nil {
+			return authErr
 		}
 		authDataStr := strings.Trim(string(authData), "\r\n\t ")
 		authDataSplit := strings.SplitN(authDataStr, ":", 2)

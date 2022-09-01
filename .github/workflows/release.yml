@@ -7,10 +7,12 @@ name: Release
 jobs:
   test:
     uses: ./.github/workflows/test.yml
+  check:
+    uses: ./.github/workflows/check.yml
 
   release:
     runs-on: ubuntu-latest
-    needs: test
+    needs: test check
     steps: 
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3

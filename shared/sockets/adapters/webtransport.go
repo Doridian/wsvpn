@@ -55,7 +55,7 @@ var _ SocketAdapter = &WebTransportAdapter{}
 
 func getPrivateField(iface interface{}, fieldName string) interface{} {
 	field := reflect.ValueOf(iface).Elem().FieldByName(fieldName)
-	return reflect.NewAt(field.Type(), unsafe.Pointer(field.UnsafeAddr())).Elem().Interface()
+	return reflect.NewAt(field.Type(), unsafe.Pointer(field.UnsafeAddr())).Elem().Interface() // #nosec G103 -- Unsafe is sadly necessary here
 }
 
 func getStreamID(stream webtransport.Stream) uint64 {
@@ -94,10 +94,10 @@ func (s *WebTransportAdapter) Close() error {
 	if s.stream != nil {
 		s.stream.CancelRead(ErrorCodeClosed)
 		s.stream.CancelWrite(ErrorCodeClosed)
-		s.stream.Close()
+		_ = s.stream.Close()
 	}
 	if s.qconn != nil {
-		s.qconn.CloseWithError(ErrorCodeClosed, "Close called")
+		_ = s.qconn.CloseWithError(ErrorCodeClosed, "Close called")
 	}
 	return s.conn.Close()
 }

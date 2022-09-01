@@ -184,7 +184,7 @@ func (s *Socket) CloseError(err error) {
 	if !s.isClosing {
 		s.isClosing = true
 		s.log.Printf("Closing socket: %v", err)
-		s.SendMessage("error", err.Error())
+		_ = s.SendMessage("error", err.Error())
 	}
 	s.Close()
 }
@@ -198,9 +198,9 @@ func (s *Socket) Close() {
 	s.closeLock.Lock()
 	defer s.closeLock.Unlock()
 
-	s.adapter.Close()
+	_ = s.adapter.Close()
 	if s.iface != nil && s.ifaceManaged {
-		s.iface.Close()
+		_ = s.iface.Close()
 	}
 
 	if s.closechanopen {

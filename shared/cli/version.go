@@ -9,6 +9,6 @@ import (
 )
 
 func UsageWithVersion() {
-	fmt.Fprintf(flag.CommandLine.Output(), "WSVPN version %s\nUsage of %s:\n", shared.Version, os.Args[0])
+	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "WSVPN version %s\nUsage of %s:\n", shared.Version, os.Args[0])
 	flag.PrintDefaults()
 }

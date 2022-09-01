@@ -150,11 +150,11 @@ func (c *Client) closeInternal() {
 		c.socket = nil
 	}
 	if c.adapter != nil {
-		c.adapter.Close()
+		_ = c.adapter.Close()
 		c.adapter = nil
 	}
 	if c.iface != nil {
-		c.iface.Close()
+		_ = c.iface.Close()
 		c.iface = nil
 	}
 }

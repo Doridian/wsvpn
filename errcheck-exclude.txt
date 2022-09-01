@@ -1,0 +1,4 @@
+(*github.com/Doridian/wsvpn/shared/iface.WaterInterfaceWrapper).Close
+(github.com/Doridian/wsvpn/shared/sockets/adapters.SocketAdapter).Close
+(*github.com/Doridian/wsvpn/shared/sockets/adapters.WebTransportAdapter).Close
+(*os.File).Close

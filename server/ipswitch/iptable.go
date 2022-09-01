@@ -18,7 +18,7 @@ func (g *IPSwitch) broadcastDataMessage(data []byte, skip *sockets.Socket) {
 	g.ipLock.RUnlock()
 
 	for _, socket := range targetList {
-		socket.WritePacket(data)
+		_ = socket.WritePacket(data)
 	}
 }
 

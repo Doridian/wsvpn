@@ -315,7 +315,7 @@ def main():
                         help="Whether to tag latest on built Docker images")
     parser.add_argument("--docker-push", default=False, action="store_true",
                         help="Whether to push Docker images to the registry")
-    parser.add_argument("--jobs", "-j", default=ncpus(),
+    parser.add_argument("--jobs", "-j", default=1,
                         type=int, help="How many jobs to run in parallel")
     parser.add_argument("--cgo", default=False, action="store_true",
                         help="Will enable CGO in all builds")

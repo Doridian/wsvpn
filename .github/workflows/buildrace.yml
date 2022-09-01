@@ -24,7 +24,7 @@ jobs:
       - name: Install required Python packages
         run: pip3 install -r requirements.txt
       - name: Build local binaries (Build all from Linux to ensure releases work)
-        run: ./build.py --compress --lipo --docker
+        run: ./build.py --compress --docker
 
   test-series:
     runs-on: ubuntu-latest
@@ -42,4 +42,4 @@ jobs:
       - name: Install required Python packages
         run: pip3 install -r requirements.txt
       - name: Build local binaries (Build all from Linux to ensure releases work)
-        run: ./build.py --compress --lipo --docker --jobs 1
+        run: ./build.py --compress --docker --jobs 1

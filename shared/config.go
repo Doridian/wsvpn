@@ -8,11 +8,11 @@ import (
 )
 
 func LoadConfigFile(file string, out interface{}) error {
-	fh, err := os.Open(file)
+	fh, err := os.Open(file) // #nosec G304 -- Variable provided only from internal / CLI sources
 	if err != nil {
 		return err
 	}
-	defer fh.Close()
+	defer fh.Close() // #nosec G307 -- Closing a file with defer is not unsafe
 
 	return LoadConfigReader(fh, out)
 }

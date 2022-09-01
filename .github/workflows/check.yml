@@ -64,3 +64,4 @@ jobs:
       with:
         run: sec
         token: ${{ secrets.GITHUB_TOKEN }}
+        flags: --exclude=G402

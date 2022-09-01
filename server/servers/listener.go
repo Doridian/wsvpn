@@ -4,10 +4,13 @@ import (
 	"crypto/tls"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/Doridian/wsvpn/server/upgraders"
 	"github.com/Doridian/wsvpn/shared"
 )
+
+const ReadHeaderTimeout = time.Duration(10) * time.Second
 
 func (s *Server) listenUpgraders() {
 	for _, upgraderLoop := range s.upgraders {
@@ -36,8 +39,9 @@ func (s *Server) listenPlaintext(httpHandlerFunc http.HandlerFunc) {
 	s.listenUpgraders()
 
 	server := &http.Server{
-		Addr:    s.ListenAddr,
-		Handler: httpHandlerFunc,
+		Addr:              s.ListenAddr,
+		Handler:           httpHandlerFunc,
+		ReadHeaderTimeout: ReadHeaderTimeout,
 	}
 	s.addCloser(server)
 
@@ -64,9 +68,10 @@ func (s *Server) listenEncrypted(httpHandlerFunc http.HandlerFunc) {
 	}
 
 	server := &http.Server{
-		Addr:      s.ListenAddr,
-		TLSConfig: s.TLSConfig,
-		Handler:   httpHandlerFunc,
+		Addr:              s.ListenAddr,
+		TLSConfig:         s.TLSConfig,
+		Handler:           httpHandlerFunc,
+		ReadHeaderTimeout: ReadHeaderTimeout,
 	}
 	s.addCloser(server)
 

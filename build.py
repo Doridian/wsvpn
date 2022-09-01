@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+from cProfile import run
 from dataclasses import dataclass
 from io import BytesIO
 from os.path import join, exists
@@ -315,7 +316,7 @@ def main():
                         help="Whether to tag latest on built Docker images")
     parser.add_argument("--docker-push", default=False, action="store_true",
                         help="Whether to push Docker images to the registry")
-    parser.add_argument("--jobs", "-j", default=1,
+    parser.add_argument("--jobs", "-j", default=ncpus(),
                         type=int, help="How many jobs to run in parallel")
     parser.add_argument("--cgo", default=False, action="store_true",
                         help="Will enable CGO in all builds")
@@ -429,7 +430,8 @@ def main():
 
     all_tasks: list = tasks.copy()
 
-    num_jobs = flags.jobs
+    parallelism_allowed = False
+    num_jobs = 1
     running_tasks: list = []
     while len(tasks) > 0:
         while len(running_tasks) < num_jobs:
@@ -438,6 +440,11 @@ def main():
                 break
             running_tasks.append(task)
             task.start()
+            if not parallelism_allowed and isinstance(task, GoBuildTask):
+                task.join()
+                parallelism_allowed = True
+                num_jobs = flags.jobs
+                running_tasks = []
 
         if len(running_tasks) > 0:
             build_task_cond.acquire()

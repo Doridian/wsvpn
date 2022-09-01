@@ -206,7 +206,7 @@ class BuildTask(Thread):
 
 class GoBuildTask(BuildTask):
     def __init__(self, proj: str, arch: Arch, goos: str, exesuffix: str, cgo: bool, gocmd: str) -> None:
-        super().__init__(dependencies=[proj], outputs=[
+        super().__init__(dependencies=[], outputs=[
             f"dist/{proj}-{goos}-{arch.name}{exesuffix}"], name=f"Go build {proj}-{goos}-{arch.name}{exesuffix}")
         self.arch = arch
         self.goos = goos
@@ -429,7 +429,8 @@ def main():
 
     all_tasks: list = tasks.copy()
 
-    num_jobs = flags.jobs
+    parallelism_allowed = False
+    num_jobs = 1
     running_tasks: list = []
     while len(tasks) > 0:
         while len(running_tasks) < num_jobs:
@@ -438,6 +439,10 @@ def main():
                 break
             running_tasks.append(task)
             task.start()
+            if not parallelism_allowed and isinstance(task, GoBuildTask):
+                task.join()
+                parallelism_allowed = True
+                num_jobs = flags.jobs
 
         if len(running_tasks) > 0:
             build_task_cond.acquire()

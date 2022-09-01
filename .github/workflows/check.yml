@@ -5,14 +5,16 @@ on:
     types: [opened, reopened, synchronize]
   workflow_call: {}
 
+name: Check
+
 jobs:
   imports:
     name: Imports
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v3
     - name: check
-      uses: grandcolline/golang-github-actions@v1.1.0
+      uses: jo-fr/golang-github-actions@master
       with:
         run: imports
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -21,9 +23,9 @@ jobs:
     name: Errcheck
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v3
     - name: check
-      uses: grandcolline/golang-github-actions@v1.1.0
+      uses: jo-fr/golang-github-actions@master
       with:
         run: errcheck
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -32,9 +34,9 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v3
     - name: check
-      uses: grandcolline/golang-github-actions@v1.1.0
+      uses: jo-fr/golang-github-actions@master
       with:
         run: lint
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -43,9 +45,9 @@ jobs:
     name: Shadow
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v3
     - name: check
-      uses: grandcolline/golang-github-actions@v1.1.0
+      uses: jo-fr/golang-github-actions@master
       with:
         run: shadow
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -54,9 +56,9 @@ jobs:
     name: StaticCheck
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v3
     - name: check
-      uses: grandcolline/golang-github-actions@v1.1.0
+      uses: jo-fr/golang-github-actions@master
       with:
         run: staticcheck
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -66,9 +68,9 @@ jobs:
     name: Sec
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v3
     - name: check
-      uses: grandcolline/golang-github-actions@v1.1.0
+      uses: jo-fr/golang-github-actions@master
       with:
         run: sec
         token: ${{ secrets.GITHUB_TOKEN }}

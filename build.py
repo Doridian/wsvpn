@@ -429,8 +429,7 @@ def main():
 
     all_tasks: list = tasks.copy()
 
-    parallelism_allowed = False
-    num_jobs = 1
+    num_jobs = flags.jobs
     running_tasks: list = []
     while len(tasks) > 0:
         while len(running_tasks) < num_jobs:
@@ -439,10 +438,6 @@ def main():
                 break
             running_tasks.append(task)
             task.start()
-            if not parallelism_allowed and isinstance(task, GoBuildTask):
-                task.join()
-                parallelism_allowed = True
-                num_jobs = flags.jobs
 
         if len(running_tasks) > 0:
             build_task_cond.acquire()

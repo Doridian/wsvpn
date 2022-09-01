@@ -70,12 +70,12 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 }
 
 func (g *MACSwitch) onMACEvicted(key interface{}, value interface{}) {
-	macAddr := key.(macAddr)
+	macAddrObj := key.(macAddr)
 
 	g.macLock.Lock()
 	defer g.macLock.Unlock()
 
-	delete(g.macTable, macAddr)
+	delete(g.macTable, macAddrObj)
 }
 
 func (g *MACSwitch) RegisterSocket(socket *sockets.Socket) {

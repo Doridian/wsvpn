@@ -163,7 +163,8 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 		newTLSConfig.Certificates = []tls.Certificate{cert}
 
 		if config.Server.TLS.ClientCA != "" {
-			tlsClientCAPEM, err := os.ReadFile(config.Server.TLS.ClientCA)
+			var tlsClientCAPEM []byte
+			tlsClientCAPEM, err = os.ReadFile(config.Server.TLS.ClientCA)
 			if err != nil {
 				return err
 			}
@@ -240,9 +241,9 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 		for {
 			<-reloadSig
 			log.Printf("Reloading configuration, might not take effect until next connection...")
-			err := reloadConfig(configPtr, server, false)
-			if err != nil {
-				log.Printf("Error reloading config: %v", err)
+			reloadErr := reloadConfig(configPtr, server, false)
+			if reloadErr != nil {
+				log.Printf("Error reloading config: %v", reloadErr)
 			}
 		}
 	}()

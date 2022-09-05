@@ -263,7 +263,7 @@ class DockerBuildTask(BuildTask):
             self.tags.append(f"{tag_base}:latest")
 
     def _run(self) -> None:
-        args = ["docker", "buildx", "build", "--build-arg", f"SIDE={self.proj}", "--platform", ",".join(
+        args = ["docker", "buildx", "build", "--build-arg", f"PROJECT={self.proj}", "--platform", ",".join(
             [f"{gobin.goos}/{gobin.arch.docker_name}" for gobin in self.gobins])]
 
         for tag in self.tags:
@@ -305,7 +305,7 @@ def main():
     parser.add_argument("--architectures", "-a", default="*", required=False, type=str,
                         help="Which architectures to build for (* for all, local for host machine, comma separated). Use \"list\" to get a list")
     parser.add_argument("--projects", "-i", default="*", required=False, type=str,
-                        help="Which projects to build (* for all, comma separated). Accepted: client, server, dual")
+                        help="Which projects to build (* for all, comma separated). Accepted: client, server, wsvpn")
     parser.add_argument("--compress", "-c", default=False, action="store_true",
                         help="Output UPX compressed binaries for Linux")
     parser.add_argument("--lipo", default=False, action="store_true",
@@ -334,7 +334,7 @@ def main():
 
     projects = None
     if flags.projects == "*":
-        projects = ["client", "server", "dual"]
+        projects = ["client", "server", "wsvpn"]
     else:
         projects = flags.projects.split(",")
 

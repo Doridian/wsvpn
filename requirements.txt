@@ -1,4 +1,3 @@
-pytest-github-actions-annotate-failures
 pytest-rerunfailures
 getmac
 scapy

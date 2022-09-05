@@ -62,7 +62,7 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 	}
 	server.LoadEventConfig(&config.Scripts)
 
-	vpnMode := shared.VPNModeInvalid
+	var vpnMode shared.VPNMode
 	switch strings.ToUpper(config.Tunnel.Mode) {
 	case "TAP":
 		vpnMode = shared.VPNModeTAP

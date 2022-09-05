@@ -15,4 +15,4 @@ RUN apt update && \
 VOLUME "/mnt"
 WORKDIR /mnt
 
-ENTRYPOINT [ "python3", "--reruns", "3", "--reruns-delay", "1", "-m", "pytest", "-p", "no:cacheprovider", "./tests" ]
+ENTRYPOINT [ "pytest", "--reruns", "3", "--reruns-delay", "1", "-p", "no:cacheprovider", "./tests" ]

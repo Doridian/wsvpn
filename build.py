@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+from cProfile import run
 from dataclasses import dataclass
 from io import BytesIO
 from os.path import join, exists
@@ -206,7 +207,7 @@ class BuildTask(Thread):
 
 class GoBuildTask(BuildTask):
     def __init__(self, proj: str, arch: Arch, goos: str, exesuffix: str, cgo: bool, gocmd: str) -> None:
-        super().__init__(dependencies=[proj], outputs=[
+        super().__init__(dependencies=[], outputs=[
             f"dist/{proj}-{goos}-{arch.name}{exesuffix}"], name=f"Go build {proj}-{goos}-{arch.name}{exesuffix}")
         self.arch = arch
         self.goos = goos
@@ -262,7 +263,7 @@ class DockerBuildTask(BuildTask):
             self.tags.append(f"{tag_base}:latest")
 
     def _run(self) -> None:
-        args = ["docker", "buildx", "build", "--build-arg", f"SIDE={self.proj}", "--platform", ",".join(
+        args = ["docker", "buildx", "build", "--build-arg", f"PROJECT={self.proj}", "--platform", ",".join(
             [f"{gobin.goos}/{gobin.arch.docker_name}" for gobin in self.gobins])]
 
         for tag in self.tags:
@@ -304,7 +305,7 @@ def main():
     parser.add_argument("--architectures", "-a", default="*", required=False, type=str,
                         help="Which architectures to build for (* for all, local for host machine, comma separated). Use \"list\" to get a list")
     parser.add_argument("--projects", "-i", default="*", required=False, type=str,
-                        help="Which projects to build (* for all, comma separated). Accepted: client, server, dual")
+                        help="Which projects to build (* for all, comma separated). Accepted: client, server, wsvpn")
     parser.add_argument("--compress", "-c", default=False, action="store_true",
                         help="Output UPX compressed binaries for Linux")
     parser.add_argument("--lipo", default=False, action="store_true",
@@ -333,7 +334,7 @@ def main():
 
     projects = None
     if flags.projects == "*":
-        projects = ["client", "server", "dual"]
+        projects = ["client", "server", "wsvpn"]
     else:
         projects = flags.projects.split(",")
 
@@ -429,7 +430,8 @@ def main():
 
     all_tasks: list = tasks.copy()
 
-    num_jobs = flags.jobs
+    parallelism_allowed = False
+    num_jobs = 1
     running_tasks: list = []
     while len(tasks) > 0:
         while len(running_tasks) < num_jobs:
@@ -438,6 +440,11 @@ def main():
                 break
             running_tasks.append(task)
             task.start()
+            if not parallelism_allowed and isinstance(task, GoBuildTask):
+                task.join()
+                parallelism_allowed = True
+                num_jobs = flags.jobs
+                running_tasks = []
 
         if len(running_tasks) > 0:
             build_task_cond.acquire()

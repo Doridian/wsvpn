@@ -11,21 +11,21 @@ import (
 )
 
 func main() {
-	sidePtr := flag.String("side", "", "client or server")
-	configPtr, printDefaultConfigPtr := shared_cli.LoadFlags("SIDE.yml", "Config file name (\"SIDE.yml\" means use either server.yml or client.yml)")
+	modePtr := flag.String("mode", "", "client or server")
+	configPtr, printDefaultConfigPtr := shared_cli.LoadFlags("MODE.yml", "Config file name (\"MODE.yml\" means use either server.yml or client.yml)")
 	flag.Parse()
 
-	if *configPtr == "SIDE.yml" {
-		configName := fmt.Sprintf("%s.yml", *sidePtr)
+	if *configPtr == "MODE.yml" {
+		configName := fmt.Sprintf("%s.yml", *modePtr)
 		configPtr = &configName
 	}
 
-	switch *sidePtr {
+	switch *modePtr {
 	case "client":
 		client_cli.Main(configPtr, printDefaultConfigPtr)
 	case "server":
 		server_cli.Main(configPtr, printDefaultConfigPtr)
 	default:
-		panic(errors.New("please choose a valid side: client or server"))
+		panic(errors.New("please choose a valid mode: client or server"))
 	}
 }

@@ -22,24 +22,22 @@ You can download the latest release binaries at https://github.com/Doridian/wsvp
 
 Pick the correct binaries for your architecture and OS (`darwin` refers to macOS).
 
-The naming convention is `side-os-architecture` (`side` being either `client`, `server` or `dual`)
+The naming convention is `wsvpn-os-architecture`
 
 Some common CPU types and what their architecture is called:
 - Intel or AMD CPU: `amd64` on a 64-bit OS, `386` on a 32-bit OS
 - Apple Silicon, such as M1: `arm64`
 - Raspberry Pi and most other SBCs: `arm64` on a 64-bit OS, `arm` on a 32-bit OS
 
-For Linux, packed binaries are also offered for very space-constrained devices. These are the ones that end in `-compressed` and are packed using https://github.com/upx/upx
-
-For macOS, universal binaries are offered as `side-darwin-universal`
+For macOS, universal binaries are offered as `wsvpn-darwin-universal`
 
 ## Example configurations
 
 In each of these examples, you run the tunnel as follows:
 1. Put the config in a file ending in `.yml`
-1. Run the binary with `--config=myfile.yml` with the full filename of the file
-   1. On Windows, this has to be done in a "Run as Administrator" command prompt, and works like `.\client-windows-amd64.exe --config=myfile.yml`
-   1. On macOS and linux, this has to be run as root, like: `sudo ./client-linux-amd64 --config=myfile.yml`
+1. Run the binary with `--config=myfile.yml` and either `--mode=server` or `--mode=client` with the full filename of the file
+   1. On Windows, this has to be done in a "Run as Administrator" command prompt, and works like `.\wsvpn-windows-amd64.exe --mode client --config=myfile.yml`
+   1. On macOS and linux, this has to be run as root, like: `sudo ./wsvpn-linux-amd64 --mode client --config=myfile.yml`
 
 **Keep in mind that WebTransport should perform better than WebSocket in most scenarios but is considered to be less stable**
 

@@ -13,7 +13,7 @@ VPN server and client that can talk over WebSocket or WebTransport
 - WebSocket protocol with and without SSL
 - WebTransport protocol (requires SSL as HTTP/3 requires SSL)
 - TUN and TAP mode
-- Works on Linux, macOS and Windows (Windows requires OpenVPN TAP driver)
+- Works on Linux, macOS and Windows (TAP on Windows requires OpenVPN TAP driver)
 - Can authenticate clients via HTTP Basic authentication or mTLS (Mutual TLS) or both
 
 ## Download
@@ -27,7 +27,7 @@ The naming convention is `wsvpn-os-architecture`
 Some common CPU types and what their architecture is called:
 - Intel or AMD CPU: `amd64` on a 64-bit OS, `386` on a 32-bit OS
 - Apple Silicon, such as M1: `arm64`
-- Raspberry Pi and most other SBCs: `arm64` on a 64-bit OS, `arm` on a 32-bit OS
+- Raspberry Pi and most other SBCs: `arm64` on a 64-bit OS, `armv7` on a 32-bit OS
 
 For macOS, universal binaries are offered as `wsvpn-darwin-universal`
 

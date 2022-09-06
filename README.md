@@ -1,5 +1,11 @@
 # WSVPN
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/Doridian/wsvpn)](https://goreportcard.com/report/github.com/Doridian/wsvpn)
+[![License: BSD-3-Clause](https://img.shields.io/github/license/Doridian/wsvpn)](https://opensource.org/licenses/BSD-3-Clause)
+[![Test](https://github.com/Doridian/wsvpn/actions/workflows/test.yml/badge.svg)](https://github.com/Doridian/wsvpn/actions/workflows/test.yml)
+[![Check](https://github.com/Doridian/wsvpn/actions/workflows/check.yml/badge.svg)](https://github.com/Doridian/wsvpn/actions/workflows/check.yml)
+[![Release](https://img.shields.io/github/v/release/Doridian/wsvpn)](https://github.com/Doridian/wsvpn/releases)
+
 VPN server and client that can talk over WebSocket or WebTransport
 
 ## Potential use cases

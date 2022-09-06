@@ -29,7 +29,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build everything for release
-        run: ./build.py --lipo --docker --docker-tag-latest --docker-push --projects wsvpn --architectures arm64,armv7,386,amd64
+        run: ./build.py --lipo --docker --docker-tag-latest --docker-push --projects wsvpn --architectures arm64,armv6,386,amd64
       - name: Release
         uses: softprops/action-gh-release@v1
         with:

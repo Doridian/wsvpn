@@ -33,7 +33,7 @@ The naming convention is `wsvpn-os-architecture`
 Some common CPU types and what their architecture is called:
 - Intel or AMD CPU: `amd64` on a 64-bit OS, `386` on a 32-bit OS
 - Apple Silicon, such as M1: `arm64`
-- Raspberry Pi and most other SBCs: `arm64` on a 64-bit OS, `armv7` on a 32-bit OS
+- Raspberry Pi and most other SBCs: `arm64` on a 64-bit OS, `armv6` on a 32-bit OS
 
 For macOS, universal binaries are offered as `wsvpn-darwin-universal`
 

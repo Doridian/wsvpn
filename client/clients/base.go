@@ -103,7 +103,7 @@ func (c *Client) Serve() error {
 		return err
 	}
 
-	c.socket = sockets.MakeSocket(c.log, c.adapter, nil, true)
+	c.socket = sockets.MakeSocket(c.log, c.adapter, nil, true, nil)
 	err = c.UpdateSocketConfig()
 	if err != nil {
 		return err

@@ -18,6 +18,8 @@ const fragmentationMinProtocol = 10
 const fragmentationNegotiatedMinProtocol = 11
 const featureFieldMinProtocol = 12
 
+type EventPusher = func(evt string)
+
 type Socket struct {
 	AssignedIP net.IP
 
@@ -53,9 +55,11 @@ type Socket struct {
 	localFeatures  map[features.Feature]bool
 	remoteFeatures map[features.Feature]bool
 	usedFeatures   map[features.Feature]bool
+
+	eventPusher EventPusher
 }
 
-func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *iface.WaterInterfaceWrapper, ifaceManaged bool) *Socket {
+func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *iface.WaterInterfaceWrapper, ifaceManaged bool, eventPusher EventPusher) *Socket {
 	return &Socket{
 		AssignedIP: net.IPv6unspecified,
 		mac:        shared.DefaultMAC,
@@ -83,6 +87,8 @@ func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *iface
 		fragmentationEnabled:  false,
 
 		compressionEnabled: false,
+
+		eventPusher: eventPusher,
 
 		localFeatures:  make(map[features.Feature]bool, 0),
 		remoteFeatures: make(map[features.Feature]bool, 0),
@@ -206,6 +212,10 @@ func (s *Socket) Close() {
 	if s.closechanopen {
 		s.closechanopen = false
 		close(s.closechan)
+
+		if s.eventPusher != nil {
+			s.eventPusher(shared.EventDown)
+		}
 	}
 
 	if s.packetHandler != nil {
@@ -225,11 +235,8 @@ func (s *Socket) Serve() {
 	}
 
 	s.adapter.SetFeaturesContainer(s)
-
 	s.adapter.SetDataMessageHandler(s.dataMessageHandler)
-
 	s.registerControlMessageHandler()
-
 	s.installPingPongHandlers()
 
 	s.wg.Add(1)
@@ -243,9 +250,11 @@ func (s *Socket) Serve() {
 
 	s.adapter.WaitReady()
 
-	go s.cleanupFragmentsLoop()
+	if s.eventPusher != nil {
+		s.eventPusher(shared.EventUp)
+	}
 
 	s.tryServeIfaceRead()
-
+	go s.cleanupFragmentsLoop()
 	go s.sendDefaultWelcome()
 }

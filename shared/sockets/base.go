@@ -57,6 +57,7 @@ type Socket struct {
 	usedFeatures   map[features.Feature]bool
 
 	eventPusher EventPusher
+	upEventSent bool
 }
 
 func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *iface.WaterInterfaceWrapper, ifaceManaged bool, eventPusher EventPusher) *Socket {
@@ -212,10 +213,6 @@ func (s *Socket) Close() {
 	if s.closechanopen {
 		s.closechanopen = false
 		close(s.closechan)
-
-		if s.eventPusher != nil {
-			s.eventPusher(shared.EventDown)
-		}
 	}
 
 	if s.packetHandler != nil {
@@ -225,6 +222,11 @@ func (s *Socket) Close() {
 	s.setReady()
 
 	s.fragmentCleanupTicker.Stop()
+
+	if s.eventPusher != nil && s.upEventSent {
+		s.upEventSent = false
+		s.eventPusher(shared.EventDown)
+	}
 }
 
 func (s *Socket) Serve() {
@@ -250,11 +252,16 @@ func (s *Socket) Serve() {
 
 	s.adapter.WaitReady()
 
-	if s.eventPusher != nil {
-		s.eventPusher(shared.EventUp)
-	}
-
 	s.tryServeIfaceRead()
 	go s.cleanupFragmentsLoop()
 	go s.sendDefaultWelcome()
+
+	if s.eventPusher != nil {
+		s.closeLock.Lock()
+		if s.closechanopen {
+			s.upEventSent = true
+			s.eventPusher(shared.EventUp)
+		}
+		s.closeLock.Unlock()
+	}
 }

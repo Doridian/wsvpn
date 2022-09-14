@@ -94,6 +94,14 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 		return err
 	}
 
+	server.MaxConnectionsPerUser = config.Server.MaxConnectionsPerUser
+	switch config.Server.MaxConnectionsPerUserMode {
+	case "kill-oldest":
+		server.MaxConnectionsPerUserMode = servers.MaxConnectionsPerUserKillOldest
+	case "prevent-new":
+		server.MaxConnectionsPerUserMode = servers.MaxConnectionsPerUserPreventNew
+	}
+
 	if !initialConfig && server.InterfaceConfig.OneInterfacePerConnection != config.Interface.OneInterfacePerConnection {
 		log.Printf("WARNING: Ignroing interface config due to change of interface.one-interface-per-connection on reload")
 	} else {

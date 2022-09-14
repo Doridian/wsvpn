@@ -153,16 +153,73 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		localIface = s.mainIface
 	}
 
-	socket := sockets.MakeSocket(clientLogger, adapter, localIface, ifaceManaged)
+	remoteNetStr := fmt.Sprintf("%s/%d", ipClient.String(), s.VPNNet.GetSize())
+	ifaceName := localIface.Interface.Name()
+
+	doRunEventScript := func(event string) {
+		eventErr := s.RunEventScript(event, remoteNetStr, ifaceName, authUsername)
+		if eventErr != nil {
+			s.log.Printf("Error in %s script: %v", event, eventErr)
+		}
+	}
+
+	socket := sockets.MakeSocket(clientLogger, adapter, localIface, ifaceManaged, doRunEventScript)
 	defer socket.Close()
+
+	maxConns := s.MaxConnectionsPerUser
 
 	s.socketsLock.Lock()
 	s.sockets[socket] = true
+
+	if authUsername != "" && maxConns > 0 {
+		userSocks := s.authenticatedSockets[authUsername]
+
+		if userSocks != nil && len(userSocks) >= maxConns {
+			switch s.MaxConnectionsPerUserMode {
+			case MaxConnectionsPerUserKillOldest:
+				toKill := userSocks[0]
+				userSocks = userSocks[1:]
+				toKill.CloseError(errors.New("maximum connections for user exceeded"))
+			case MaxConnectionsPerUserPreventNew:
+				socket.CloseError(errors.New("maximum connections for user exceeded"))
+				s.socketsLock.Unlock()
+				return
+			}
+		}
+
+		if userSocks == nil {
+			userSocks = []*sockets.Socket{socket}
+		} else {
+			userSocks = append(userSocks, socket)
+		}
+		s.authenticatedSockets[authUsername] = userSocks
+	}
 	s.socketsLock.Unlock()
 
 	defer func() {
 		s.socketsLock.Lock()
 		delete(s.sockets, socket)
+
+		if authUsername != "" {
+			userSocks := s.authenticatedSockets[authUsername]
+
+			if userSocks != nil {
+				newSocks := make([]*sockets.Socket, 0)
+
+				for _, sock := range s.authenticatedSockets[authUsername] {
+					if sock == socket {
+						continue
+					}
+					newSocks = append(newSocks, sock)
+				}
+
+				if len(newSocks) == 0 {
+					delete(s.authenticatedSockets, authUsername)
+				} else {
+					s.authenticatedSockets[authUsername] = newSocks
+				}
+			}
+		}
 		s.socketsLock.Unlock()
 	}()
 
@@ -191,18 +248,6 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	socket.Serve()
 	socket.WaitReady()
 
-	remoteNetStr := fmt.Sprintf("%s/%d", ipClient.String(), s.VPNNet.GetSize())
-	ifaceName := localIface.Interface.Name()
-
-	doRunEventScript := func(event string) {
-		eventErr := s.RunEventScript(event, remoteNetStr, ifaceName, authUsername)
-		if eventErr != nil {
-			s.log.Printf("Error in %s script: %v", event, eventErr)
-		}
-	}
-
-	doRunEventScript(shared.EventUp)
-
 	err = socket.MakeAndSendCommand(&commands.InitParameters{
 		ClientID:            clientID,
 		ServerID:            s.serverID,
@@ -218,8 +263,6 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	socket.Wait()
-
-	go doRunEventScript(shared.EventDown)
 }
 
 func (s *Server) UpdateSocketConfig() error {

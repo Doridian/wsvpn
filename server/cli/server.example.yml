@@ -57,3 +57,5 @@ server:
     # allow-all: Just allow all clients regardless of authentication
     # htpasswd: Set config key to filename of a htpasswd-formatted file; Authenticates clients using HTTP Basic authentication
     config: ""
+  max-connections-per-user: 0 # Only works with a form of authentication enabled
+  max-connections-per-user-mode: kill-oldest # kill-oldest or prevent-new

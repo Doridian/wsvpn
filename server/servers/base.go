@@ -19,20 +19,29 @@ import (
 var errNone = errors.New("none")
 var ErrNoServeWaitsLeft = errors.New("no serve waits left")
 
+type MaxConnectionsPerUserEnum = int
+
+const (
+	MaxConnectionsPerUserKillOldest MaxConnectionsPerUserEnum = 0
+	MaxConnectionsPerUserPreventNew MaxConnectionsPerUserEnum = 1
+)
+
 type Server struct {
 	shared.EventConfigHolder
 
-	PacketHandler      sockets.PacketHandler
-	VPNNet             *shared.VPNNet
-	DoLocalIPConfig    bool
-	DoRemoteIPConfig   bool
-	TLSConfig          *tls.Config
-	ListenAddr         string
-	HTTP3Enabled       bool
-	Authenticator      authenticators.Authenticator
-	Mode               shared.VPNMode
-	SocketConfigurator sockets.SocketConfigurator
-	InterfaceConfig    *iface.InterfaceConfig
+	PacketHandler             sockets.PacketHandler
+	VPNNet                    *shared.VPNNet
+	DoLocalIPConfig           bool
+	DoRemoteIPConfig          bool
+	TLSConfig                 *tls.Config
+	ListenAddr                string
+	HTTP3Enabled              bool
+	Authenticator             authenticators.Authenticator
+	Mode                      shared.VPNMode
+	SocketConfigurator        sockets.SocketConfigurator
+	InterfaceConfig           *iface.InterfaceConfig
+	MaxConnectionsPerUser     int
+	MaxConnectionsPerUserMode MaxConnectionsPerUserEnum
 
 	upgraders          []upgraders.SocketUpgrader
 	slotMutex          *sync.Mutex
@@ -44,10 +53,11 @@ type Server struct {
 	log                *log.Logger
 	serverID           string
 
-	closers     []io.Closer
-	sockets     map[*sockets.Socket]bool
-	closerLock  *sync.Mutex
-	socketsLock *sync.Mutex
+	closers              []io.Closer
+	sockets              map[*sockets.Socket]bool
+	authenticatedSockets map[string][]*sockets.Socket
+	closerLock           *sync.Mutex
+	socketsLock          *sync.Mutex
 
 	serveErrorChannel chan interface{}
 	serveError        error
@@ -58,17 +68,18 @@ type Server struct {
 
 func NewServer() *Server {
 	return &Server{
-		slotMutex:          &sync.Mutex{},
-		ifaceCreationMutex: &sync.Mutex{},
-		usedSlots:          make(map[uint64]bool),
-		log:                shared.MakeLogger("SERVER", ""),
-		serveErrorChannel:  make(chan interface{}),
-		serveWaitGroup:     &sync.WaitGroup{},
-		closers:            make([]io.Closer, 0),
-		sockets:            make(map[*sockets.Socket]bool),
-		closerLock:         &sync.Mutex{},
-		socketsLock:        &sync.Mutex{},
-		localFeatures:      make(map[features.Feature]bool),
+		slotMutex:            &sync.Mutex{},
+		ifaceCreationMutex:   &sync.Mutex{},
+		usedSlots:            make(map[uint64]bool),
+		log:                  shared.MakeLogger("SERVER", ""),
+		serveErrorChannel:    make(chan interface{}),
+		serveWaitGroup:       &sync.WaitGroup{},
+		closers:              make([]io.Closer, 0),
+		sockets:              make(map[*sockets.Socket]bool),
+		authenticatedSockets: make(map[string][]*sockets.Socket),
+		closerLock:           &sync.Mutex{},
+		socketsLock:          &sync.Mutex{},
+		localFeatures:        make(map[features.Feature]bool),
 	}
 }
 

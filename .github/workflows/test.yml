@@ -30,6 +30,9 @@ jobs:
   test-windows:
     runs-on: windows-latest
     steps:
+      - name: Add mask for secrets
+        run: |
+          echo "::add-mask::${{ secrets.NPCAP_URL }}"
       - uses: actions/checkout@v3
       - name: Install drivers
         run: .\.github\InstallDrivers.ps1

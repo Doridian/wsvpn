@@ -44,7 +44,7 @@ func (s *Socket) installPingPongHandlers() {
 			case <-pingTimeoutTimer.C:
 				s.log.Println("Ping timeout")
 				return
-			case <-s.closechan:
+			case <-s.closeChan:
 				return
 			}
 		}

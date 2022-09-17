@@ -8,3 +8,5 @@ __pycache__
 /server.yml
 *.pem
 /shared/iface/wintun
+*.exe
+*.msi

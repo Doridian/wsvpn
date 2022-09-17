@@ -1,3 +1,4 @@
+$NpcapURL = $env:NPCAP_URL
 $OpenVPNMSI = "https://swupdate.openvpn.org/community/releases/OpenVPN-2.5.7-I602-amd64.msi"
 
 $global:ErrorActionPreference = "Stop"
@@ -18,6 +19,12 @@ function MakeTAP([Parameter(Mandatory=$true)]$Name)
     @{$true = Write-Host "[OK]"}[$?]
 
 }
+
+DownloadFile "$NpcapURL" "npcap.exe"
+
+Write-Host "Installing Npcap..."
+Start-Process "$WorkingDir\npcap.exe" -ArgumentList "/s" -Wait
+@{$true = Write-Host "[OK]"}[$?]
 
 DownloadFile "$OpenVPNMSI" "openvpn.msi"
 

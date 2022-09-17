@@ -31,10 +31,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Install OpenVPN TAP
-        run: .\.github\InstallTAP.ps1
-      - name: Install npcap
-        run: .\.github\InstallNpcap.ps1
+      - name: Install drivers
+        run: .\.github\InstallDrivers.ps1
+        env:
+          NPCAP_URL: ${{ secrets.NPCAP_URL }}
       - uses: actions/setup-go@v3
         with:
           go-version-file: 'go.mod'

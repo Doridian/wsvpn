@@ -40,8 +40,8 @@ type Socket struct {
 	wg               *sync.WaitGroup
 	readyWait        *sync.Cond
 	handlers         map[string]CommandHandler
-	closechan        chan bool
-	closechanopen    bool
+	closeChan        chan bool
+	closeChanOpen    bool
 	mac              net.HardwareAddr
 	packetBufferSize int
 	packetHandler    PacketHandler
@@ -71,8 +71,8 @@ func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *iface
 		wg:                    &sync.WaitGroup{},
 		readyWait:             shared.MakeSimpleCond(),
 		handlers:              make(map[commands.CommandName]CommandHandler),
-		closechan:             make(chan bool),
-		closechanopen:         true,
+		closeChan:             make(chan bool),
+		closeChanOpen:         true,
 		remoteProtocolVersion: UndeterminedProtocolVersion,
 		packetBufferSize:      2000,
 		log:                   logger,
@@ -188,12 +188,21 @@ func (s *Socket) closeDone() {
 }
 
 func (s *Socket) CloseError(err error) {
-	if !s.isClosing {
-		s.isClosing = true
-		s.log.Printf("Closing socket: %v", err)
-		_ = s.SendMessage("error", err.Error())
+	s.closeLock.Lock()
+	defer s.closeLock.Unlock()
+
+	wasClosing := s.isClosing
+	s.close(false)
+
+	if !wasClosing {
+		s.log.Printf("Closing socket with error: %v", err)
+		go func() {
+			_ = s.SendMessage("error", err.Error())
+			_ = s.adapter.Close()
+		}()
+	} else {
+		_ = s.adapter.Close()
 	}
-	s.Close()
 }
 
 func (s *Socket) setReady() {
@@ -204,15 +213,26 @@ func (s *Socket) setReady() {
 func (s *Socket) Close() {
 	s.closeLock.Lock()
 	defer s.closeLock.Unlock()
+	if s.isClosing {
+		return
+	}
+	s.close(true)
+}
 
-	_ = s.adapter.Close()
+func (s *Socket) close(closeAdapter bool) {
+	s.isClosing = true
+
+	if closeAdapter {
+		_ = s.adapter.Close()
+	}
+
 	if s.iface != nil && s.ifaceManaged {
 		_ = s.iface.Close()
 	}
 
-	if s.closechanopen {
-		s.closechanopen = false
-		close(s.closechan)
+	if s.closeChanOpen {
+		s.closeChanOpen = false
+		close(s.closeChan)
 	}
 
 	if s.packetHandler != nil {
@@ -258,7 +278,7 @@ func (s *Socket) Serve() {
 
 	if s.eventPusher != nil {
 		s.closeLock.Lock()
-		if s.closechanopen {
+		if s.closeChanOpen {
 			s.upEventSent = true
 			s.eventPusher(shared.EventUp)
 		}

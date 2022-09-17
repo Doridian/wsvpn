@@ -169,8 +169,6 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	maxConns := s.MaxConnectionsPerUser
 
 	s.socketsLock.Lock()
-	s.sockets[socket] = true
-
 	if authUsername != "" && maxConns > 0 {
 		userSocks := s.authenticatedSockets[authUsername]
 
@@ -181,8 +179,8 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 				userSocks = userSocks[1:]
 				toKill.CloseError(errors.New("maximum connections for user exceeded"))
 			case MaxConnectionsPerUserPreventNew:
-				socket.CloseError(errors.New("maximum connections for user exceeded"))
 				s.socketsLock.Unlock()
+				socket.CloseError(errors.New("maximum connections for user exceeded"))
 				return
 			}
 		}
@@ -194,6 +192,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		}
 		s.authenticatedSockets[authUsername] = userSocks
 	}
+	s.sockets[socket] = true
 	s.socketsLock.Unlock()
 
 	defer func() {

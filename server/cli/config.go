@@ -51,6 +51,7 @@ type Config struct {
 		} `yaml:"authenticator"`
 		MaxConnectionsPerUser     int    `yaml:"max-connections-per-user"`
 		MaxConnectionsPerUserMode string `yaml:"max-connections-per-user-mode"`
+		WebsiteDirectory          string `yaml:"website-directory"`
 	}
 }
 

@@ -42,6 +42,7 @@ type Server struct {
 	InterfaceConfig           *iface.InterfaceConfig
 	MaxConnectionsPerUser     int
 	MaxConnectionsPerUserMode MaxConnectionsPerUserEnum
+	WebsiteDirectory          string
 
 	upgraders          []upgraders.SocketUpgrader
 	slotMutex          *sync.Mutex

@@ -58,6 +58,31 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		clientLogger.Printf("Authenticated as: %s", authUsername)
 	}
 
+	var adapter adapters.SocketAdapter
+	wasUpgraded := false
+	for _, upgrader := range s.upgraders {
+		if !upgrader.Matches(r) {
+			continue
+		}
+		wasUpgraded = true
+		adapter, err = upgrader.Upgrade(w, r)
+		if err != nil {
+			clientLogger.Printf("Error upgrading connection: %v", err)
+			return
+		}
+		break
+	}
+
+	if !wasUpgraded {
+		s.serveStatic(w, r)
+		return
+	}
+
+	defer adapter.Close()
+	s.addCloser(adapter)
+
+	clientLogger.Printf("Upgraded connection to %s", adapter.Name())
+
 	var slot uint64 = 1
 	maxSlot := s.VPNNet.GetClientSlots() + 1
 	s.slotMutex.Lock()
@@ -66,7 +91,6 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		if slot > maxSlot {
 			s.slotMutex.Unlock()
 			clientLogger.Println("Cannot connect new client: IP slots exhausted")
-			http.Error(w, "IP slots exhausted", http.StatusInternalServerError)
 			return
 		}
 	}
@@ -78,26 +102,6 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		delete(s.usedSlots, slot)
 		s.slotMutex.Unlock()
 	}()
-
-	var adapter adapters.SocketAdapter
-	err = errors.New("no matching upgrader")
-	for _, upgrader := range s.upgraders {
-		if !upgrader.Matches(r) {
-			continue
-		}
-		adapter, err = upgrader.Upgrade(w, r)
-		break
-	}
-
-	if err != nil {
-		clientLogger.Printf("Error upgrading connection: %v", err)
-		return
-	}
-
-	defer adapter.Close()
-	s.addCloser(adapter)
-
-	clientLogger.Printf("Upgraded connection to %s", adapter.Name())
 
 	ipClient, err := s.VPNNet.GetIPAt(int(slot) + 1)
 	if err != nil {

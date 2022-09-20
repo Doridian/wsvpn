@@ -49,6 +49,8 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 		log.Printf("WARNING: Ignoring change of tunnel.subnet on reload")
 	}
 
+	server.WebsiteDirectory = config.Server.WebsiteDirectory
+
 	server.SocketConfigurator = &cli.PingFlagsSocketConfigurator{
 		Config: &config.Tunnel.Ping,
 	}

@@ -43,6 +43,7 @@ scripts:
 server:
   listen: 127.0.0.1:9000
   enable-http3: false
+  website-directory: "" # Serve normal HTTP(S) requests from this folder, disabled if blank
   tls:
     client-ca: "" # Filename of CA for mTLS
     certificate: "" # Filename of certificate for TLS

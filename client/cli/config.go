@@ -3,6 +3,7 @@ package cli
 import (
 	_ "embed" // Required for go:embed
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -27,11 +28,16 @@ type Config struct {
 	Scripts shared.EventConfig `yaml:"scripts"`
 
 	Client struct {
-		Server             string        `yaml:"server"`
-		Proxy              string        `yaml:"proxy"`
-		AuthFile           string        `yaml:"auth-file"`
+		Server  string      `yaml:"server"`
+		Headers http.Header `yaml:"headers"`
+
+		Proxy string `yaml:"proxy"`
+
+		AuthFile string `yaml:"auth-file"`
+
 		AutoReconnectDelay time.Duration `yaml:"auto-reconnect-delay"`
-		TLS                struct {
+
+		TLS struct {
 			CA          string               `yaml:"ca"`
 			Certificate string               `yaml:"certificate"`
 			Key         string               `yaml:"key"`

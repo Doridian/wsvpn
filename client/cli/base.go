@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
@@ -49,7 +50,18 @@ func reloadConfig(configPtr *string, client *clients.Client) error {
 		dest.User = nil
 	}
 
+	client.Headers = http.Header{}
+	for name, values := range config.Client.Headers {
+		for _, value := range values {
+			client.Headers.Add(name, value)
+		}
+	}
+
 	client.SetBasicAuthFromUserInfo(userInfo)
+
+	if client.Headers.Get("User-Agent") == "" {
+		client.Headers.Set("User-Agent", fmt.Sprintf("wsvpn/%s", shared.Version))
+	}
 
 	client.TLSConfig.InsecureSkipVerify = config.Client.TLS.Config.Insecure
 	client.TLSConfig.ServerName = config.Client.TLS.ServerName

@@ -25,6 +25,14 @@ client:
   proxy: "" # Example: http://user:password@proxy.example.com:8080
   auth-file:  "" # Filename of file containing user:password for HTTP Basic authentication
   auto-reconnect-delay: 0s # Delay after which to retry connecting to the server automatically after an error, set to 0s (default) to disable
+
+  headers: # Map of headers (string key to *list* of string values)
+  # Host:
+  #   - example.com
+  # X-Other-Header:
+  #   - value1
+  #   - value2
+
   tls:
     ca: "" # Filename of CA bundle for verifying server cert
     certificate: "" # Filename of certificate for mTLS

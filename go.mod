@@ -7,7 +7,7 @@ require (
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/lucas-clemente/quic-go v0.29.1
+	github.com/lucas-clemente/quic-go v0.29.2
 	github.com/marten-seemann/webtransport-go v0.1.1
 	github.com/tg123/go-htpasswd v1.2.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -28,8 +28,8 @@ require (
 	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/marten-seemann/qpack v0.2.1 // indirect
-	github.com/marten-seemann/qtls-go1-18 v0.1.2 // indirect
-	github.com/marten-seemann/qtls-go1-19 v0.1.0 // indirect
+	github.com/marten-seemann/qtls-go1-18 v0.1.3 // indirect
+	github.com/marten-seemann/qtls-go1-19 v0.1.1 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect

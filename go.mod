@@ -7,7 +7,7 @@ require (
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/lucas-clemente/quic-go v0.29.2
+	github.com/lucas-clemente/quic-go v0.30.0
 	github.com/marten-seemann/webtransport-go v0.1.1
 	github.com/tg123/go-htpasswd v1.2.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -16,7 +16,9 @@ require (
 require (
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/gopacket v1.1.19 // indirect
+	github.com/google/pprof v0.0.0-20210407192527-94a9f03dee38 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
+	github.com/onsi/ginkgo/v2 v2.2.0 // indirect
 	golang.org/x/exp v0.0.0-20220827204233-334a2380cb91 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20211104114900-415007cec224 // indirect
 	golang.zx2c4.com/wireguard v0.0.0-20220829161405-d1d08426b27b // indirect
@@ -27,7 +29,7 @@ require (
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4
-	github.com/marten-seemann/qpack v0.2.1 // indirect
+	github.com/marten-seemann/qpack v0.3.0 // indirect
 	github.com/marten-seemann/qtls-go1-18 v0.1.3 // indirect
 	github.com/marten-seemann/qtls-go1-19 v0.1.1 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect

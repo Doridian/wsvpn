@@ -122,7 +122,7 @@ func (s *WebTransportAdapter) RefreshFeatures() {
 	quicvarint.Write(buf, s.quarterStreamID)
 	s.quarterStreamIDVarint = buf.Bytes()
 
-	s.maxPayloadLen = uint16(1220 - (len(s.quarterStreamIDVarint) + 3))
+	s.maxPayloadLen = uint16(1200 - (len(s.quarterStreamIDVarint) + 3))
 }
 
 func (s *WebTransportAdapter) Serve() (bool, error) {

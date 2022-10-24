@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/lucas-clemente/quic-go v0.30.0
-	github.com/marten-seemann/webtransport-go v0.1.1
+	github.com/marten-seemann/webtransport-go v0.2.0
 	github.com/tg123/go-htpasswd v1.2.0
 	gopkg.in/yaml.v3 v3.0.1
 )

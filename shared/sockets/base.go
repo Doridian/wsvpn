@@ -219,6 +219,10 @@ func (s *Socket) Close() {
 	s.close(true)
 }
 
+func (s *Socket) GetAdapter() adapters.SocketAdapter {
+	return s.adapter
+}
+
 func (s *Socket) close(closeAdapter bool) {
 	s.isClosing = true
 

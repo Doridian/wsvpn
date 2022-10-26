@@ -74,7 +74,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !wasUpgraded {
-		s.serveStatic(w, r)
+		s.serveHTTP(w, r, authUsername)
 		return
 	}
 
@@ -196,12 +196,12 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		}
 		s.authenticatedSockets[authUsername] = userSocks
 	}
-	s.sockets[socket] = true
+	s.sockets[clientID] = socket
 	s.socketsLock.Unlock()
 
 	defer func() {
 		s.socketsLock.Lock()
-		delete(s.sockets, socket)
+		delete(s.sockets, clientID)
 
 		if authUsername != "" {
 			userSocks := s.authenticatedSockets[authUsername]
@@ -275,7 +275,7 @@ func (s *Server) UpdateSocketConfig() error {
 
 	s.socketsLock.Lock()
 	defer s.socketsLock.Unlock()
-	for socket := range s.sockets {
+	for _, socket := range s.sockets {
 		err := s.SocketConfigurator.ConfigureSocket(socket)
 		if err != nil {
 			return err

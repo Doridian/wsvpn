@@ -43,6 +43,8 @@ type Server struct {
 	MaxConnectionsPerUser     int
 	MaxConnectionsPerUserMode MaxConnectionsPerUserEnum
 	WebsiteDirectory          string
+	APIEnabled                bool
+	APIUsers                  map[string]bool
 
 	upgraders          []upgraders.SocketUpgrader
 	slotMutex          *sync.Mutex
@@ -55,7 +57,7 @@ type Server struct {
 	serverID           string
 
 	closers              []io.Closer
-	sockets              map[*sockets.Socket]bool
+	sockets              map[string]*sockets.Socket
 	authenticatedSockets map[string][]*sockets.Socket
 	closerLock           *sync.Mutex
 	socketsLock          *sync.Mutex
@@ -76,7 +78,7 @@ func NewServer() *Server {
 		serveErrorChannel:    make(chan interface{}),
 		serveWaitGroup:       &sync.WaitGroup{},
 		closers:              make([]io.Closer, 0),
-		sockets:              make(map[*sockets.Socket]bool),
+		sockets:              make(map[string]*sockets.Socket),
 		authenticatedSockets: make(map[string][]*sockets.Socket),
 		closerLock:           &sync.Mutex{},
 		socketsLock:          &sync.Mutex{},
@@ -176,7 +178,7 @@ func (s *Server) SetMTU(mtu int) error {
 	s.socketsLock.Lock()
 	defer s.socketsLock.Unlock()
 
-	for sock := range s.sockets {
+	for _, sock := range s.sockets {
 		sock.SetMTU(mtu)
 		iface := sock.GetInterfaceIfManaged()
 		if iface != nil {

@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-func (s *Server) serveStatic(w http.ResponseWriter, r *http.Request) {
+func (s *Server) serveHTTP(w http.ResponseWriter, r *http.Request, username string) {
 	if strings.HasPrefix(r.URL.Path, "/api") {
-		http.Error(w, "API not implemented, yet", http.StatusNotFound)
+		s.serveAPI(w, r, username)
 		return
 	}
 

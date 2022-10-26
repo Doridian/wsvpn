@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"io"
+	"net"
 	"reflect"
 	"sync"
 	"unsafe"
@@ -88,6 +89,14 @@ func (s *WebTransportAdapter) IsServer() bool {
 
 func (s *WebTransportAdapter) IsClient() bool {
 	return !s.isServer
+}
+
+func (s *WebTransportAdapter) LocalAddr() net.Addr {
+	return s.conn.LocalAddr()
+}
+
+func (s *WebTransportAdapter) RemoteAddr() net.Addr {
+	return s.conn.RemoteAddr()
 }
 
 func (s *WebTransportAdapter) Close() error {

@@ -103,7 +103,7 @@ func (s *WebTransportAdapter) Close() error {
 }
 
 func (s *WebTransportAdapter) GetTLSConnectionState() (tls.ConnectionState, bool) {
-	return s.qconn.ConnectionState().TLS.ConnectionState, true
+	return s.conn.ConnectionState().TLS.ConnectionState, true
 }
 
 func (s *WebTransportAdapter) setReady() {

@@ -29,8 +29,14 @@ func socketToJSON(clientID string, socket *sockets.Socket) SocketStruct {
 
 func serveJSON(data interface{}, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
+
 	enc := json.NewEncoder(w)
-	enc.Encode(data)
+	err := enc.Encode(data)
+
+	if err != nil {
+		w.Header().Del("Content-Type")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
 }
 
 func (s *Server) serveAPI(w http.ResponseWriter, r *http.Request, username string) {

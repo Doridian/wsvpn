@@ -3,6 +3,7 @@ package adapters
 import (
 	"crypto/tls"
 	"errors"
+	"net"
 
 	"github.com/Doridian/wsvpn/shared/commands"
 	"github.com/Doridian/wsvpn/shared/features"
@@ -35,6 +36,9 @@ type SocketAdapter interface {
 	GetTLSConnectionState() (tls.ConnectionState, bool)
 
 	GetCommandSerializationType() commands.SerializationType
+
+	RemoteAddr() net.Addr
+	LocalAddr() net.Addr
 
 	IsServer() bool
 	IsClient() bool

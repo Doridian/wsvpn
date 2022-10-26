@@ -60,3 +60,6 @@ server:
     config: ""
   max-connections-per-user: 0 # Only works with a form of authentication enabled, 0 to disable
   max-connections-per-user-mode: kill-oldest # kill-oldest or prevent-new
+  api:
+    enabled: false # Whether to enable the API
+    users: [] # Which users are allowed to use the API. Leaving this empty allows any authenticated user!

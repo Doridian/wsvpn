@@ -91,6 +91,13 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 		}
 	}
 
+	server.APIEnabled = config.Server.API.Enabled
+	apiUsers := make(map[string]bool)
+	for _, u := range config.Server.API.Users {
+		apiUsers[u] = true
+	}
+	server.APIUsers = apiUsers
+
 	err = server.SetMTU(config.Tunnel.MTU)
 	if err != nil {
 		return err

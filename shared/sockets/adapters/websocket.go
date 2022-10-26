@@ -3,6 +3,7 @@ package adapters
 import (
 	"crypto/tls"
 	"errors"
+	"net"
 	"sync"
 
 	"github.com/Doridian/wsvpn/shared/commands"
@@ -34,6 +35,14 @@ func (s *WebSocketAdapter) IsServer() bool {
 
 func (s *WebSocketAdapter) IsClient() bool {
 	return !s.isServer
+}
+
+func (s *WebSocketAdapter) LocalAddr() net.Addr {
+	return s.conn.LocalAddr()
+}
+
+func (s *WebSocketAdapter) RemoteAddr() net.Addr {
+	return s.conn.RemoteAddr()
 }
 
 func (s *WebSocketAdapter) RefreshFeatures() {

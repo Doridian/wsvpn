@@ -15,7 +15,7 @@ type SocketStruct struct {
 	RemoteAddr string `json:"remote_addr"`
 }
 
-const apiRouteSockets = "sockets"
+const apiRouteClients = "clients"
 
 func socketToJSON(clientID string, socket *sockets.Socket) SocketStruct {
 	adapter := socket.GetAdapter()
@@ -48,7 +48,11 @@ func (s *Server) serveAPI(w http.ResponseWriter, r *http.Request, username strin
 	switch len(pathSplit) {
 	case 3:
 		switch pathSplit[2] {
-		case apiRouteSockets:
+		case apiRouteClients:
+			if r.Method != http.MethodGet {
+				break
+			}
+
 			s.socketsLock.Lock()
 			sockets := make([]SocketStruct, 0, len(s.sockets))
 			for clientID, socket := range s.sockets {
@@ -61,7 +65,7 @@ func (s *Server) serveAPI(w http.ResponseWriter, r *http.Request, username strin
 		}
 	case 4:
 		switch pathSplit[2] {
-		case apiRouteSockets:
+		case apiRouteClients:
 			clientID := pathSplit[3]
 			s.socketsLock.Lock()
 			socket := s.sockets[clientID]

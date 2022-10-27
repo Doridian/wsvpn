@@ -58,6 +58,8 @@ type Socket struct {
 
 	eventPusher EventPusher
 	upEventSent bool
+
+	Metadata map[string]interface{}
 }
 
 func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *iface.WaterInterfaceWrapper, ifaceManaged bool, eventPusher EventPusher) *Socket {
@@ -94,6 +96,8 @@ func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *iface
 		localFeatures:  make(map[features.Feature]bool, 0),
 		remoteFeatures: make(map[features.Feature]bool, 0),
 		usedFeatures:   make(map[features.Feature]bool),
+
+		Metadata: make(map[string]interface{}),
 	}
 }
 
@@ -221,6 +225,14 @@ func (s *Socket) Close() {
 
 func (s *Socket) GetAdapter() adapters.SocketAdapter {
 	return s.adapter
+}
+
+func (s *Socket) LocalAddr() net.Addr {
+	return s.adapter.LocalAddr()
+}
+
+func (s *Socket) RemoteAddr() net.Addr {
+	return s.adapter.RemoteAddr()
 }
 
 func (s *Socket) close(closeAdapter bool) {

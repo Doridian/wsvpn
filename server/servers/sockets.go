@@ -168,6 +168,7 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	socket := sockets.MakeSocket(clientLogger, adapter, localIface, ifaceManaged, doRunEventScript)
+	socket.Metadata["username"] = authUsername
 	defer socket.Close()
 
 	maxConns := s.MaxConnectionsPerUser

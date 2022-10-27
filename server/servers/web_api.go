@@ -10,20 +10,23 @@ import (
 
 type SocketStruct struct {
 	ClientID   string `json:"client_id"`
+	Protocol   string `json:"protocol"`
 	VPNIP      string `json:"vpn_ip"`
 	LocalAddr  string `json:"local_addr"`
 	RemoteAddr string `json:"remote_addr"`
+	Username   string `json:"username"`
 }
 
 const apiRouteClients = "clients"
 
 func socketToJSON(clientID string, socket *sockets.Socket) SocketStruct {
-	adapter := socket.GetAdapter()
 	return SocketStruct{
 		ClientID:   clientID,
+		Protocol:   socket.GetAdapter().Name(),
 		VPNIP:      socket.AssignedIP.String(),
-		RemoteAddr: adapter.RemoteAddr().String(),
-		LocalAddr:  adapter.LocalAddr().String(),
+		LocalAddr:  socket.LocalAddr().String(),
+		RemoteAddr: socket.RemoteAddr().String(),
+		Username:   socket.Metadata["username"].(string),
 	}
 }
 

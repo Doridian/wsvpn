@@ -1,9 +1,11 @@
 package macswitch
 
 import (
+	"time"
+
 	"github.com/Doridian/water/waterutil"
 	"github.com/Doridian/wsvpn/shared/sockets"
-	lru "github.com/hashicorp/golang-lru"
+	lru "github.com/hashicorp/golang-lru/v2"
 )
 
 const EthernetLength = 14
@@ -69,13 +71,11 @@ func (g *MACSwitch) HandlePacket(socket *sockets.Socket, packet []byte) (bool, e
 	return false, nil
 }
 
-func (g *MACSwitch) onMACEvicted(key interface{}, value interface{}) {
-	macAddrObj := key.(macAddr)
-
+func (g *MACSwitch) onMACEvicted(key macAddr, value time.Time) {
 	g.macLock.Lock()
 	defer g.macLock.Unlock()
 
-	delete(g.macTable, macAddrObj)
+	delete(g.macTable, key)
 }
 
 func (g *MACSwitch) RegisterSocket(socket *sockets.Socket) {
@@ -100,7 +100,7 @@ func (g *MACSwitch) UnregisterSocket(socket *sockets.Socket) {
 	socketMACs := socketTbl.Keys()
 
 	for _, mac := range socketMACs {
-		delete(g.macTable, mac.(macAddr))
+		delete(g.macTable, mac)
 	}
 
 	delete(g.socketTable, socket)

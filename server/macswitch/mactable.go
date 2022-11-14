@@ -7,7 +7,6 @@ import (
 
 	"github.com/Doridian/water/waterutil"
 	"github.com/Doridian/wsvpn/shared/sockets"
-	lru "github.com/hashicorp/golang-lru"
 )
 
 func (g *MACSwitch) broadcastDataMessage(data []byte, skip *sockets.Socket) {
@@ -43,7 +42,7 @@ func (g *MACSwitch) cleanupAllMACs() {
 		}
 
 		g.macLock.RLock()
-		tables := make([]*lru.Cache, 0, len(g.socketTable))
+		tables := make([]socketToMACs, 0, len(g.socketTable))
 		for _, table := range g.socketTable {
 			tables = append(tables, table)
 		}
@@ -56,10 +55,10 @@ func (g *MACSwitch) cleanupAllMACs() {
 	g.cleanupTimer.Stop()
 }
 
-func (g *MACSwitch) cleanupMACs(macTable *lru.Cache) {
+func (g *MACSwitch) cleanupMACs(macTable socketToMACs) {
 	for {
 		k, v, ok := macTable.GetOldest()
-		if !ok || time.Since(v.(time.Time)) <= g.MACTableTimeout {
+		if !ok || time.Since(v) <= g.MACTableTimeout {
 			break
 		}
 		macTable.Remove(k)

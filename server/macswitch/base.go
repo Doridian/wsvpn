@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/Doridian/wsvpn/shared/sockets"
-	lru "github.com/hashicorp/golang-lru"
+	lru "github.com/hashicorp/golang-lru/v2"
 )
 
-type socketToMACs = *lru.Cache
+type socketToMACs = *lru.Cache[macAddr, time.Time]
 
 type macAddr [6]byte
 
@@ -56,7 +56,7 @@ func MakeMACSwitch() *MACSwitch {
 
 func (g *MACSwitch) ConfigUpdate() {
 	g.macLock.RLock()
-	tables := make([]*lru.Cache, 0, len(g.socketTable))
+	tables := make([]socketToMACs, 0, len(g.socketTable))
 	for _, table := range g.socketTable {
 		tables = append(tables, table)
 	}

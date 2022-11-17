@@ -16,7 +16,6 @@ import (
 	"github.com/Doridian/wsvpn/shared/commands"
 	"github.com/Doridian/wsvpn/shared/features"
 	"github.com/lucas-clemente/quic-go"
-	"github.com/lucas-clemente/quic-go/http3"
 	"github.com/lucas-clemente/quic-go/quicvarint"
 	"github.com/marten-seemann/webtransport-go"
 )
@@ -57,12 +56,6 @@ var _ SocketAdapter = &WebTransportAdapter{}
 func getPrivateField(iface interface{}, fieldName string) interface{} {
 	field := reflect.ValueOf(iface).Elem().FieldByName(fieldName)
 	return reflect.NewAt(field.Type(), unsafe.Pointer(field.UnsafeAddr())).Elem().Interface() // #nosec G103 -- Unsafe is sadly necessary here
-}
-
-func getStreamID(stream webtransport.Stream) uint64 {
-	sendStream := getPrivateField(stream, "sendStream")
-	quicStream := getPrivateField(sendStream, "str").(http3.Stream)
-	return uint64(quicStream.StreamID())
 }
 
 func getQuicConnection(conn *webtransport.Session) quic.Connection {
@@ -108,7 +101,7 @@ func (s *WebTransportAdapter) Close() error {
 	if s.qconn != nil {
 		_ = s.qconn.CloseWithError(ErrorCodeClosed, "Close called")
 	}
-	return s.conn.Close()
+	return s.conn.CloseWithError(ErrorCodeClosed, "Close called")
 }
 
 func (s *WebTransportAdapter) GetTLSConnectionState() (tls.ConnectionState, bool) {
@@ -148,7 +141,7 @@ func (s *WebTransportAdapter) Serve() (bool, error) {
 		return true, err
 	}
 
-	s.streamID = getStreamID(s.stream)
+	s.streamID = uint64(s.stream.StreamID())
 	s.RefreshFeatures()
 
 	s.wg.Add(1)

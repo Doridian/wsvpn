@@ -108,7 +108,7 @@ func (s *WebTransportAdapter) Close() error {
 	if s.qconn != nil {
 		_ = s.qconn.CloseWithError(ErrorCodeClosed, "Close called")
 	}
-	return s.conn.Close()
+	return s.conn.CloseWithError(ErrorCodeClosed, "Close called")
 }
 
 func (s *WebTransportAdapter) GetTLSConnectionState() (tls.ConnectionState, bool) {

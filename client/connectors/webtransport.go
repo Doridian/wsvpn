@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
+	"github.com/lucas-clemente/quic-go"
 	"github.com/lucas-clemente/quic-go/http3"
 	"github.com/marten-seemann/webtransport-go"
 )
@@ -39,8 +40,17 @@ func (c *WebTransportConnector) Dial(config SocketConnectorConfig) (adapters.Soc
 		return nil, err
 	}
 
+	hijacker, ok := resp.Body.(http3.Hijacker)
+	if !ok {
+		return nil, errors.New("unexpected: Body is not http3.Hijacker")
+	}
+	qconn, ok := hijacker.StreamCreator().(quic.Connection)
+	if !ok {
+		return nil, errors.New("unexpected: StreamCreator is not quic.Connection")
+	}
+
 	serializationType := readSerializationType(resp.Header)
-	return adapters.NewWebTransportAdapter(conn, serializationType, false), nil
+	return adapters.NewWebTransportAdapter(qconn, conn, serializationType, false), nil
 }
 
 func (c *WebTransportConnector) GetSchemes() []string {

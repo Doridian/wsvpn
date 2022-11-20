@@ -2,9 +2,11 @@ package upgraders
 
 import (
 	"crypto/tls"
+	"errors"
 	"net/http"
 
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
+	"github.com/lucas-clemente/quic-go"
 	"github.com/lucas-clemente/quic-go/http3"
 	"github.com/marten-seemann/webtransport-go"
 )
@@ -41,12 +43,21 @@ func (u *WebTransportUpgrader) SetQuicHeaders(header http.Header) error {
 func (u *WebTransportUpgrader) Upgrade(w http.ResponseWriter, r *http.Request) (adapters.SocketAdapter, error) {
 	serializationType := handleHTTPSerializationHeaders(w, r)
 
+	hijacker, ok := w.(http3.Hijacker)
+	if !ok {
+		return nil, errors.New("unexpected: ResponseWriter is not http3.Hijacker")
+	}
+	qconn, ok := hijacker.StreamCreator().(quic.Connection)
+	if !ok {
+		return nil, errors.New("unexpected: StreamCreator is not quic.Connection")
+	}
+
 	conn, err := u.server.Upgrade(w, r)
 	if err != nil {
 		return nil, err
 	}
 
-	return adapters.NewWebTransportAdapter(conn, serializationType, true), nil
+	return adapters.NewWebTransportAdapter(qconn, conn, serializationType, true), nil
 }
 
 func (u *WebTransportUpgrader) ListenAndServe() error {

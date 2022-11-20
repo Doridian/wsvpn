@@ -8,9 +8,7 @@ import (
 	"errors"
 	"io"
 	"net"
-	"reflect"
 	"sync"
-	"unsafe"
 
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
@@ -53,19 +51,10 @@ type WebTransportAdapter struct {
 
 var _ SocketAdapter = &WebTransportAdapter{}
 
-func getPrivateField(iface interface{}, fieldName string) interface{} {
-	field := reflect.ValueOf(iface).Elem().FieldByName(fieldName)
-	return reflect.NewAt(field.Type(), unsafe.Pointer(field.UnsafeAddr())).Elem().Interface() // #nosec G103 -- Unsafe is sadly necessary here
-}
-
-func getQuicConnection(conn *webtransport.Session) quic.Connection {
-	return getPrivateField(conn, "qconn").(quic.Connection)
-}
-
-func NewWebTransportAdapter(conn *webtransport.Session, serializationType commands.SerializationType, isServer bool) *WebTransportAdapter {
+func NewWebTransportAdapter(qconn quic.Connection, conn *webtransport.Session, serializationType commands.SerializationType, isServer bool) *WebTransportAdapter {
 	adapter := &WebTransportAdapter{
 		conn:               conn,
-		qconn:              getQuicConnection(conn),
+		qconn:              qconn,
 		isServer:           isServer,
 		readyWait:          shared.MakeSimpleCond(),
 		wg:                 &sync.WaitGroup{},

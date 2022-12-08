@@ -50,6 +50,8 @@ github.com/marten-seemann/webtransport-go v0.4.0 h1:seNdLfPIEQCZFrWlSF/o8jfx2DBi
 github.com/marten-seemann/webtransport-go v0.4.0/go.mod h1:4xcfySgZMLP4aG5GBGj1egP7NlpfwgYJ1WJMvPPiVMU=
 github.com/marten-seemann/webtransport-go v0.4.1 h1:8Ir7OoAvtp79yxQpa3foTKIPuoH+0eKpisHObJyu9Sk=
 github.com/marten-seemann/webtransport-go v0.4.1/go.mod h1:4xcfySgZMLP4aG5GBGj1egP7NlpfwgYJ1WJMvPPiVMU=
+github.com/marten-seemann/webtransport-go v0.4.2 h1:8ZRr9AsPuDiLQwnX2PxGs2t35GPvUaqPJnvk+c2SFSs=
+github.com/marten-seemann/webtransport-go v0.4.2/go.mod h1:4xcfySgZMLP4aG5GBGj1egP7NlpfwgYJ1WJMvPPiVMU=
 github.com/onsi/ginkgo/v2 v2.2.0 h1:3ZNA3L1c5FYDFTTxbFeVGGD8jYvjYauHD30YgLxVsNI=
 github.com/onsi/ginkgo/v2 v2.2.0/go.mod h1:MEH45j8TBi6u9BMogfbp0stKC5cdGjumZj5Y7AG4VIk=
 github.com/onsi/gomega v1.20.1 h1:PA/3qinGoukvymdIDV8pii6tiZgC8kbmJO6Z5+b002Q=

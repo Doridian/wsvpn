@@ -19,9 +19,7 @@ jobs:
           check-latest: true
           cache: true
       - name: Install slimfat
-        run: pip --no-cache-dir install --user slimfat
-      - name: Load slimfat
-        run: python3 -m slimfat test || python -m slimfat test
+        run: pip --no-cache-dir install --user slimfat &&  python3 -m slimfat test || python -m slimfat test
 
   imports:
     name: Imports

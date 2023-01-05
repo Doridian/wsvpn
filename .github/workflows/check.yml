@@ -8,6 +8,21 @@ on:
 name: Check
 
 jobs:
+  sanity-check:
+    name: Sanity check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+          check-latest: true
+          cache: true
+      - name: Install slimfat
+        run: pip3 --no-cache-dir install slimfat
+      - name: Load slimfat
+        run: python3 -m slimfat test
+
   imports:
     name: Imports
     runs-on: ubuntu-latest

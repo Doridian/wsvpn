@@ -1,7 +1,7 @@
-github.com/Doridian/gopacket v1.2.0 h1:/2Iji4fRpL+iFArv1+EqK0Ay097hap2cu0hmUsqrjXo=
-github.com/Doridian/gopacket v1.2.0/go.mod h1:16EwY3JsEHp3TFeSRcmSC9yOdG8GkFAWImZaL13kOGc=
-github.com/Doridian/water v1.3.1 h1:A+YBGjzSlkC6hdHevr0arYZZe4m2m1hIfgHSM6SKQH4=
-github.com/Doridian/water v1.3.1/go.mod h1:Tr2ENP1evaPo69GUDyMDOPYGJTboC/7acYiQqTyfDD8=
+github.com/Doridian/gopacket v1.2.1 h1:z0Iu5zplIq01nGNwKoreAhc/RMIUqu6vZLxLsHjpO48=
+github.com/Doridian/gopacket v1.2.1/go.mod h1:16EwY3JsEHp3TFeSRcmSC9yOdG8GkFAWImZaL13kOGc=
+github.com/Doridian/water v1.3.2 h1:SXpwUpMH9jJiIoDypSN2gY2ibgxm8Ka2utfDnSlozGk=
+github.com/Doridian/water v1.3.2/go.mod h1:OZO9ofRyDqTucY8uw+7I0KXu2kFCvCi1LG+BeV5+BSw=
 github.com/GehirnInc/crypt v0.0.0-20200316065508-bb7000b8a962 h1:KeNholpO2xKjgaaSyd+DyQRrsQjhbSeS7qe4nEw8aQw=
 github.com/GehirnInc/crypt v0.0.0-20200316065508-bb7000b8a962/go.mod h1:kC29dT1vFpj7py2OvG1khBdQpo3kInWP+6QipLbdngo=
 github.com/apparentlymart/go-cidr v1.1.0 h1:2mAhrMoF+nhXqxTzSZMUzDHkLjmIHC+Zzn4tdgBZjnU=

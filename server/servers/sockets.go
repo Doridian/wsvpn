@@ -19,6 +19,22 @@ import (
 )
 
 func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
+	tlsConnectionState := r.TLS
+
+	http3Hijacker, ok := w.(http3.Hijacker)
+	if ok {
+		qconn, ok := http3Hijacker.StreamCreator().(quic.Connection)
+		if ok {
+			qlsState := qconn.ConnectionState().TLS.ConnectionState
+			tlsConnectionState = &qlsState
+		}
+	}
+
+	if r.URL.Path == rootRoutePreauthorize {
+		s.handlePreauthorize(w, r, tlsConnectionState)
+		return
+	}
+
 	var err error
 
 	clientUUID, err := uuid.NewRandom()
@@ -31,17 +47,6 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	clientID := clientUUID.String()
 
 	clientLogger := shared.MakeLogger("CLIENT", clientID)
-
-	tlsConnectionState := r.TLS
-
-	http3Hijacker, ok := w.(http3.Hijacker)
-	if ok {
-		qconn, ok := http3Hijacker.StreamCreator().(quic.Connection)
-		if ok {
-			qlsState := qconn.ConnectionState().TLS.ConnectionState
-			tlsConnectionState = &qlsState
-		}
-	}
 
 	if tlsConnectionState != nil {
 		clientLogger.Printf("TLS %s connection established with cipher=%s", shared.TLSVersionString(tlsConnectionState.Version), tls.CipherSuiteName(tlsConnectionState.CipherSuite))

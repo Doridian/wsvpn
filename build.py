@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-from cProfile import run
 from dataclasses import dataclass
 from io import BytesIO
 from os.path import join, exists

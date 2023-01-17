@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/Doridian/water"
 	"github.com/Doridian/wsvpn/shared"
@@ -19,6 +20,15 @@ import (
 )
 
 func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
+	clientUUID, err := uuid.NewRandom()
+	if err != nil {
+		s.log.Printf("Error creating client ID: %v", err)
+		http.Error(w, "Error creating client ID", http.StatusInternalServerError)
+		return
+	}
+	clientID := clientUUID.String()
+	clientLogger := shared.MakeLogger("CLIENT", clientID)
+
 	tlsConnectionState := r.TLS
 
 	http3Hijacker, ok := w.(http3.Hijacker)
@@ -31,22 +41,9 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.URL.Path == rootRoutePreauthorize {
-		s.handlePreauthorize(w, r, tlsConnectionState)
+		s.handlePreauthorize(clientLogger, w, r, tlsConnectionState)
 		return
 	}
-
-	var err error
-
-	clientUUID, err := uuid.NewRandom()
-	if err != nil {
-		s.log.Printf("Error creating client ID: %v", err)
-		http.Error(w, "Error creating client ID", http.StatusInternalServerError)
-		return
-	}
-
-	clientID := clientUUID.String()
-
-	clientLogger := shared.MakeLogger("CLIENT", clientID)
 
 	if tlsConnectionState != nil {
 		clientLogger.Printf("TLS %s connection established with cipher=%s", shared.TLSVersionString(tlsConnectionState.Version), tls.CipherSuiteName(tlsConnectionState.CipherSuite))
@@ -54,7 +51,15 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		clientLogger.Printf("Unencrypted connection established")
 	}
 
-	authOk, authUsername := s.handleSocketAuth(clientLogger, w, r, tlsConnectionState)
+	var authOk bool
+	var authUsername string
+	if len(s.PreauthorizeSecret) > 0 && strings.HasPrefix(r.URL.Path, prefixRoutePreauthorize) {
+		preauthToken := r.URL.Path[len(prefixRoutePreauthorize):]
+		authOk, authUsername = s.handlePreauthorizeToken(clientLogger, w, r, preauthToken)
+	} else {
+		authOk, authUsername = s.handleSocketAuth(clientLogger, w, r, tlsConnectionState)
+	}
+
 	if !authOk {
 		return
 	}

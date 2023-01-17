@@ -30,7 +30,7 @@ func (c *WebTransportConnector) Dial(config SocketConnectorConfig) (adapters.Soc
 	dialer.TLSClientConfig = config.GetTLSConfig()
 
 	if config.GetProxyURL() != nil {
-		return nil, errors.New("proxy is not support for WebTransport at the moment")
+		return nil, errors.New("proxy is not supported for WebTransport at the moment")
 	}
 
 	headers := config.GetHeaders()

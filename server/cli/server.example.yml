@@ -63,3 +63,4 @@ server:
   api:
     enabled: false # Whether to enable the API
     users: [] # Which users are allowed to use the API. Leaving this empty allows any authenticated user!
+  preauthorize-secret: "" # Will enable preauthorization if set

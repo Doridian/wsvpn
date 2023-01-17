@@ -217,6 +217,8 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 		log.Printf("WARNING: Ignoring disablement of TLS on reload")
 	}
 
+	server.PreauthorizeSecret = []byte(config.Server.PreauthorizeSecret)
+
 	return server.UpdateSocketConfig()
 }
 

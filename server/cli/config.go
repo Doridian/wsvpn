@@ -49,6 +49,7 @@ type Config struct {
 			Type   string `yaml:"type"`
 			Config string `yaml:"config"`
 		} `yaml:"authenticator"`
+		PreauthorizeSecret        string `yaml:"preauthorize-secret"`
 		MaxConnectionsPerUser     int    `yaml:"max-connections-per-user"`
 		MaxConnectionsPerUserMode string `yaml:"max-connections-per-user-mode"`
 		WebsiteDirectory          string `yaml:"website-directory"`

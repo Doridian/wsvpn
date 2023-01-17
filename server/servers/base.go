@@ -45,6 +45,7 @@ type Server struct {
 	WebsiteDirectory          string
 	APIEnabled                bool
 	APIUsers                  map[string]bool
+	PreauthorizeSecret        []byte
 
 	upgraders          []upgraders.SocketUpgrader
 	slotMutex          *sync.Mutex

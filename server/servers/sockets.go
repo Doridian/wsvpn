@@ -15,8 +15,8 @@ import (
 	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 	"github.com/google/uuid"
-	"github.com/lucas-clemente/quic-go"
-	"github.com/lucas-clemente/quic-go/http3"
+	"github.com/quic-go/quic-go"
+	"github.com/quic-go/quic-go/http3"
 )
 
 func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {

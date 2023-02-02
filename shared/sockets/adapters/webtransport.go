@@ -13,9 +13,9 @@ import (
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
 	"github.com/Doridian/wsvpn/shared/features"
-	"github.com/lucas-clemente/quic-go"
-	"github.com/lucas-clemente/quic-go/quicvarint"
-	"github.com/marten-seemann/webtransport-go"
+	"github.com/quic-go/quic-go"
+	"github.com/quic-go/quic-go/quicvarint"
+	"github.com/quic-go/webtransport-go"
 )
 
 type StreamMessageType = byte

@@ -71,8 +71,6 @@ func (s *WebSocketAdapter) GetTLSConnectionState() (tls.ConnectionState, bool) {
 }
 
 func (s *WebSocketAdapter) Serve() (bool, error) {
-	defer s.Close()
-
 	for {
 		msg, msgType, err := wsutil.ReadData(s.conn, s.readState)
 		if err != nil {
@@ -91,7 +89,7 @@ func (s *WebSocketAdapter) Serve() (bool, error) {
 				s.pongHandler()
 			}
 		} else if msgType == ws.OpClose {
-			return true, fmt.Errorf("client closed connection: %v", msg)
+			return false, fmt.Errorf("client closed connection: %v", msg)
 		}
 
 		if !res {

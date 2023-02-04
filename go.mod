@@ -5,9 +5,10 @@ go 1.19
 require (
 	github.com/Doridian/water v1.3.2
 	github.com/apparentlymart/go-cidr v1.1.0
+	github.com/gobwas/ws v1.1.0
 	github.com/golang-jwt/jwt/v4 v4.4.3
 	github.com/google/uuid v1.3.0
-	github.com/gorilla/websocket v1.5.0
+	github.com/magisterquis/connectproxy v0.0.0-20200725203833-3582e84f0c9b
 	github.com/quic-go/quic-go v0.32.0
 	github.com/quic-go/webtransport-go v0.5.0
 	github.com/tg123/go-htpasswd v1.2.0
@@ -16,6 +17,8 @@ require (
 
 require (
 	github.com/Doridian/gopacket v1.2.1 // indirect
+	github.com/gobwas/httphead v0.1.0 // indirect
+	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/pprof v0.0.0-20210407192527-94a9f03dee38 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
@@ -35,7 +38,7 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.1
 	golang.org/x/crypto v0.4.0 // indirect
 	golang.org/x/mod v0.6.0 // indirect
-	golang.org/x/net v0.5.0 // indirect
+	golang.org/x/net v0.5.0
 	golang.org/x/sys v0.4.0 // indirect
 	golang.org/x/text v0.6.0 // indirect
 	golang.org/x/tools v0.2.0 // indirect

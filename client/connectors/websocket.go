@@ -1,12 +1,21 @@
 package connectors
 
 import (
+	"context"
+	"net"
 	"net/http"
-	"net/url"
+
+	"github.com/magisterquis/connectproxy"
 
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
-	"github.com/gorilla/websocket"
+	"github.com/gobwas/ws"
+	"golang.org/x/net/proxy"
 )
+
+func init() {
+	proxy.RegisterDialerType("http", connectproxy.New)
+	proxy.RegisterDialerType("https", connectproxy.New)
+}
 
 type WebSocketConnector struct {
 }
@@ -18,24 +27,37 @@ func NewWebSocketConnector() *WebSocketConnector {
 }
 
 func (c *WebSocketConnector) Dial(config SocketConnectorConfig) (adapters.SocketAdapter, error) {
-	dialer := websocket.Dialer{}
+	var respHeaders http.Header
+
+	dialer := ws.Dialer{
+		OnHeader: func(key, value []byte) error {
+			respHeaders.Add(string(key), string(value))
+			return nil
+		},
+	}
 
 	proxyURL := config.GetProxyURL()
 	if proxyURL != nil {
-		dialer.Proxy = func(_ *http.Request) (*url.URL, error) {
-			return proxyURL, nil
+		proxyDialer, err := proxy.FromURL(proxyURL, proxy.Direct)
+		if err != nil {
+			return nil, err
+		}
+		dialer.NetDial = func(ctx context.Context, network string, addr string) (net.Conn, error) {
+			return proxyDialer.Dial(network, addr)
 		}
 	}
-	dialer.TLSClientConfig = config.GetTLSConfig()
+	dialer.TLSConfig = config.GetTLSConfig()
 
 	headers := config.GetHeaders()
 	addSupportedSerializationHeader(headers)
-	conn, resp, err := dialer.Dial(config.GetServerURL().String(), headers)
+	dialer.Header = ws.HandshakeHeaderHTTP(headers)
+
+	conn, _, _, err := dialer.Dial(context.Background(), config.GetServerURL().String())
 	if err != nil {
 		return nil, err
 	}
 
-	serializationType := readSerializationType(resp.Header)
+	serializationType := readSerializationType(respHeaders)
 	return adapters.NewWebSocketAdapter(conn, serializationType, true), nil
 }
 

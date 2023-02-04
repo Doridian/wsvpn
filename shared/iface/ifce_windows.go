@@ -90,7 +90,8 @@ func InitializeWater() error {
 	if err != nil {
 		return err
 	}
-	fh.Write(wintunDll)
-	fh.Close()
-	return nil
+	defer fh.Close()
+
+	_, err = fh.Write(wintunDll)
+	return err
 }

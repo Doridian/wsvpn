@@ -7,61 +7,23 @@ on:
 
 name: Check
 
+permissions:
+  contents: read
+  # Optional: allow read access to pull request. Use with `only-new-issues` option.
+  # pull-requests: read
 jobs:
-  imports:
-    name: Imports
-    runs-on: ubuntu-latest
+  golangci:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    name: lint
+    runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v3
-    - name: check
-      uses: jo-fr/golang-github-actions@master
-      with:
-        run: imports
-        token: ${{ secrets.GITHUB_TOKEN }}
-
-  errcheck:
-    name: Errcheck
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: check
-      uses: jo-fr/golang-github-actions@master
-      with:
-        run: errcheck
-        token: ${{ secrets.GITHUB_TOKEN }}
-        flags: --exclude errcheck-exclude.txt
-
-  shadow:
-    name: Shadow
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: check
-      uses: jo-fr/golang-github-actions@master
-      with:
-        run: shadow
-        token: ${{ secrets.GITHUB_TOKEN }}
-
-  staticcheck:
-    name: StaticCheck
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: check
-      uses: jo-fr/golang-github-actions@master
-      with:
-        run: staticcheck
-        token: ${{ secrets.GITHUB_TOKEN }}
-        flags: --checks all,-ST1000
-
-  sec:
-    name: Sec
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: check
-      uses: jo-fr/golang-github-actions@master
-      with:
-        run: sec
-        token: ${{ secrets.GITHUB_TOKEN }}
-        flags: --exclude=G402
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+          check-latest: true
+          cache: true
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3

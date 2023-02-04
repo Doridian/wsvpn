@@ -25,5 +25,18 @@ jobs:
           go-version-file: 'go.mod'
           check-latest: true
           cache: true
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+          check-latest: true
+          cache: true
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      - name: Install required Python packages
+        run: pip install -r requirements.txt
+      - name: Build local binaries
+        run: python ./build.py --architecture local --platform local
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3

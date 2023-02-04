@@ -4,29 +4,25 @@ import (
 	"net/http"
 
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
-	"github.com/gorilla/websocket"
+	"github.com/gobwas/ws"
 )
 
 type WebSocketUpgrader struct {
-	upgrader *websocket.Upgrader
+	upgrader *ws.HTTPUpgrader
 }
 
 var _ SocketUpgrader = &WebSocketUpgrader{}
 
 func NewWebSocketUpgrader() *WebSocketUpgrader {
 	return &WebSocketUpgrader{
-		upgrader: &websocket.Upgrader{
-			ReadBufferSize:  2048,
-			WriteBufferSize: 2048,
-			CheckOrigin:     func(r *http.Request) bool { return true },
-		},
+		upgrader: &ws.HTTPUpgrader{},
 	}
 }
 
 func (u *WebSocketUpgrader) Upgrade(w http.ResponseWriter, r *http.Request) (adapters.SocketAdapter, error) {
 	serializationType := handleHTTPSerializationHeaders(w, r)
 
-	conn, err := u.upgrader.Upgrade(w, r, nil)
+	conn, _, _, err := u.upgrader.Upgrade(r, w)
 	if err != nil {
 		return nil, err
 	}

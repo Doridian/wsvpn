@@ -3,10 +3,12 @@
 *.pyc
 __pycache__
 .pytest_cache
+*.pem
+*.exe
+*.msi
 /dist
 /client.yml
 /server.yml
-*.pem
 /shared/iface/wintun
-*.exe
-*.msi
+/htpasswd
+/site

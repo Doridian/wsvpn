@@ -3,30 +3,43 @@ package adapters
 import (
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"net"
 	"sync"
 
 	"github.com/Doridian/wsvpn/shared/commands"
-	"github.com/gorilla/websocket"
+	"github.com/gobwas/ws"
+	"github.com/gobwas/ws/wsutil"
 )
 
 type WebSocketAdapter struct {
 	adapterBase
-	conn              *websocket.Conn
+	conn              net.Conn
 	writeLock         *sync.Mutex
 	serializationType commands.SerializationType
 	isServer          bool
+
+	readState  ws.State
+	writeState ws.State
 }
 
 var _ SocketAdapter = &WebSocketAdapter{}
 
-func NewWebSocketAdapter(conn *websocket.Conn, serializationType commands.SerializationType, isServer bool) *WebSocketAdapter {
-	return &WebSocketAdapter{
+func NewWebSocketAdapter(conn net.Conn, serializationType commands.SerializationType, isServer bool) *WebSocketAdapter {
+	wsa := &WebSocketAdapter{
 		conn:              conn,
 		writeLock:         &sync.Mutex{},
 		serializationType: serializationType,
 		isServer:          isServer,
 	}
+	if isServer {
+		wsa.readState = ws.StateClientSide
+		wsa.writeState = ws.StateServerSide
+	} else {
+		wsa.readState = ws.StateServerSide
+		wsa.writeState = ws.StateClientSide
+	}
+	return wsa
 }
 
 func (s *WebSocketAdapter) IsServer() bool {
@@ -50,7 +63,7 @@ func (s *WebSocketAdapter) RefreshFeatures() {
 }
 
 func (s *WebSocketAdapter) GetTLSConnectionState() (tls.ConnectionState, bool) {
-	tlsConn, ok := s.conn.UnderlyingConn().(*tls.Conn)
+	tlsConn, ok := s.conn.(*tls.Conn)
 	if !ok {
 		return tls.ConnectionState{}, false
 	}
@@ -58,26 +71,27 @@ func (s *WebSocketAdapter) GetTLSConnectionState() (tls.ConnectionState, bool) {
 }
 
 func (s *WebSocketAdapter) Serve() (bool, error) {
-	s.conn.SetPongHandler(func(appData string) error {
-		if s.pongHandler != nil {
-			s.pongHandler()
-		}
-		return nil
-	})
+	defer s.Close()
 
 	for {
-		msgType, msg, err := s.conn.ReadMessage()
+		msg, msgType, err := wsutil.ReadData(s.conn, s.readState)
 		if err != nil {
-			return websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway), err
+			return true, err
 		}
 
-		var res bool
-		if msgType == websocket.TextMessage {
+		res := true
+		if msgType == ws.OpText {
 			res = s.controlMessageHandler(msg)
-		} else if msgType == websocket.BinaryMessage {
+		} else if msgType == ws.OpBinary {
 			res = s.dataMessageHandler(msg)
-		} else {
-			res = true
+		} else if msgType == ws.OpPing {
+			_ = wsutil.WriteMessage(s.conn, s.writeState, ws.OpPong, msg)
+		} else if msgType == ws.OpPong {
+			if s.pongHandler != nil {
+				s.pongHandler()
+			}
+		} else if msgType == ws.OpClose {
+			return true, fmt.Errorf("client closed connection: %v", msg)
 		}
 
 		if !res {
@@ -106,19 +120,19 @@ func (s *WebSocketAdapter) MaxDataPayloadLen() uint16 {
 func (s *WebSocketAdapter) WriteControlMessage(message []byte) error {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
-	return s.conn.WriteMessage(websocket.TextMessage, message)
+	return wsutil.WriteMessage(s.conn, s.writeState, ws.OpText, message)
 }
 
 func (s *WebSocketAdapter) WriteDataMessage(message []byte) error {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
-	return s.conn.WriteMessage(websocket.BinaryMessage, message)
+	return wsutil.WriteMessage(s.conn, s.writeState, ws.OpBinary, message)
 }
 
 func (s *WebSocketAdapter) WritePingMessage() error {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
-	return s.conn.WriteMessage(websocket.PingMessage, []byte{})
+	return wsutil.WriteMessage(s.conn, s.writeState, ws.OpPing, []byte{})
 }
 
 func (s *WebSocketAdapter) Name() string {

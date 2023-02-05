@@ -70,6 +70,12 @@ func (s *WebSocketAdapter) GetTLSConnectionState() (tls.ConnectionState, bool) {
 	return tlsConn.ConnectionState(), true
 }
 
+func (s *WebSocketAdapter) writePongMessage(data []byte) error {
+	s.writeLock.Lock()
+	defer s.writeLock.Unlock()
+	return wsutil.WriteMessage(s.conn, s.writeState, ws.OpPong, data)
+}
+
 func (s *WebSocketAdapter) Serve() (bool, error) {
 	for {
 		msg, msgType, err := wsutil.ReadData(s.conn, s.readState)
@@ -83,7 +89,8 @@ func (s *WebSocketAdapter) Serve() (bool, error) {
 		} else if msgType == ws.OpBinary {
 			res = s.dataMessageHandler(msg)
 		} else if msgType == ws.OpPing {
-			_ = wsutil.WriteMessage(s.conn, s.writeState, ws.OpPong, msg)
+			err = s.writePongMessage(msg)
+			res = err == nil
 		} else if msgType == ws.OpPong {
 			if s.pongHandler != nil {
 				s.pongHandler()

@@ -58,7 +58,7 @@ func (c *WebSocketConnector) Dial(config SocketConnectorConfig) (adapters.Socket
 	}
 
 	serializationType := readSerializationType(respHeaders)
-	return adapters.NewWebSocketAdapter(conn, serializationType, true), nil
+	return adapters.NewWebSocketAdapter(conn, serializationType, false), nil
 }
 
 func (c *WebSocketConnector) GetSchemes() []string {

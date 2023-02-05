@@ -3,7 +3,7 @@ package adapters
 import (
 	"crypto/tls"
 	"errors"
-	"fmt"
+	"io"
 	"net"
 	"sync"
 
@@ -19,7 +19,8 @@ type WebSocketAdapter struct {
 	serializationType commands.SerializationType
 	isServer          bool
 
-	wsState ws.State
+	wsState    ws.State
+	dataWriter *wsutil.Writer
 }
 
 var _ SocketAdapter = &WebSocketAdapter{}
@@ -31,11 +32,14 @@ func NewWebSocketAdapter(conn net.Conn, serializationType commands.Serialization
 		serializationType: serializationType,
 		isServer:          isServer,
 	}
+
 	if isServer {
 		wsa.wsState = ws.StateServerSide
 	} else {
 		wsa.wsState = ws.StateClientSide
 	}
+	wsa.dataWriter = wsutil.NewWriter(conn, wsa.wsState, ws.OpBinary)
+
 	return wsa
 }
 
@@ -74,26 +78,39 @@ func (s *WebSocketAdapter) writePongMessage(data []byte) error {
 }
 
 func (s *WebSocketAdapter) Serve() (bool, error) {
+	reader := wsutil.NewReader(s.conn, s.wsState)
+
 	for {
-		msg, msgType, err := wsutil.ReadData(s.conn, s.wsState)
+		hdr, err := reader.NextFrame()
 		if err != nil {
 			return true, err
 		}
 
+		if hdr.OpCode == ws.OpClose {
+			return false, errors.New("received close frame")
+		}
+
+		msg := make([]byte, hdr.Length)
+		_, err = io.ReadFull(reader, msg)
+		if err != nil {
+			return false, err
+		}
+
 		res := true
-		if msgType == ws.OpText {
+		switch hdr.OpCode {
+		case ws.OpText:
 			res = s.controlMessageHandler(msg)
-		} else if msgType == ws.OpBinary {
+		case ws.OpBinary:
 			res = s.dataMessageHandler(msg)
-		} else if msgType == ws.OpPing {
+		case ws.OpPing:
 			err = s.writePongMessage(msg)
-			res = err == nil
-		} else if msgType == ws.OpPong {
+			if err != nil {
+				return true, err
+			}
+		case ws.OpPong:
 			if s.pongHandler != nil {
 				s.pongHandler()
 			}
-		} else if msgType == ws.OpClose {
-			return false, fmt.Errorf("client closed connection: %v", msg)
 		}
 
 		if !res {
@@ -128,7 +145,12 @@ func (s *WebSocketAdapter) WriteControlMessage(message []byte) error {
 func (s *WebSocketAdapter) WriteDataMessage(message []byte) error {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
-	return wsutil.WriteMessage(s.conn, s.wsState, ws.OpBinary, message)
+	_, err := s.dataWriter.Write(message)
+	if err != nil {
+		return err
+	}
+	err = s.dataWriter.Flush()
+	return err
 }
 
 func (s *WebSocketAdapter) WritePingMessage() error {

@@ -79,6 +79,7 @@ func (s *WebSocketAdapter) writePongMessage(data []byte) error {
 
 func (s *WebSocketAdapter) Serve() (bool, error) {
 	reader := wsutil.NewReader(s.conn, s.wsState)
+	messageBuf := make([]byte, s.MaxDataPayloadLen())
 
 	for {
 		hdr, err := reader.NextFrame()
@@ -90,7 +91,11 @@ func (s *WebSocketAdapter) Serve() (bool, error) {
 			return false, errors.New("received close frame")
 		}
 
-		msg := make([]byte, hdr.Length)
+		if hdr.Length > int64(len(messageBuf)) {
+			return true, ErrDataPayloadTooLarge
+		}
+
+		msg := messageBuf[:hdr.Length]
 		_, err = io.ReadFull(reader, msg)
 		if err != nil {
 			return false, err

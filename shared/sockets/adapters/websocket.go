@@ -91,6 +91,10 @@ func (s *WebSocketAdapter) Serve() (bool, error) {
 			return false, errors.New("received close frame")
 		}
 
+		if hdr.Length > int64(len(messageBuf)) {
+			return true, ErrDataPayloadTooLarge
+		}
+
 		msg := messageBuf[:hdr.Length]
 		_, err = io.ReadFull(reader, msg)
 		if err != nil {

@@ -4,7 +4,9 @@ import (
 	"flag"
 	"log"
 	"os"
+	"os/signal"
 	"runtime/pprof"
+	"syscall"
 )
 
 func LoadFlags(configName string, configHelp string) (*string, *bool) {
@@ -26,6 +28,14 @@ func LoadFlags(configName string, configHelp string) (*string, *bool) {
 			log.Fatal(err)
 		}
 		pprof.StartCPUProfile(f)
+		sig := make(chan os.Signal, 1)
+		signal.Notify(sig, syscall.SIGUSR1)
+		go func() {
+			for {
+				<-sig
+				pprof.StopCPUProfile()
+			}
+		}()
 	}
 
 	return configPtr, printDefaultConfigPtr

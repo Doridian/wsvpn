@@ -92,7 +92,9 @@ func (s *Socket) dataMessageHandler(message []byte) bool {
 	}
 
 	fragInfo.time = time.Now()
-	fragInfo.data[fragIndex] = message[5:]
+	buf := make([]byte, len(message)-5)
+	copy(buf, message[5:])
+	fragInfo.data[fragIndex] = buf
 	if isLastFragment {
 		fragInfo.lastIndex = int(fragIndex)
 	}

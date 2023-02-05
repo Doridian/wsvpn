@@ -19,8 +19,7 @@ type WebSocketAdapter struct {
 	serializationType commands.SerializationType
 	isServer          bool
 
-	readState  ws.State
-	writeState ws.State
+	wsState ws.State
 }
 
 var _ SocketAdapter = &WebSocketAdapter{}
@@ -33,11 +32,9 @@ func NewWebSocketAdapter(conn net.Conn, serializationType commands.Serialization
 		isServer:          isServer,
 	}
 	if isServer {
-		wsa.readState = ws.StateClientSide
-		wsa.writeState = ws.StateServerSide
+		wsa.wsState = ws.StateServerSide
 	} else {
-		wsa.readState = ws.StateServerSide
-		wsa.writeState = ws.StateClientSide
+		wsa.wsState = ws.StateClientSide
 	}
 	return wsa
 }
@@ -70,9 +67,15 @@ func (s *WebSocketAdapter) GetTLSConnectionState() (tls.ConnectionState, bool) {
 	return tlsConn.ConnectionState(), true
 }
 
+func (s *WebSocketAdapter) writePongMessage(data []byte) error {
+	s.writeLock.Lock()
+	defer s.writeLock.Unlock()
+	return wsutil.WriteMessage(s.conn, s.wsState, ws.OpPong, data)
+}
+
 func (s *WebSocketAdapter) Serve() (bool, error) {
 	for {
-		msg, msgType, err := wsutil.ReadData(s.conn, s.readState)
+		msg, msgType, err := wsutil.ReadData(s.conn, s.wsState)
 		if err != nil {
 			return true, err
 		}
@@ -83,7 +86,8 @@ func (s *WebSocketAdapter) Serve() (bool, error) {
 		} else if msgType == ws.OpBinary {
 			res = s.dataMessageHandler(msg)
 		} else if msgType == ws.OpPing {
-			_ = wsutil.WriteMessage(s.conn, s.writeState, ws.OpPong, msg)
+			err = s.writePongMessage(msg)
+			res = err == nil
 		} else if msgType == ws.OpPong {
 			if s.pongHandler != nil {
 				s.pongHandler()
@@ -118,19 +122,19 @@ func (s *WebSocketAdapter) MaxDataPayloadLen() uint16 {
 func (s *WebSocketAdapter) WriteControlMessage(message []byte) error {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
-	return wsutil.WriteMessage(s.conn, s.writeState, ws.OpText, message)
+	return wsutil.WriteMessage(s.conn, s.wsState, ws.OpText, message)
 }
 
 func (s *WebSocketAdapter) WriteDataMessage(message []byte) error {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
-	return wsutil.WriteMessage(s.conn, s.writeState, ws.OpBinary, message)
+	return wsutil.WriteMessage(s.conn, s.wsState, ws.OpBinary, message)
 }
 
 func (s *WebSocketAdapter) WritePingMessage() error {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
-	return wsutil.WriteMessage(s.conn, s.writeState, ws.OpPing, []byte{})
+	return wsutil.WriteMessage(s.conn, s.wsState, ws.OpPing, []byte{})
 }
 
 func (s *WebSocketAdapter) Name() string {

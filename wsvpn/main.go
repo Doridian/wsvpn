@@ -13,7 +13,6 @@ import (
 func main() {
 	modePtr := flag.String("mode", "", "client or server")
 	configPtr, printDefaultConfigPtr := shared_cli.LoadFlags("MODE.yml", "Config file name (\"MODE.yml\" means use either server.yml or client.yml)")
-	flag.Parse()
 
 	if *configPtr == "MODE.yml" {
 		configName := fmt.Sprintf("%s.yml", *modePtr)

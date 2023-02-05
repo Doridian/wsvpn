@@ -12,5 +12,8 @@ func LoadFlags(configName string, configHelp string) (*string, *bool) {
 	printDefaultConfigPtr := flag.Bool("print-default-config", false, "Print default config to console")
 
 	flag.Usage = UsageWithVersion
+
+	flag.Parse()
+
 	return configPtr, printDefaultConfigPtr
 }

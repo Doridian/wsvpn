@@ -105,21 +105,31 @@ func (s *WebSocketAdapter) handleFrame(hdr ws.Header, data []byte) error {
 	return nil
 }
 
+func (s *WebSocketAdapter) handleInitial() error {
+	if s.initial == nil {
+		return nil
+	}
+
+	defer func() {
+		ws.PutReader(s.initial)
+		s.initial = nil
+	}()
+
+	f, err := ws.ReadFrame(s.initial)
+	if err == nil {
+		return s.handleFrame(f.Header, f.Payload)
+	}
+
+	if errors.Is(err, io.EOF) {
+		return nil
+	}
+	return err
+}
+
 func (s *WebSocketAdapter) Serve() (bool, error) {
-	if s.initial != nil {
-		defer func() {
-			ws.PutReader(s.initial)
-			s.initial = nil
-		}()
-		f, err := ws.ReadFrame(s.initial)
-		if err == nil {
-			err = s.handleFrame(f.Header, f.Payload)
-			if err != nil {
-				return true, err
-			}
-		} else if !errors.Is(err, io.EOF) {
-			return true, err
-		}
+	err := s.handleInitial()
+	if err != nil {
+		return true, err
 	}
 
 	reader := wsutil.NewReader(s.conn, s.wsState)

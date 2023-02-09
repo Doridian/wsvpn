@@ -145,18 +145,21 @@ func (s *WebSocketAdapter) MaxDataPayloadLen() uint16 {
 func (s *WebSocketAdapter) WriteControlMessage(message []byte) error {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
+	log.Printf("[T] %x %v %x", ws.OpText, string(message), 0x0)
 	return wsutil.WriteMessage(s.conn, s.wsState, ws.OpText, message)
 }
 
 func (s *WebSocketAdapter) WriteDataMessage(message []byte) error {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
+	log.Printf("[D] %x %v %x", ws.OpBinary, message, 0x0)
 	return wsutil.WriteMessage(s.conn, s.wsState, ws.OpBinary, message)
 }
 
 func (s *WebSocketAdapter) WritePingMessage() error {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
+	log.Printf("[P] %x %v %x", ws.OpPing, "", 0x0)
 	return wsutil.WriteMessage(s.conn, s.wsState, ws.OpPing, []byte{})
 }
 

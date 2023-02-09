@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"io"
-	"log"
 	"net"
 	"sync"
 
@@ -79,7 +78,7 @@ func (s *WebSocketAdapter) writePongMessage(data []byte) error {
 	return wsutil.WriteMessage(s.conn, s.wsState, ws.OpPong, data)
 }
 
-func (s *WebSocketAdapter) handleFrame(hdr ws.Header, data []byte, x int) (bool, error) {
+func (s *WebSocketAdapter) handleFrame(hdr ws.Header, data []byte) (bool, error) {
 	res := true
 	switch hdr.OpCode {
 	case ws.OpText:
@@ -103,7 +102,7 @@ func (s *WebSocketAdapter) Serve() (bool, error) {
 	if s.initial != nil {
 		f, err := ws.ReadFrame(s.initial)
 		if err == nil {
-			s.handleFrame(f.Header, f.Payload, 0xFF)
+			s.handleFrame(f.Header, f.Payload)
 		} else if !errors.Is(err, io.EOF) {
 			return true, err
 		}
@@ -134,7 +133,7 @@ func (s *WebSocketAdapter) Serve() (bool, error) {
 			return true, err
 		}
 
-		res, err := s.handleFrame(hdr, msg, 0x10)
+		res, err := s.handleFrame(hdr, msg)
 		if !res {
 			if err != nil {
 				return true, err
@@ -164,21 +163,18 @@ func (s *WebSocketAdapter) MaxDataPayloadLen() uint16 {
 func (s *WebSocketAdapter) WriteControlMessage(message []byte) error {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
-	log.Printf("[T] %x %v %x", ws.OpText, string(message), 0x0)
 	return wsutil.WriteMessage(s.conn, s.wsState, ws.OpText, message)
 }
 
 func (s *WebSocketAdapter) WriteDataMessage(message []byte) error {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
-	log.Printf("[D] %x %v %x", ws.OpBinary, message, 0x0)
 	return wsutil.WriteMessage(s.conn, s.wsState, ws.OpBinary, message)
 }
 
 func (s *WebSocketAdapter) WritePingMessage() error {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
-	log.Printf("[P] %x %v %x", ws.OpPing, "", 0x0)
 	return wsutil.WriteMessage(s.conn, s.wsState, ws.OpPing, []byte{})
 }
 

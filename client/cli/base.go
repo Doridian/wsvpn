@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	_ "net/http/pprof"
 	"net/url"
 	"os"
 	"os/signal"
@@ -124,10 +123,6 @@ func reloadConfig(configPtr *string, client *clients.Client) error {
 }
 
 func Main(configPtr *string, printDefaultConfigPtr *bool) {
-	go func() {
-		log.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
-
 	if *printDefaultConfigPtr {
 		fmt.Println(GetDefaultConfig())
 		return

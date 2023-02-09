@@ -21,7 +21,8 @@ type WebSocketAdapter struct {
 	isServer          bool
 	initial           *bufio.Reader
 
-	wsState ws.State
+	wsState    ws.State
+	dataWriter *wsutil.Writer
 }
 
 var _ SocketAdapter = &WebSocketAdapter{}
@@ -40,6 +41,7 @@ func NewWebSocketAdapter(conn net.Conn, serializationType commands.Serialization
 	} else {
 		wsa.wsState = ws.StateClientSide
 	}
+	wsa.dataWriter = wsutil.NewWriter(conn, wsa.wsState, ws.OpBinary)
 
 	return wsa
 }
@@ -169,7 +171,12 @@ func (s *WebSocketAdapter) WriteControlMessage(message []byte) error {
 func (s *WebSocketAdapter) WriteDataMessage(message []byte) error {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
-	return wsutil.WriteMessage(s.conn, s.wsState, ws.OpBinary, message)
+	_, err := s.dataWriter.Write(message)
+	if err != nil {
+		return err
+	}
+	err = s.dataWriter.Flush()
+	return err
 }
 
 func (s *WebSocketAdapter) WritePingMessage() error {

@@ -80,31 +80,39 @@ func (s *WebSocketAdapter) writePongMessage(data []byte) error {
 	return wsutil.WriteMessage(s.conn, s.wsState, ws.OpPong, data)
 }
 
-func (s *WebSocketAdapter) handleFrame(hdr ws.Header, data []byte) (bool, error) {
-	res := true
+func (s *WebSocketAdapter) handleFrame(hdr ws.Header, data []byte) error {
 	switch hdr.OpCode {
 	case ws.OpText:
-		res = s.controlMessageHandler(data)
+		res := s.controlMessageHandler(data)
+		if !res {
+			return errors.New("error in control message")
+		}
 	case ws.OpBinary:
-		res = s.dataMessageHandler(data)
+		res := s.dataMessageHandler(data)
+		if !res {
+			return errors.New("error in data message")
+		}
 	case ws.OpPing:
 		err := s.writePongMessage(data)
 		if err != nil {
-			return false, err
+			return err
 		}
 	case ws.OpPong:
 		if s.pongHandler != nil {
 			s.pongHandler()
 		}
 	}
-	return res, nil
+	return nil
 }
 
 func (s *WebSocketAdapter) Serve() (bool, error) {
 	if s.initial != nil {
 		f, err := ws.ReadFrame(s.initial)
 		if err == nil {
-			s.handleFrame(f.Header, f.Payload)
+			err = s.handleFrame(f.Header, f.Payload)
+			if err != nil {
+				return true, err
+			}
 		} else if !errors.Is(err, io.EOF) {
 			return true, err
 		}
@@ -135,16 +143,11 @@ func (s *WebSocketAdapter) Serve() (bool, error) {
 			return true, err
 		}
 
-		res, err := s.handleFrame(hdr, msg)
-		if !res {
-			if err != nil {
-				return true, err
-			}
-			break
+		err = s.handleFrame(hdr, msg)
+		if err != nil {
+			return true, err
 		}
 	}
-
-	return true, errors.New("Serve terminated")
 }
 
 func (s *WebSocketAdapter) WaitReady() {

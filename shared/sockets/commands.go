@@ -122,18 +122,15 @@ func (s *Socket) MakeAndSendCommand(parameters commands.CommandParameters) error
 func (s *Socket) rawMakeAndSendCommand(parameters commands.CommandParameters, id string) error {
 	if s.adapter.IsServer() {
 		if !parameters.ServerCanIssue() {
-			s.CloseError(fmt.Errorf("server tried issung client-only command: %v", parameters))
 			return ErrCommandNotSupported
 		}
 	} else {
 		if !parameters.ClientCanIssue() {
-			s.CloseError(fmt.Errorf("client tried issung server-only command: %v", parameters))
 			return ErrCommandNotSupported
 		}
 	}
 
 	if s.remoteProtocolVersion < parameters.MinProtocolVersion() {
-		s.CloseError(fmt.Errorf("tried issung command invalid for version: %v", parameters))
 		return ErrCommandNotSupported
 	}
 

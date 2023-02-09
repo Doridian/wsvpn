@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"bufio"
 	"crypto/tls"
 	"errors"
 	"io"
@@ -19,18 +20,20 @@ type WebSocketAdapter struct {
 	writeLock         *sync.Mutex
 	serializationType commands.SerializationType
 	isServer          bool
+	initial           *bufio.Reader
 
 	wsState ws.State
 }
 
 var _ SocketAdapter = &WebSocketAdapter{}
 
-func NewWebSocketAdapter(conn net.Conn, serializationType commands.SerializationType, isServer bool) *WebSocketAdapter {
+func NewWebSocketAdapter(conn net.Conn, serializationType commands.SerializationType, isServer bool, initial *bufio.Reader) *WebSocketAdapter {
 	wsa := &WebSocketAdapter{
 		conn:              conn,
 		writeLock:         &sync.Mutex{},
 		serializationType: serializationType,
 		isServer:          isServer,
+		initial:           initial,
 	}
 
 	if isServer {
@@ -76,7 +79,38 @@ func (s *WebSocketAdapter) writePongMessage(data []byte) error {
 	return wsutil.WriteMessage(s.conn, s.wsState, ws.OpPong, data)
 }
 
+func (s *WebSocketAdapter) handleFrame(hdr ws.Header, data []byte, x int) (bool, error) {
+	res := true
+	switch hdr.OpCode {
+	case ws.OpText:
+		res = s.controlMessageHandler(data)
+	case ws.OpBinary:
+		res = s.dataMessageHandler(data)
+	case ws.OpPing:
+		err := s.writePongMessage(data)
+		if err != nil {
+			return false, err
+		}
+	case ws.OpPong:
+		if s.pongHandler != nil {
+			s.pongHandler()
+		}
+	}
+	return res, nil
+}
+
 func (s *WebSocketAdapter) Serve() (bool, error) {
+	if s.initial != nil {
+		f, err := ws.ReadFrame(s.initial)
+		if err == nil {
+			s.handleFrame(f.Header, f.Payload, 0xFF)
+		} else if !errors.Is(err, io.EOF) {
+			return true, err
+		}
+		ws.PutReader(s.initial)
+		s.initial = nil
+	}
+
 	reader := wsutil.NewReader(s.conn, s.wsState)
 	messageBuf := make([]byte, s.MaxDataPayloadLen())
 
@@ -97,29 +131,14 @@ func (s *WebSocketAdapter) Serve() (bool, error) {
 		msg := messageBuf[:hdr.Length]
 		_, err = io.ReadFull(reader, msg)
 		if err != nil {
-			return false, err
+			return true, err
 		}
 
-		log.Printf("[F] %x %v %x", hdr.OpCode, string(msg), reader.State)
-
-		res := true
-		switch hdr.OpCode {
-		case ws.OpText:
-			res = s.controlMessageHandler(msg)
-		case ws.OpBinary:
-			res = s.dataMessageHandler(msg)
-		case ws.OpPing:
-			err = s.writePongMessage(msg)
+		res, err := s.handleFrame(hdr, msg, 0x10)
+		if !res {
 			if err != nil {
 				return true, err
 			}
-		case ws.OpPong:
-			if s.pongHandler != nil {
-				s.pongHandler()
-			}
-		}
-
-		if !res {
 			break
 		}
 	}

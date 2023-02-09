@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"io"
+	"log"
 	"net"
 	"sync"
 
@@ -19,8 +20,7 @@ type WebSocketAdapter struct {
 	serializationType commands.SerializationType
 	isServer          bool
 
-	wsState    ws.State
-	dataWriter *wsutil.Writer
+	wsState ws.State
 }
 
 var _ SocketAdapter = &WebSocketAdapter{}
@@ -38,7 +38,6 @@ func NewWebSocketAdapter(conn net.Conn, serializationType commands.Serialization
 	} else {
 		wsa.wsState = ws.StateClientSide
 	}
-	wsa.dataWriter = wsutil.NewWriter(conn, wsa.wsState, ws.OpBinary)
 
 	return wsa
 }
@@ -101,6 +100,8 @@ func (s *WebSocketAdapter) Serve() (bool, error) {
 			return false, err
 		}
 
+		log.Printf("[F] %x %v %x", hdr.OpCode, string(msg), reader.State)
+
 		res := true
 		switch hdr.OpCode {
 		case ws.OpText:
@@ -150,12 +151,7 @@ func (s *WebSocketAdapter) WriteControlMessage(message []byte) error {
 func (s *WebSocketAdapter) WriteDataMessage(message []byte) error {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
-	_, err := s.dataWriter.Write(message)
-	if err != nil {
-		return err
-	}
-	err = s.dataWriter.Flush()
-	return err
+	return wsutil.WriteMessage(s.conn, s.wsState, ws.OpBinary, message)
 }
 
 func (s *WebSocketAdapter) WritePingMessage() error {

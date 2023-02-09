@@ -52,13 +52,13 @@ func (c *WebSocketConnector) Dial(config SocketConnectorConfig) (adapters.Socket
 	addSupportedSerializationHeader(headers)
 	dialer.Header = ws.HandshakeHeaderHTTP(headers)
 
-	conn, _, _, err := dialer.Dial(context.Background(), config.GetServerURL().String())
+	conn, reader, _, err := dialer.Dial(context.Background(), config.GetServerURL().String())
 	if err != nil {
 		return nil, err
 	}
 
 	serializationType := readSerializationType(respHeaders)
-	return adapters.NewWebSocketAdapter(conn, serializationType, false), nil
+	return adapters.NewWebSocketAdapter(conn, serializationType, false, reader), nil
 }
 
 func (c *WebSocketConnector) GetSchemes() []string {

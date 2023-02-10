@@ -54,9 +54,10 @@ server:
       cipher-preference: "" # blank, AES or CHACHA
       key-log-file: "" # This will log TLS secret keys to a file. DO NOT USE IN PRODUCTION!
   authenticator:
-    type: allow-all # allow-all or htpasswd
+    type: allow-all # radius, allow-all or htpasswd
     # allow-all: Just allow all clients regardless of authentication
     # htpasswd: Set config key to filename of a htpasswd-formatted file; Authenticates clients using HTTP Basic authentication
+    # radius: Set to the path of a YAML file containing the keys "server: HOST:PORT" and "secret: SHARED_SECRET" 
     config: ""
   max-connections-per-user: 0 # Only works with a form of authentication enabled, 0 to disable
   max-connections-per-user-mode: kill-oldest # kill-oldest or prevent-new

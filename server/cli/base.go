@@ -151,6 +151,8 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 		newAuthenticator = &authenticators.AllowAllAuthenticator{}
 	case "htpasswd":
 		newAuthenticator = &authenticators.HtpasswdAuthenticator{}
+	case "radius":
+		newAuthenticator = &authenticators.RadiusAuthenticator{}
 	default:
 		return errors.New("invalid authenticator selected")
 	}

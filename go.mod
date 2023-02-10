@@ -13,6 +13,7 @@ require (
 	github.com/quic-go/webtransport-go v0.5.1
 	github.com/tg123/go-htpasswd v1.2.0
 	gopkg.in/yaml.v3 v3.0.1
+	layeh.com/radius v0.0.0-20221205141417-e7fbddd11d68
 )
 
 require (

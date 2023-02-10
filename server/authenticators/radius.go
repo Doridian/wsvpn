@@ -19,14 +19,13 @@ type RadiusAuthenticator struct {
 
 var _ Authenticator = &RadiusAuthenticator{}
 
-func (a *RadiusAuthenticator) Load(configFile string) (err error) {
+func (a *RadiusAuthenticator) Load(configFile string) error {
 	fh, err := os.Open(configFile)
 	if err != nil {
-		return
+		return err
 	}
 	defer fh.Close()
-	yaml.NewDecoder(fh).Decode(a)
-	return
+	return yaml.NewDecoder(fh).Decode(a)
 }
 
 func (a *RadiusAuthenticator) Authenticate(r *http.Request, w http.ResponseWriter) (AuthResult, string) {
@@ -37,8 +36,16 @@ func (a *RadiusAuthenticator) Authenticate(r *http.Request, w http.ResponseWrite
 	}
 
 	packet := radius.New(radius.CodeAccessRequest, []byte(a.Secret))
-	rfc2865.UserName_SetString(packet, username)
-	rfc2865.UserPassword_SetString(packet, password)
+	err := rfc2865.UserName_SetString(packet, username)
+	if err != nil {
+		respondWWWAuthenticateBasic(w)
+		return AuthFailedDefault, ""
+	}
+	err = rfc2865.UserPassword_SetString(packet, password)
+	if err != nil {
+		respondWWWAuthenticateBasic(w)
+		return AuthFailedDefault, ""
+	}
 	response, err := radius.Exchange(context.Background(), packet, a.Server)
 	if err != nil {
 		log.Printf("radius exchange error: %v", err)

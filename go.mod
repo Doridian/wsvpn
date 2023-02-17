@@ -11,7 +11,7 @@ require (
 	github.com/magisterquis/connectproxy v0.0.0-20200725203833-3582e84f0c9b
 	github.com/quic-go/quic-go v0.32.0
 	github.com/quic-go/webtransport-go v0.5.1
-	github.com/tg123/go-htpasswd v1.2.0
+	github.com/tg123/go-htpasswd v1.2.1
 	gopkg.in/yaml.v3 v3.0.1
 	layeh.com/radius v0.0.0-20221205141417-e7fbddd11d68
 )
@@ -37,7 +37,7 @@ require (
 	github.com/GehirnInc/crypt v0.0.0-20200316065508-bb7000b8a962 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.1
-	golang.org/x/crypto v0.4.0 // indirect
+	golang.org/x/crypto v0.6.0 // indirect
 	golang.org/x/mod v0.6.0 // indirect
 	golang.org/x/net v0.7.0
 	golang.org/x/sys v0.5.0 // indirect

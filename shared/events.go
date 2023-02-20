@@ -5,18 +5,21 @@ import (
 )
 
 const (
-	EventUp   = "up"
-	EventDown = "down"
+	EventUp      = "up"
+	EventDown    = "down"
+	EventStartup = "startup"
 )
 
 type EventConfigHolder struct {
-	UpScript   []string
-	DownScript []string
+	UpScript      []string
+	DownScript    []string
+	StartupScript []string
 }
 
 type EventConfig struct {
-	Up   []string `yaml:"up"`
-	Down []string `yaml:"down"`
+	Up      []string `yaml:"up"`
+	Down    []string `yaml:"down"`
+	Startup []string `yaml:"startup"`
 }
 
 func (c *EventConfigHolder) RunEventScript(op string, remoteNet string, iface string, args ...string) error {
@@ -27,6 +30,8 @@ func (c *EventConfigHolder) RunEventScript(op string, remoteNet string, iface st
 		script = c.UpScript
 	case EventDown:
 		script = c.DownScript
+	case EventStartup:
+		script = c.StartupScript
 	default:
 		return fmt.Errorf("invalid event %s", op)
 	}
@@ -47,4 +52,5 @@ func (c *EventConfigHolder) RunEventScript(op string, remoteNet string, iface st
 func (c *EventConfigHolder) LoadEventConfig(config *EventConfig) {
 	c.UpScript = config.Up
 	c.DownScript = config.Down
+	c.StartupScript = config.Startup
 }

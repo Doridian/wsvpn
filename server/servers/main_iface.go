@@ -58,14 +58,9 @@ func (s *Server) createMainIface() error {
 
 	s.ifaceCreationMutex.Unlock()
 
-	vpnNet := s.VPNNet
-	if s.InterfaceConfig.OneInterfacePerConnection {
-		vpnNet = nil
-	}
+	serverIP := s.VPNNet.GetServerIP()
 
-	serverIP := vpnNet.GetServerIP()
-
-	err = s.mainIface.Configure(serverIP, vpnNet, serverIP)
+	err = s.mainIface.Configure(serverIP, s.VPNNet, serverIP)
 	if err != nil {
 		return err
 	}

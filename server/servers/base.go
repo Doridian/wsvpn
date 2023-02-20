@@ -134,6 +134,16 @@ func (s *Server) Serve() error {
 		s.setServeError(ErrNoServeWaitsLeft)
 	}()
 
+	mainIfaceName := ""
+	if s.mainIface != nil {
+		mainIfaceName = s.mainIface.Interface.Name()
+	}
+
+	eventErr := s.RunEventScript("startup", s.VPNNet.GetSubnet().String(), mainIfaceName)
+	if eventErr != nil {
+		s.log.Printf("Error in startup script: %v", eventErr)
+	}
+
 	<-s.serveErrorChannel
 
 	s.closeAll()

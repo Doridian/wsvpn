@@ -39,8 +39,8 @@ scripts:
   # Example: "./handler.sh" might be called like "./handler.sh up 192.168.3.2/24 tun0 user"
   up: []
   down: []
-  # This script gets run as "args... operation subnet interface"
   # Interface will only be set if the server has "one-interface-per-connection" set to false
+  # User will never be set
   startup: []
 
 server:

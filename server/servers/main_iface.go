@@ -58,9 +58,12 @@ func (s *Server) createMainIface() error {
 
 	s.ifaceCreationMutex.Unlock()
 
-	serverIP := s.VPNNet.GetServerIP()
-
-	err = s.mainIface.Configure(serverIP, s.VPNNet, serverIP)
+	if s.DoLocalIPConfig {
+		serverIP := s.VPNNet.GetServerIP()
+		err = s.mainIface.Configure(serverIP, s.VPNNet, serverIP)
+	} else {
+		err = s.mainIface.Configure(nil, nil, nil)
+	}
 	if err != nil {
 		return err
 	}

@@ -87,7 +87,7 @@ func (c *Client) registerCommandHandlers() {
 		if c.doIPConfig {
 			err = c.iface.Configure(c.remoteNet.GetRawIP(), c.remoteNet, c.remoteNet.GetServerIP())
 		} else {
-			err = c.iface.Configure(nil, c.remoteNet, c.remoteNet.GetServerIP())
+			err = c.iface.Configure(nil, nil, nil)
 		}
 		if err != nil {
 			return err

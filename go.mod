@@ -10,7 +10,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/magisterquis/connectproxy v0.0.0-20200725203833-3582e84f0c9b
 	github.com/quic-go/quic-go v0.33.0
-	github.com/quic-go/webtransport-go v0.5.1
+	github.com/quic-go/webtransport-go v0.5.2
 	github.com/tg123/go-htpasswd v1.2.1
 	gopkg.in/yaml.v3 v3.0.1
 	layeh.com/radius v0.0.0-20221205141417-e7fbddd11d68

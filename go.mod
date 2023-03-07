@@ -3,7 +3,7 @@ module github.com/Doridian/wsvpn
 go 1.19
 
 require (
-	github.com/Doridian/water v1.4.0
+	github.com/Doridian/water v1.4.1
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/gobwas/ws v1.1.0
 	github.com/golang-jwt/jwt/v4 v4.5.0

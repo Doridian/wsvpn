@@ -13,19 +13,26 @@ import (
 const ReadHeaderTimeout = time.Duration(10) * time.Second
 
 func (s *Server) listenUpgraders() {
-	for _, upgraderLoop := range s.upgraders {
+	for _, upgrader := range s.upgraders {
 		s.serveWaitGroup.Add(1)
+		upgrader.SetHeaders(s.headers)
 		go func(upgrader upgraders.SocketUpgrader) {
 			defer s.serveWaitGroup.Done()
 			err := upgrader.ListenAndServe()
 			s.setServeError(err)
-		}(upgraderLoop)
+		}(upgrader)
 	}
 }
 
 func (s *Server) addUpgrader(upgrader upgraders.SocketUpgrader) {
 	s.upgraders = append(s.upgraders, upgrader)
 	s.addCloser(upgrader)
+}
+
+func (s *Server) setUpgraderHeaders() {
+	for _, upgrader := range s.upgraders {
+		upgrader.SetHeaders(s.headers)
+	}
 }
 
 func (s *Server) listenPlaintext(httpHandlerFunc http.HandlerFunc) {

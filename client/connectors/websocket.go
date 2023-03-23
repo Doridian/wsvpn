@@ -2,7 +2,6 @@ package connectors
 
 import (
 	"context"
-	"log"
 	"net"
 	"net/http"
 
@@ -32,7 +31,6 @@ func (c *WebSocketConnector) Dial(config SocketConnectorConfig) (adapters.Socket
 
 	dialer := ws.Dialer{
 		OnHeader: func(key, value []byte) error {
-			log.Panicf("Got header: %s: %s", string(key), string(value))
 			respHeaders.Add(string(key), string(value))
 			return nil
 		},

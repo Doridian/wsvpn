@@ -47,7 +47,7 @@ type Server struct {
 	APIEnabled                bool
 	APIUsers                  map[string]bool
 	PreauthorizeSecret        []byte
-	Headers                   http.Header
+	headers                   http.Header
 
 	upgraders          []upgraders.SocketUpgrader
 	slotMutex          *sync.Mutex
@@ -87,6 +87,11 @@ func NewServer() *Server {
 		socketsLock:          &sync.Mutex{},
 		localFeatures:        make(map[features.Feature]bool),
 	}
+}
+
+func (s *Server) SetHeaders(headers http.Header) {
+	s.headers = headers
+	s.setUpgraderHeaders()
 }
 
 func (s *Server) SetServerID(serverID string) {

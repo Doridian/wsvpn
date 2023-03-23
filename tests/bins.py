@@ -69,9 +69,15 @@ class GoBin(Thread):
             LAST_PORT += 1
             self.cfg["server"]["listen"] = f"127.0.0.1:{self.port}"
             self.cfg["tunnel"]["subnet"] = None
+            self.cfg["server"]["headers"] = {
+                "X-Test-Header": ["test-header-value"]
+            }
         else:
             self.port = None
             self.ip = None
+            self.cfg["client"]["headers"] = {
+                "X-Test-Header": ["test-header-value"]
+            }
 
         self.proc_wait_cond = Condition()
         self.is_ready_or_done = False

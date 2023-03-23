@@ -19,6 +19,10 @@ func NewWebSocketUpgrader() *WebSocketUpgrader {
 	}
 }
 
+func (u *WebSocketUpgrader) SetHeaders(headers http.Header) {
+	u.upgrader.Header = headers
+}
+
 func (u *WebSocketUpgrader) Upgrade(w http.ResponseWriter, r *http.Request) (adapters.SocketAdapter, error) {
 	serializationType := handleHTTPSerializationHeaders(w, r)
 

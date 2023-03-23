@@ -47,6 +47,14 @@ server:
   listen: 127.0.0.1:9000
   enable-http3: false
   website-directory: "" # Serve normal HTTP(S) requests from this folder, disabled if blank
+
+  headers: # Map of headers (string key to *list* of string values)
+  # X-Some-Host:
+  #   - example.com
+  # X-Other-Header:
+  #   - value1
+  #   - value2
+
   tls:
     client-ca: "" # Filename of CA for mTLS
     certificate: "" # Filename of certificate for TLS

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -97,6 +98,18 @@ func reloadConfig(configPtr *string, server *servers.Server, initialConfig bool)
 		apiUsers[u] = true
 	}
 	server.APIUsers = apiUsers
+
+	srvHeaders := http.Header{}
+	for name, values := range config.Server.Headers {
+		for _, value := range values {
+			srvHeaders.Add(name, value)
+		}
+	}
+
+	if srvHeaders.Get("Server") == "" {
+		srvHeaders.Set("Server", fmt.Sprintf("wsvpn/%s", shared.Version))
+	}
+	server.SetHeaders(srvHeaders)
 
 	err = server.SetMTU(config.Tunnel.MTU)
 	if err != nil {

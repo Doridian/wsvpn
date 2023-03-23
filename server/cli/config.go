@@ -3,6 +3,7 @@ package cli
 import (
 	_ "embed" // Required for go:embed
 	"log"
+	"net/http"
 	"strings"
 
 	"github.com/Doridian/wsvpn/shared"
@@ -37,8 +38,9 @@ type Config struct {
 	Scripts shared.EventConfig `yaml:"scripts"`
 
 	Server struct {
-		Listen      string `yaml:"listen"`
-		EnableHTTP3 bool   `yaml:"enable-http3"`
+		Listen      string      `yaml:"listen"`
+		EnableHTTP3 bool        `yaml:"enable-http3"`
+		Headers     http.Header `yaml:"headers"`
 		TLS         struct {
 			ClientCA    string               `yaml:"client-ca"`
 			Certificate string               `yaml:"certificate"`

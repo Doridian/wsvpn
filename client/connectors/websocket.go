@@ -27,7 +27,8 @@ func NewWebSocketConnector() *WebSocketConnector {
 }
 
 func (c *WebSocketConnector) Dial(config SocketConnectorConfig) (adapters.SocketAdapter, error) {
-	var respHeaders http.Header
+	//var respHeaders http.Header
+	respHeaders := http.Header{}
 
 	dialer := ws.Dialer{
 		OnHeader: func(key, value []byte) error {

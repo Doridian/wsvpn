@@ -29,6 +29,12 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	clientID := clientUUID.String()
 	clientLogger := shared.MakeLogger("CLIENT", clientID)
 
+	for key, values := range s.Headers {
+		for _, value := range values {
+			w.Header().Add(key, value)
+		}
+	}
+
 	tlsConnectionState := r.TLS
 
 	http3Hijacker, ok := w.(http3.Hijacker)

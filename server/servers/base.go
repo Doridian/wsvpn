@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"log"
+	"net/http"
 	"sync"
 
 	"github.com/Doridian/wsvpn/server/authenticators"
@@ -46,6 +47,7 @@ type Server struct {
 	APIEnabled                bool
 	APIUsers                  map[string]bool
 	PreauthorizeSecret        []byte
+	Headers                   http.Header
 
 	upgraders          []upgraders.SocketUpgrader
 	slotMutex          *sync.Mutex

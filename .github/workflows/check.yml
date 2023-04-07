@@ -25,11 +25,6 @@ jobs:
           go-version-file: 'go.mod'
           check-latest: true
           cache: true
-      - uses: actions/setup-go@v4
-        with:
-          go-version-file: 'go.mod'
-          check-latest: true
-          cache: true
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'

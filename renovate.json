@@ -12,5 +12,8 @@
   ],
   "postUpdateOptions": [
     "gomodTidy"
-  ]
+  ],
+  "automergeType": "pr",
+  "platformAutomerge": true,
+  "automerge": true
 }

@@ -68,7 +68,7 @@ func GetPlatformSpecifics(config *water.Config, ifaceConfig *InterfaceConfig) er
 
 func VerifyPlatformFlags(ifaceConfig *InterfaceConfig, mode shared.VPNMode) error {
 	if ifaceConfig.OneInterfacePerConnection {
-		return errors.New("Windows can not support one-interface-per-connection")
+		return errors.New("windows can not support one-interface-per-connection")
 	}
 
 	return nil

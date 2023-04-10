@@ -299,11 +299,11 @@ class LipoTask(BuildTask):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--platforms", "-p", default="*", required=False, type=str,
+    parser.add_argument("--platforms", "--platform", "-p", default="*", required=False, type=str,
                         help="Which platforms to build for (* for all, local for host machine, comma separated). Accepted: linux, darwin, windows")
-    parser.add_argument("--architectures", "-a", default="*", required=False, type=str,
+    parser.add_argument("--architectures", "--architecture", "-a", default="*", required=False, type=str,
                         help="Which architectures to build for (* for all, local for host machine, comma separated). Use \"list\" to get a list")
-    parser.add_argument("--projects", "-i", default="*", required=False, type=str,
+    parser.add_argument("--projects", "--project", "-i", default="*", required=False, type=str,
                         help="Which projects to build (* for all, comma separated). Accepted: client, server, wsvpn")
     parser.add_argument("--compress", "-c", default=False, action="store_true",
                         help="Output UPX compressed binaries for Linux")

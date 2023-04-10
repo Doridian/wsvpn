@@ -32,7 +32,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Build local binaries
-        run: python ./build.py --architecture local --platform local
+        run: python ./build.py --architectures local --platforms local
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3

@@ -40,7 +40,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Build local binaries
-        run: ./build.py --architecture local --platform local
+        run: ./build.py --architectures local --platforms local
 
       - name: Run tests
         run: sudo -H -E "$(which pytest)" --reruns 3 --reruns-delay 1 -p no:cacheprovider ./tests

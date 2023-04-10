@@ -103,6 +103,13 @@ func (c *Client) registerCommandHandlers() {
 			return err
 		}
 
+		if c.SetDefaultGateway {
+			err = c.iface.AddIPRoute(&net.IPNet{IP: net.IPv4(0, 0, 0, 0), Mask: net.IPv4Mask(0, 0, 0, 0)}, c.remoteNet.GetServerIP())
+			if err != nil {
+				c.log.Printf("Error adding default gateway route (not fatal): %v", err)
+			}
+		}
+
 		c.doRunEventScript(shared.EventUp)
 		c.sentUpEvent = true
 

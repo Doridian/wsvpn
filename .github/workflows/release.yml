@@ -11,31 +11,48 @@ jobs:
   check:
     uses: ./.github/workflows/check.yml
     secrets: inherit
-  release:
+
+  create_release:
     runs-on: ubuntu-latest
-    needs: [test, check]
+    steps:
+      - name: Create release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+
+  release:
+    needs: [test, check, create_release]
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps: 
       - uses: actions/checkout@v3
+
       - uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
           check-latest: true
           cache: true
+
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
           cache: 'pip'
       - name: Install required Python packages
         run: pip install -r requirements.txt
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build everything for release
-        run: ./build.py --lipo --docker --docker-tag-latest --docker-push --projects wsvpn --architectures arm64,armv6,386,amd64
-      - name: Release
+        run: ./build.py --lipo --docker --docker-tag-latest --docker-push --projects wsvpn --platforms local --architectures arm64,armv6,386,amd64
+
+      - name: Upload release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ needs.create_release.outputs.tag-name }}
           files: dist/*

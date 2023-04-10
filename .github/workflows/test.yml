@@ -14,12 +14,12 @@ jobs:
         os: [macos-latest, ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
-
       - name: Add mask for secrets
-        if: matrix.os == 'windows-latest'
         run: |
           echo "::add-mask::${{ secrets.NPCAP_URL }}"
+
+      - uses: actions/checkout@v3
+
       - name: Install drivers
         run: .\.github\InstallDrivers.ps1
         if: matrix.os == 'windows-latest'

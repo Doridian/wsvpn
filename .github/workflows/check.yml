@@ -9,29 +9,30 @@ name: Check
 
 permissions:
   contents: read
-  # Optional: allow read access to pull request. Use with `only-new-issues` option.
-  # pull-requests: read
 jobs:
-  golangci:
+  lint:
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-    name: lint
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
+
       - uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
           check-latest: true
           cache: true
+
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
           cache: 'pip'
       - name: Install required Python packages
         run: pip install -r requirements.txt
+
       - name: Build local binaries
-        run: python ./build.py --architecture local --platform local
+        run: python ./build.py --architectures local --platforms local
+
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3

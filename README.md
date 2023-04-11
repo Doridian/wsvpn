@@ -57,7 +57,7 @@ In each of these examples, you run the tunnel as follows:
 
 WSVPN currently requires Golang at least version 1.18 to build successfully. You can use `build.py` locally if you wish.
 
-The suggested invocation to build binaries for your local machine would look like: `./build.py --platform local --architecture local`.
+The suggested invocation to build binaries for your local machine would look like: `./build.py --platforms local --architectures local`.
 
 The binaries can be found in the `dist` folder.
 

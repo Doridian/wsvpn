@@ -299,11 +299,11 @@ class LipoTask(BuildTask):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--platforms", "-p", default="*", required=False, type=str,
+    parser.add_argument("--platforms", "--platform", "-p", default="*", required=False, type=str,
                         help="Which platforms to build for (* for all, local for host machine, comma separated). Accepted: linux, darwin, windows")
-    parser.add_argument("--architectures", "-a", default="*", required=False, type=str,
+    parser.add_argument("--architectures", "--architecture", "-a", default="*", required=False, type=str,
                         help="Which architectures to build for (* for all, local for host machine, comma separated). Use \"list\" to get a list")
-    parser.add_argument("--projects", "-i", default="*", required=False, type=str,
+    parser.add_argument("--projects", "--project", "-i", default="*", required=False, type=str,
                         help="Which projects to build (* for all, comma separated). Accepted: client, server, wsvpn")
     parser.add_argument("--compress", "-c", default=False, action="store_true",
                         help="Output UPX compressed binaries for Linux")
@@ -361,35 +361,14 @@ def main():
     for distfile in listdir("dist"):
         remove(join("dist", distfile))
 
-    print("Downloading Go modules...", flush=True)
-    check_call([flags.gocmd, "mod", "download"])
-
-    if flags.docker:
-        print("Preparing Docker buildx...", flush=True)
-        call(["docker", "buildx", "create", "--name", "multiarch"],
-             stdout=DEVNULL, stderr=DEVNULL)
-        check_call(["docker", "buildx", "use", "multiarch"])
-
-    if "windows" in platforms:
-        url = "https://www.wintun.net/builds/wintun-0.14.1.zip"
-        print(f"Downloading WinTun from \"{url}\"...", flush=True)
-
-        with BytesIO() as stream:
-            res = get(url)
-            res.raise_for_status()
-            stream.write(res.content)
-            stream.flush()
-
-            outdir = "shared/iface/wintun"
-            try:
-                mkdir(outdir)
-            except FileExistsError:
-                pass
-            zip = ZipFile(stream)
-            zip.extractall(outdir)
-
     print("Generating all build tasks...", flush=True)
     tasks: list = []
+    task_types: set = set()
+    task_platforms: set = set()
+    def addTask(task: BuildTask) -> None:
+        tasks.append(task)
+        task_types.add(type(task))
+
     for proj in projects:
         for platform in platforms:
             exesuffix = ""
@@ -406,17 +385,50 @@ def main():
                                    exesuffix=exesuffix, cgo=flags.cgo, gocmd=flags.gocmd)
                 platform_tasks.append(task)
 
-                tasks.append(task)
+                addTask(task)
                 if flags.compress and platform == "linux" and task.arch.upx_supported:
-                    tasks.append(CompressTask(input=task.outputs[0]))
+                    addTask(CompressTask(input=task.outputs[0]))
+
+            if not platform_tasks:
+                continue
+
+            task_platforms.add(platform)
 
             if platform == "linux" and flags.docker:
-                tasks.append(DockerBuildTask([task for task in platform_tasks if task.arch.docker_name],
-                             tag_latest=flags.docker_tag_latest, push=flags.docker_push))
+                addTask(DockerBuildTask([task for task in platform_tasks if task.arch.docker_name],
+                            tag_latest=flags.docker_tag_latest, push=flags.docker_push))
 
             if platform == "darwin" and flags.lipo:
-                tasks.append(
+                addTask(
                     LipoTask([task for task in platform_tasks if task.goos == "darwin"]))
+
+    if GoBuildTask in task_types:
+        print("Downloading Go modules...", flush=True)
+        check_call([flags.gocmd, "mod", "download"])
+
+    if DockerBuildTask in task_types:
+        print("Preparing Docker buildx...", flush=True)
+        call(["docker", "buildx", "create", "--name", "multiarch"],
+             stdout=DEVNULL, stderr=DEVNULL)
+        check_call(["docker", "buildx", "use", "multiarch"])
+
+    if "windows" in task_platforms:
+        url = "https://www.wintun.net/builds/wintun-0.14.1.zip"
+        print(f"Downloading WinTun from \"{url}\"...", flush=True)
+
+        with BytesIO() as stream:
+            res = get(url)
+            res.raise_for_status()
+            stream.write(res.content)
+            stream.flush()
+
+            outdir = "shared/iface/wintun"
+            try:
+                mkdir(outdir)
+            except FileExistsError:
+                pass
+            zip = ZipFile(stream)
+            zip.extractall(outdir)
 
     print("Executing build tasks...", flush=True)
 

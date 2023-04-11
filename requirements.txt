@@ -4,3 +4,4 @@ scapy
 requests
 pytest
 pyyaml
+slimfat

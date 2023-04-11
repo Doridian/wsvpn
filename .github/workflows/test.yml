@@ -8,66 +8,43 @@ on:
 name: Test
 
 jobs:
-  test-linux:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v4
-        with:
-          go-version-file: 'go.mod'
-          check-latest: true
-          cache: true
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-          cache: 'pip'
-      - name: Install required Python packages
-        run: pip3 install -r requirements.txt
-      - name: Build local binaries (Build all from Linux to ensure releases work)
-        run: ./build.py --architecture local
-      - name: Run tests
-        run: sudo -H -E "$(which pytest)" --reruns 3 --reruns-delay 1 -p no:cacheprovider ./tests
-  test-windows:
-    runs-on: windows-latest
+  test:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Add mask for secrets
         run: |
           echo "::add-mask::${{ secrets.NPCAP_URL }}"
+
       - uses: actions/checkout@v3
+
       - name: Install drivers
         run: .\.github\InstallDrivers.ps1
+        if: matrix.os == 'windows-latest'
         env:
           NPCAP_URL: ${{ secrets.NPCAP_URL }}
+
       - uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
           check-latest: true
           cache: true
+
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
           cache: 'pip'
       - name: Install required Python packages
         run: pip install -r requirements.txt
+
       - name: Build local binaries
-        run: python ./build.py --architecture local --platform local
+        run: python ./build.py --architectures local --platforms local
+
       - name: Run tests
-        run: pytest -p no:cacheprovider ./tests --reruns 3 --reruns-delay 1
-  test-darwin:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v4
-        with:
-          go-version-file: 'go.mod'
-          check-latest: true
-          cache: true
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-          cache: 'pip'
-      - name: Install required Python packages
-        run: pip3 install -r requirements.txt
-      - name: Build local binaries
-        run: ./build.py --architecture local --platform local
-      - run: sudo -H -E "$(which pytest)" --reruns 3 --reruns-delay 1 -p no:cacheprovider ./tests
+        run: sudo -H -E "$(which pytest)" --reruns 3 --reruns-delay 1 -p no:cacheprovider ./tests
+        if: matrix.os != 'windows-latest'
+      - name: Run tests
+        run: pytest --reruns 3 --reruns-delay 1 -p no:cacheprovider ./tests
+        if: matrix.os == 'windows-latest'

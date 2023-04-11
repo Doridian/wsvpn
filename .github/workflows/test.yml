@@ -46,4 +46,4 @@ jobs:
 
       - name: Run tests
         run: |
-          sudo -H -E "$(which pytest)" --reruns 3 --reruns-delay 1 -p no:cacheprovider ./tests
+          sudo -H -E -- "$(which pytest)" --reruns 3 --reruns-delay 1 -p no:cacheprovider ./tests

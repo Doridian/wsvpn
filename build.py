@@ -363,8 +363,8 @@ def main():
 
     print("Generating all build tasks...", flush=True)
     tasks: list = []
-    task_types: set = {}
-    task_platforms: set = {}
+    task_types: set = set()
+    task_platforms: set = set()
     def addTask(task: BuildTask) -> None:
         tasks.append(task)
         task_types.add(type(task))

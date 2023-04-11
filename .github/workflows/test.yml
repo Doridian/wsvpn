@@ -43,8 +43,21 @@ jobs:
         run: python ./build.py --architectures local --platforms local
 
       - name: Run tests
-        run: sudo -H -E "$(which pytest)" --reruns 3 --reruns-delay 1 -p no:cacheprovider ./tests
+        run: |
+          # PowerShell boilerplate
+          function sudo(
+                  [switch]$E,
+                  [switch]$H,
+                  [parameter(ValueFromRemainingArguments = $true)]
+                  [string[]]$Passthrough
+          ) {
+              IEX "& $Passthrough"
+          }
+
+          function which($Value) {
+              echo $Value
+          }
+          # END: PowerShell boilerplate
+
+          sudo -H -E "$(which pytest)" --reruns 3 --reruns-delay 1 -p no:cacheprovider ./tests
         if: matrix.os != 'windows-latest'
-      - name: Run tests
-        run: pytest --reruns 3 --reruns-delay 1 -p no:cacheprovider ./tests
-        if: matrix.os == 'windows-latest'

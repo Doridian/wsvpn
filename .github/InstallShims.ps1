@@ -1,4 +1,4 @@
-New-Item -Force -Path $PROFILE.CurrentUserCurrentHost -ItemType "file" -Value @"
+New-Item -Force -Path $PROFILE.CurrentUserCurrentHost -ItemType file -Value @'
 function sudo(
         [switch]$E,
         [switch]$H,
@@ -11,4 +11,4 @@ function sudo(
 function which($Value) {
     Write-Output $Value
 }
-"@
+'@

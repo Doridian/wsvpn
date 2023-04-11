@@ -1,0 +1,14 @@
+Set-Content -Path $PROFILE.CurrentUserCurrentHost -Value @"
+function sudo(
+        [switch]$E,
+        [switch]$H,
+        [parameter(ValueFromRemainingArguments = $true)]
+        [string[]]$Passthrough
+) {
+    Invoke-Expression "& $Passthrough"
+}
+
+function which($Value) {
+    Write-Output $Value
+}
+"@

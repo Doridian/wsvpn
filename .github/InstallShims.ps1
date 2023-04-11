@@ -1,4 +1,4 @@
-Set-Content -Path $PROFILE.CurrentUserCurrentHost -Value @"
+New-Item -Path "$PROFILE.CurrentUserCurrentHost" -ItemType "file" -Value @"
 function sudo(
         [switch]$E,
         [switch]$H,

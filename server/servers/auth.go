@@ -3,7 +3,6 @@ package servers
 import (
 	"crypto/tls"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -67,13 +66,9 @@ func sendPreauthorizedResponse(w http.ResponseWriter, r *http.Request, resp *pre
 }
 
 func (s *Server) handlePreauthorizeToken(logger *log.Logger, w http.ResponseWriter, r *http.Request, token string) (bool, string) {
-	jwtToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
-		if token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-
+	jwtToken, err := jwt.ParseWithClaims(token, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return s.PreauthorizeSecret, nil
-	})
+	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
 
 	if err != nil {
 		logger.Printf("JWT parsing failed: %v", err)
@@ -81,12 +76,14 @@ func (s *Server) handlePreauthorizeToken(logger *log.Logger, w http.ResponseWrit
 		return false, ""
 	}
 
-	claims, ok := jwtToken.Claims.(jwt.MapClaims)
-	if !ok || !jwtToken.Valid {
+	subject, err := jwtToken.Claims.GetSubject()
+	if err != nil {
 		logger.Printf("JWT reading failed: %v", err)
-		http.Error(w, "Failed to reading JWT", http.StatusBadRequest)
+		http.Error(w, "Failed to read JWT", http.StatusBadRequest)
+		return false, ""
 	}
-	return true, claims["sub"].(string)
+
+	return true, subject
 }
 
 func (s *Server) handlePreauthorize(logger *log.Logger, w http.ResponseWriter, r *http.Request, tlsState *tls.ConnectionState) {
@@ -122,9 +119,9 @@ func (s *Server) handlePreauthorize(logger *log.Logger, w http.ResponseWriter, r
 		return
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": authUsername,
-		"exp": time.Now().UTC().Add(time.Minute * 1).Unix(),
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+		Subject:   authUsername,
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 1)),
 	})
 
 	signedToken, err := token.SignedString(s.PreauthorizeSecret)

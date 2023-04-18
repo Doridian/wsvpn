@@ -6,7 +6,6 @@ require (
 	github.com/Doridian/water v1.6.0
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/gobwas/ws v1.2.0
-	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/google/uuid v1.3.0
 	github.com/magisterquis/connectproxy v0.0.0-20200725203833-3582e84f0c9b

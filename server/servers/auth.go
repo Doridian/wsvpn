@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/Doridian/wsvpn/server/authenticators"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 const rootRoutePreauthorize = "/preauthorize"

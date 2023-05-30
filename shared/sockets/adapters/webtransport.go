@@ -108,10 +108,7 @@ func (s *WebTransportAdapter) RefreshFeatures() {
 	} else {
 		s.quarterStreamID = s.streamID / 4
 	}
-
-	buf := &bytes.Buffer{}
-	quicvarint.Write(buf, s.quarterStreamID)
-	s.quarterStreamIDVarint = buf.Bytes()
+	s.quarterStreamIDVarint = quicvarint.Append([]byte{}, s.quarterStreamID)
 
 	s.maxPayloadLen = uint16(1200 - (len(s.quarterStreamIDVarint) + 3))
 }

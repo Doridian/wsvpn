@@ -65,6 +65,10 @@ func reloadConfig(configPtr *string, client *clients.Client) error {
 
 	client.TLSConfig.InsecureSkipVerify = config.Client.TLS.Config.Insecure
 	client.TLSConfig.ServerName = config.Client.TLS.ServerName
+	if client.TLSConfig.ServerName == "" {
+		client.TLSConfig.ServerName = dest.Hostname()
+	}
+
 	err = cli.TLSUseConfig(client.TLSConfig, &config.Client.TLS.Config)
 	if err != nil {
 		return err

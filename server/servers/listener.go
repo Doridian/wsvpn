@@ -98,7 +98,7 @@ func (s *Server) listen() {
 	tlsConfigTemp, _ := s.TLSConfig.GetConfigForClient(nil)
 
 	s.log.Printf("VPN server online at %s (HTTP/3 %s, TLS %s, mTLS %s), Mode %s, Subnet %s (%d max clients), MTU %d",
-		s.ListenAddr, shared.BoolToEnabled(s.HTTP3Enabled), shared.BoolToEnabled(tlsConfigTemp != nil),
+		s.ListenAddr, shared.BoolToEnabled(s.HTTP3Enabled), shared.BoolToEnabled(s.TLSConfig != nil),
 		shared.BoolToEnabled(tlsConfigTemp != nil && tlsConfigTemp.ClientAuth == tls.RequireAndVerifyClientCert), s.Mode.ToString(), s.VPNNet.GetRaw(), s.VPNNet.GetClientSlots(), s.mtu)
 
 	httpHandlerFunc := http.HandlerFunc(s.serveSocket)

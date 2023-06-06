@@ -95,13 +95,18 @@ func (s *Server) listenEncrypted(httpHandlerFunc http.HandlerFunc) {
 func (s *Server) listen() {
 	s.upgraders = make([]upgraders.SocketUpgrader, 0)
 
+	tlsConfigTemp := s.TLSConfig
+	if tlsConfigTemp != nil && tlsConfigTemp.GetConfigForClient != nil {
+		tlsConfigTemp, _ = tlsConfigTemp.GetConfigForClient(nil)
+	}
+
 	s.log.Printf("VPN server online at %s (HTTP/3 %s, TLS %s, mTLS %s), Mode %s, Subnet %s (%d max clients), MTU %d",
-		s.ListenAddr, shared.BoolToEnabled(s.HTTP3Enabled), shared.BoolToEnabled(s.TLSConfig != nil),
-		shared.BoolToEnabled(s.TLSConfig != nil && s.TLSConfig.ClientAuth == tls.RequireAndVerifyClientCert), s.Mode.ToString(), s.VPNNet.GetRaw(), s.VPNNet.GetClientSlots(), s.mtu)
+		s.ListenAddr, shared.BoolToEnabled(s.HTTP3Enabled), shared.BoolToEnabled(tlsConfigTemp != nil),
+		shared.BoolToEnabled(tlsConfigTemp != nil && tlsConfigTemp.ClientAuth == tls.RequireAndVerifyClientCert), s.Mode.ToString(), s.VPNNet.GetRaw(), s.VPNNet.GetClientSlots(), s.mtu)
 
 	httpHandlerFunc := http.HandlerFunc(s.serveSocket)
 
-	if s.TLSConfig == nil {
+	if tlsConfigTemp == nil {
 		s.listenPlaintext(httpHandlerFunc)
 	} else {
 		s.listenEncrypted(httpHandlerFunc)

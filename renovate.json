@@ -5,6 +5,10 @@
   ],
   "packageRules": [
     {
+      "matchDepTypes": ["golang"],
+      "enabled": true
+    },
+    {
       "matchManagers": ["gomod"],
       "matchDepTypes": ["indirect"],
       "enabled": true

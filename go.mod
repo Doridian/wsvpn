@@ -29,7 +29,7 @@ require (
 	github.com/quic-go/qtls-go1-20 v0.2.2 // indirect
 	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
-	golang.zx2c4.com/wireguard v0.0.0-20230627160250-1f25eac395d6 // indirect
+	golang.zx2c4.com/wireguard v0.0.0-20230704135630-469159ecf7d1 // indirect
 )
 
 require (

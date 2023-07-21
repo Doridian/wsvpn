@@ -9,7 +9,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/google/uuid v1.3.0
 	github.com/magisterquis/connectproxy v0.0.0-20200725203833-3582e84f0c9b
-	github.com/quic-go/quic-go v0.36.2
+	github.com/quic-go/quic-go v0.37.0
 	github.com/quic-go/webtransport-go v0.5.3
 	github.com/tg123/go-htpasswd v1.2.1
 	gopkg.in/yaml.v3 v3.0.1
@@ -25,8 +25,7 @@ require (
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/onsi/ginkgo/v2 v2.11.0 // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
-	github.com/quic-go/qtls-go1-19 v0.3.2 // indirect
-	github.com/quic-go/qtls-go1-20 v0.2.2 // indirect
+	github.com/quic-go/qtls-go1-20 v0.3.0 // indirect
 	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
 	golang.zx2c4.com/wireguard v0.0.0-20230704135630-469159ecf7d1 // indirect

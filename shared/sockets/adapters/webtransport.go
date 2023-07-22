@@ -94,7 +94,7 @@ func (s *WebTransportAdapter) Close() error {
 }
 
 func (s *WebTransportAdapter) GetTLSConnectionState() (tls.ConnectionState, bool) {
-	return s.conn.ConnectionState().TLS.ConnectionState, true
+	return s.conn.ConnectionState().TLS, true
 }
 
 func (s *WebTransportAdapter) setReady() {
@@ -215,7 +215,7 @@ func (s *WebTransportAdapter) serveData() {
 	defer s.Close()
 
 	for {
-		data, err := s.qconn.ReceiveMessage()
+		data, err := s.qconn.ReceiveMessage(context.Background())
 		if err != nil {
 			s.handleServeError(err, true)
 			break

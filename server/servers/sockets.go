@@ -41,8 +41,8 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 	if ok {
 		qconn, ok := http3Hijacker.StreamCreator().(quic.Connection)
 		if ok {
-			qlsState := qconn.ConnectionState().TLS.ConnectionState
-			tlsConnectionState = &qlsState
+			qtlsState := qconn.ConnectionState().TLS
+			tlsConnectionState = &qtlsState
 		}
 	}
 

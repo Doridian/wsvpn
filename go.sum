@@ -1,5 +1,5 @@
-github.com/Doridian/gopacket v1.2.1 h1:z0Iu5zplIq01nGNwKoreAhc/RMIUqu6vZLxLsHjpO48=
-github.com/Doridian/gopacket v1.2.1/go.mod h1:16EwY3JsEHp3TFeSRcmSC9yOdG8GkFAWImZaL13kOGc=
+github.com/Doridian/gopacket v1.3.4 h1:pX8h8pkUTHSpYEKAwLtUK8+N9wdEdMJvYrSwaHZgzh4=
+github.com/Doridian/gopacket v1.3.4/go.mod h1:16EwY3JsEHp3TFeSRcmSC9yOdG8GkFAWImZaL13kOGc=
 github.com/Doridian/water v1.6.1 h1:cszUUfRlk9duYwv1bE5mFluhaHJK0TAIdPLJk2DV0cI=
 github.com/Doridian/water v1.6.1/go.mod h1:bjQW67+p0YKqdrjoDWpJ+bcRvrrHphxwZOC6OTfBuf8=
 github.com/GehirnInc/crypt v0.0.0-20230320061759-8cc1b52080c5 h1:IEjq88XO4PuBDcvmjQJcQGg+w+UaafSy8G5Kcb5tBhI=

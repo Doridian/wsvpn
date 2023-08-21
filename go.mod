@@ -9,7 +9,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/google/uuid v1.3.0
 	github.com/magisterquis/connectproxy v0.0.0-20200725203833-3582e84f0c9b
-	github.com/quic-go/quic-go v0.37.6
+	github.com/quic-go/quic-go v0.38.0
 	github.com/quic-go/webtransport-go v0.5.3
 	github.com/tg123/go-htpasswd v1.2.1
 	gopkg.in/yaml.v3 v3.0.1
@@ -40,5 +40,5 @@ require (
 	golang.org/x/net v0.14.0
 	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/text v0.12.0 // indirect
-	golang.org/x/tools 229f8486be03 // indirect
+	golang.org/x/tools v0.12.1-0.20230815132531-74c255bcf846 // indirect
 )

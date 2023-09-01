@@ -40,5 +40,5 @@ require (
 	golang.org/x/net v0.14.0
 	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/text v0.12.0 // indirect
-	golang.org/x/tools v0.12.1-0.20230901150022-a1a928ddbedd // indirect
+	golang.org/x/tools v0.12.1-0.20230901210945-21090a2aa8d3 // indirect
 )

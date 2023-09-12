@@ -42,7 +42,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         if: matrix.os != 'macos-latest'
         with:
           registry: ghcr.io

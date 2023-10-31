@@ -215,7 +215,7 @@ func (s *WebTransportAdapter) serveData() {
 	defer s.Close()
 
 	for {
-		data, err := s.qconn.ReceiveMessage(context.Background())
+		data, err := s.qconn.ReceiveDatagram(context.Background())
 		if err != nil {
 			s.handleServeError(err, true)
 			break
@@ -279,7 +279,7 @@ func (s *WebTransportAdapter) WriteDataMessage(message []byte) error {
 	buf := &bytes.Buffer{}
 	buf.Write(s.quarterStreamIDVarint)
 	buf.Write(message)
-	err := s.qconn.SendMessage(buf.Bytes())
+	err := s.qconn.SendDatagram(buf.Bytes())
 	if err != nil && err.Error() == "message too large" {
 		return ErrDataPayloadTooLarge
 	}

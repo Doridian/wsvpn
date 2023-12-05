@@ -20,7 +20,7 @@ require (
 	github.com/Doridian/gopacket v1.3.4 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
-	github.com/google/pprof v0.0.0-20231203200248-ad67f76aa53d // indirect
+	github.com/google/pprof v0.0.0-20231205033806-a5a03c77bf08 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/onsi/ginkgo/v2 v2.13.2 // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect

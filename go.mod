@@ -9,7 +9,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/google/uuid v1.5.0
 	github.com/magisterquis/connectproxy v0.0.0-20200725203833-3582e84f0c9b
-	github.com/quic-go/quic-go v0.40.0
+	github.com/quic-go/quic-go v0.40.1
 	github.com/quic-go/webtransport-go v0.6.0
 	github.com/tg123/go-htpasswd v1.2.1
 	gopkg.in/yaml.v3 v3.0.1

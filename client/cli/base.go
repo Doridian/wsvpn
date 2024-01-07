@@ -112,6 +112,7 @@ func reloadConfig(configPtr *string, client *clients.Client) error {
 		}
 		client.SetLocalFeature(feat, en)
 	}
+	client.FirewallMark = config.FirewallMark
 	client.SetDefaultGateway = config.Tunnel.SetDefaultGateway
 	client.ServerURL = dest
 	client.InterfaceConfig = &config.Interface

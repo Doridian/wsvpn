@@ -12,6 +12,8 @@ interface:
   persist: false
   component-id: root\tap0901 # Windows only. Defaults: root\tap0901 or tap0901
 
+firewall-mark: 1337 # Unix only. Set to 0 to disable.
+
 scripts:
   # These scripts get run as "args... operation subnet interface"
   # Pass in an array, first argument is the executable, further arguments

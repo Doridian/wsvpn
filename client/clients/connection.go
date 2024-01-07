@@ -3,6 +3,7 @@ package clients
 import (
 	"crypto/tls"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -26,6 +27,13 @@ func (c *Client) GetHeaders() http.Header {
 
 func (c *Client) GetServerURL() *url.URL {
 	return c.ServerURL
+}
+
+func (c *Client) EnhanceConn(conn net.Conn) error {
+	if c.FirewallMark <= 0 {
+		return nil
+	}
+	return setFirewallMark(conn, c.FirewallMark)
 }
 
 func (c *Client) RegisterDefaultConnectors() {

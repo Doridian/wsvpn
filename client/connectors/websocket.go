@@ -57,6 +57,11 @@ func (c *WebSocketConnector) Dial(config SocketConnectorConfig) (adapters.Socket
 		return nil, err
 	}
 
+	err = config.EnhanceConn(conn)
+	if err != nil {
+		return nil, err
+	}
+
 	serializationType := readSerializationType(respHeaders)
 	return adapters.NewWebSocketAdapter(conn, serializationType, false, reader), nil
 }

@@ -2,6 +2,7 @@ package connectors
 
 import (
 	"crypto/tls"
+	"net"
 	"net/http"
 	"net/url"
 
@@ -18,4 +19,5 @@ type SocketConnectorConfig interface {
 	GetTLSConfig() *tls.Config
 	GetHeaders() http.Header
 	GetServerURL() *url.URL
+	EnhanceConn(conn net.Conn) error
 }

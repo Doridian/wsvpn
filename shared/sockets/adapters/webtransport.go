@@ -32,6 +32,7 @@ type WebTransportAdapter struct {
 	adapterBase
 	qconn              quic.Connection
 	conn               *webtransport.Session
+	netConn            net.Conn
 	stream             webtransport.Stream
 	isServer           bool
 	wg                 *sync.WaitGroup
@@ -51,10 +52,11 @@ type WebTransportAdapter struct {
 
 var _ SocketAdapter = &WebTransportAdapter{}
 
-func NewWebTransportAdapter(qconn quic.Connection, conn *webtransport.Session, serializationType commands.SerializationType, isServer bool) *WebTransportAdapter {
+func NewWebTransportAdapter(qconn quic.Connection, conn *webtransport.Session, netConn net.Conn, serializationType commands.SerializationType, isServer bool) *WebTransportAdapter {
 	adapter := &WebTransportAdapter{
 		conn:               conn,
 		qconn:              qconn,
+		netConn:            netConn,
 		isServer:           isServer,
 		readyWait:          shared.MakeSimpleCond(),
 		wg:                 &sync.WaitGroup{},
@@ -90,7 +92,11 @@ func (s *WebTransportAdapter) Close() error {
 	if s.qconn != nil {
 		_ = s.qconn.CloseWithError(ErrorCodeClosed, "Close called")
 	}
-	return s.conn.CloseWithError(ErrorCodeClosed, "Close called")
+	err := s.conn.CloseWithError(ErrorCodeClosed, "Close called")
+	if s.netConn != nil {
+		_ = s.netConn.Close()
+	}
+	return err
 }
 
 func (s *WebTransportAdapter) GetTLSConnectionState() (tls.ConnectionState, bool) {

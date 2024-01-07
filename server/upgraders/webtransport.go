@@ -61,7 +61,7 @@ func (u *WebTransportUpgrader) Upgrade(w http.ResponseWriter, r *http.Request) (
 		return nil, err
 	}
 
-	return adapters.NewWebTransportAdapter(qconn, conn, serializationType, true), nil
+	return adapters.NewWebTransportAdapter(qconn, conn, nil, serializationType, true), nil
 }
 
 func (u *WebTransportUpgrader) ListenAndServe() error {

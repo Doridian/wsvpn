@@ -37,10 +37,15 @@ func (c *WebTransportConnector) Dial(config SocketConnectorConfig) (adapters.Soc
 	serverURL := *config.GetServerURL()
 	serverURL.Scheme = "https"
 
+	if config.GetProxyURL() != nil {
+		return nil, errors.New("proxy is not supported for WebTransport at the moment")
+	}
+
 	udpConn, err := net.ListenUDP("udp", nil)
 	if err != nil {
 		return nil, err
 	}
+
 	err = config.EnhanceConn(udpConn)
 	if err != nil {
 		_ = udpConn.Close()
@@ -58,28 +63,27 @@ func (c *WebTransportConnector) Dial(config SocketConnectorConfig) (adapters.Soc
 	}
 	dialer.TLSClientConfig = config.GetTLSConfig()
 
-	if config.GetProxyURL() != nil {
-		return nil, errors.New("proxy is not supported for WebTransport at the moment")
-	}
-
 	headers := config.GetHeaders()
 	addSupportedSerializationHeader(headers)
 	resp, conn, err := dialer.Dial(context.Background(), serverURL.String(), headers)
 	if err != nil {
+		_ = udpConn.Close()
 		return nil, err
 	}
 
 	hijacker, ok := resp.Body.(http3.Hijacker)
 	if !ok {
+		_ = udpConn.Close()
 		return nil, errors.New("unexpected: Body is not http3.Hijacker")
 	}
 	qconn, ok := hijacker.StreamCreator().(quic.Connection)
 	if !ok {
+		_ = udpConn.Close()
 		return nil, errors.New("unexpected: StreamCreator is not quic.Connection")
 	}
 
 	serializationType := readSerializationType(resp.Header)
-	return adapters.NewWebTransportAdapter(qconn, conn, serializationType, false), nil
+	return adapters.NewWebTransportAdapter(qconn, conn, udpConn, serializationType, false), nil
 }
 
 func (c *WebTransportConnector) GetSchemes() []string {

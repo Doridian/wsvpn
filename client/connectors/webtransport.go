@@ -2,7 +2,9 @@ package connectors
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
+	"net"
 
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 	"github.com/quic-go/quic-go"
@@ -19,13 +21,40 @@ func NewWebTransportConnector() *WebTransportConnector {
 	return &WebTransportConnector{}
 }
 
+type quicDialer struct {
+	transport *quic.Transport
+}
+
+func (d *quicDialer) Dial(ctx context.Context, addr string, tlsCfg *tls.Config, cfg *quic.Config) (quic.EarlyConnection, error) {
+	udpAddr, err := net.ResolveUDPAddr("udp", addr)
+	if err != nil {
+		return nil, err
+	}
+	return d.transport.DialEarly(ctx, udpAddr, tlsCfg, cfg)
+}
+
 func (c *WebTransportConnector) Dial(config SocketConnectorConfig) (adapters.SocketAdapter, error) {
 	serverURL := *config.GetServerURL()
 	serverURL.Scheme = "https"
 
+	udpConn, err := net.ListenUDP("udp", nil)
+	if err != nil {
+		return nil, err
+	}
+	err = config.EnhanceConn(udpConn)
+	if err != nil {
+		_ = udpConn.Close()
+		return nil, err
+	}
+	quicDialer := &quicDialer{
+		transport: &quic.Transport{Conn: udpConn},
+	}
+
 	var dialer webtransport.Dialer
 	if dialer.RoundTripper == nil {
-		dialer.RoundTripper = &http3.RoundTripper{}
+		dialer.RoundTripper = &http3.RoundTripper{
+			Dial: quicDialer.Dial,
+		}
 	}
 	dialer.TLSClientConfig = config.GetTLSConfig()
 

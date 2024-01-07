@@ -12,6 +12,8 @@ interface:
   persist: false
   component-id: root\tap0901 # Windows only. Defaults: root\tap0901 or tap0901
 
+firewall-mark: 0 # Linux only. Set to positive integer to mark packets with this value in the firewall
+
 scripts:
   # These scripts get run as "args... operation subnet interface"
   # Pass in an array, first argument is the executable, further arguments

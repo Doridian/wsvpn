@@ -23,7 +23,8 @@ type Config struct {
 		Features          features.Config       `yaml:"features"`
 	} `yaml:"tunnel"`
 
-	Interface iface.InterfaceConfig `yaml:"interface"`
+	Interface    iface.InterfaceConfig `yaml:"interface"`
+	FirewallMark int                   `yaml:"firewall-mark"`
 
 	Scripts shared.EventConfig `yaml:"scripts"`
 

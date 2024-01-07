@@ -23,6 +23,7 @@ type Client struct {
 	ProxyURL           *url.URL
 	ServerURL          *url.URL
 	Headers            http.Header
+	FirewallMark       int
 	SetDefaultGateway  bool
 	SocketConfigurator sockets.SocketConfigurator
 	InterfaceConfig    *iface.InterfaceConfig

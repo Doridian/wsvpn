@@ -59,6 +59,7 @@ func (c *WebSocketConnector) Dial(config SocketConnectorConfig) (adapters.Socket
 
 	err = config.EnhanceConn(conn)
 	if err != nil {
+		_ = conn.Close()
 		return nil, err
 	}
 

@@ -22,7 +22,7 @@ func setFirewallMark(conn net.Conn, mark int) error {
 
 	switch typedConn := conn.(type) {
 	case syscall.Conn:
-		file = typedConn
+		syscallConn = typedConn
 	case *tls.Conn:
 		return setFirewallMark(typedConn.NetConn(), mark)
 	default:

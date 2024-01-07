@@ -78,6 +78,7 @@ class GoBin(Thread):
             self.cfg["client"]["headers"] = {
                 "X-Test-Header": ["test-header-value"]
             }
+            self.cfg["firewall-mark"] = 1337
 
         self.proc_wait_cond = Condition()
         self.is_ready_or_done = False

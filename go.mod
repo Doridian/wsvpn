@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/Doridian/water v1.6.1
 	github.com/apparentlymart/go-cidr v1.1.0
-	github.com/gobwas/ws v1.3.1
+	github.com/gobwas/ws v1.3.2
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/google/uuid v1.5.0
 	github.com/magisterquis/connectproxy v0.0.0-20200725203833-3582e84f0c9b
@@ -38,7 +38,7 @@ require (
 	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.19.0
-	golang.org/x/sys v0.16.0 // indirect
+	golang.org/x/sys v0.16.0
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.16.1 // indirect
 )

@@ -372,6 +372,8 @@ def main():
         task_types.add(type(task))
 
     for proj in projects:
+        if not proj:
+            continue
         for platform in platforms:
             exesuffix = ""
             if platform == "windows":

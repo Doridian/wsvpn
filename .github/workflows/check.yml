@@ -29,7 +29,7 @@ jobs:
       - name: Install required Python packages
         run: pip install -r requirements.txt
       - name: Download wintun
-        run: python ./build.py --download-wintun --projects ','
+        run: python ./build.py --download-wintun --projects ,
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:

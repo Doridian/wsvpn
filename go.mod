@@ -22,7 +22,7 @@ require (
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/google/pprof v0.0.0-20231229205709-960ae82b1e42 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
-	github.com/onsi/ginkgo/v2 v2.13.2 // indirect
+	github.com/onsi/ginkgo/v2 v2.14.0 // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
 	github.com/quic-go/qtls-go1-20 v0.4.1 // indirect
 	go.uber.org/mock v0.4.0 // indirect

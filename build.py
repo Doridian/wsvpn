@@ -321,6 +321,8 @@ def main():
                         help="Will enable CGO in all builds")
     parser.add_argument("--gocmd", default="go", type=str,
                         help="Use this command instead of go to build")
+    parser.add_argument("--download-wintun", default=False, action="store_true", help="Download wintun DLLs")
+    parser.add_argument("--no-download-wintun", default=False, action="store_true", help="Never download wintun DLLs")
     flags = parser.parse_args()
 
     platforms = None
@@ -370,6 +372,8 @@ def main():
         task_types.add(type(task))
 
     for proj in projects:
+        if not proj:
+            continue
         for platform in platforms:
             exesuffix = ""
             if platform == "windows":
@@ -412,7 +416,7 @@ def main():
              stdout=DEVNULL, stderr=DEVNULL)
         check_call(["docker", "buildx", "use", "multiarch"])
 
-    if "windows" in task_platforms:
+    if ("windows" in task_platforms and not flags.no_download_wintun) or flags.download_wintun:
         url = "https://www.wintun.net/builds/wintun-0.14.1.zip"
         print(f"Downloading WinTun from \"{url}\"...", flush=True)
 

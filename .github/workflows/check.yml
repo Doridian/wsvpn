@@ -22,16 +22,18 @@ jobs:
           go-version-file: 'go.mod'
           check-latest: true
           cache: false
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: latest
-          args: --timeout=30m
       - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
           cache: 'pip'
       - name: Install required Python packages
         run: pip install -r requirements.txt
+      - name: Download wintun
+        run: python ./build.py --download-wintun --projects ","
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          args: --timeout=30m
       - name: Build local binaries
-        run: python ./build.py --architectures local --platforms local
+        run: python ./build.py --no-download-wintun --architectures local --platforms local

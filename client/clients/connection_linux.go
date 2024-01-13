@@ -34,13 +34,17 @@ func setFirewallMark(conn net.Conn, mark int) error {
 		return err
 	}
 
-	var operr error
 	fd, err := syscallConn.SyscallConn()
 	if err != nil {
 		return err
 	}
 
-	err = fd.Control(func(fd uintptr) {
+	return setFirewallMarkRaw(fd, mark)
+}
+
+func setFirewallMarkRaw(conn syscall.RawConn, mark int) error {
+	var operr error
+	err := fd.Control(func(fd uintptr) {
 		operr = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, fwmarkIoctl, int(mark))
 	})
 

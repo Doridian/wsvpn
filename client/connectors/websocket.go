@@ -36,6 +36,7 @@ func (c *WebSocketConnector) Dial(config SocketConnectorConfig) (adapters.Socket
 		},
 	}
 
+	enhancedDialer := config.GetDialer()
 	proxyURL := config.GetProxyURL()
 	if proxyURL != nil {
 		proxyDialer, err := proxy.FromURL(proxyURL, proxy.Direct)
@@ -45,6 +46,8 @@ func (c *WebSocketConnector) Dial(config SocketConnectorConfig) (adapters.Socket
 		dialer.NetDial = func(ctx context.Context, network string, addr string) (net.Conn, error) {
 			return proxyDialer.Dial(network, addr)
 		}
+	} else if enhancedDialer != nil {
+		dialer.NetDial = enhancedDialer.DialContext
 	}
 	dialer.TLSConfig = config.GetTLSConfig()
 
@@ -57,10 +60,12 @@ func (c *WebSocketConnector) Dial(config SocketConnectorConfig) (adapters.Socket
 		return nil, err
 	}
 
-	err = config.EnhanceConn(conn)
-	if err != nil {
-		_ = conn.Close()
-		return nil, err
+	if enhancedDialer == nil {
+		err = config.EnhanceConn(conn)
+		if err != nil {
+			_ = conn.Close()
+			return nil, err
+		}
 	}
 
 	serializationType := readSerializationType(respHeaders)

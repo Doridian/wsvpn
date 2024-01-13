@@ -3,6 +3,7 @@ package clients
 import (
 	"crypto/tls"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -39,6 +40,7 @@ type Client struct {
 	socket     *sockets.Socket
 	adapter    adapters.SocketAdapter
 	connectors map[string]connectors.SocketConnector
+	dialer     *net.Dialer
 
 	sentUpEvent bool
 
@@ -52,6 +54,20 @@ func NewClient() *Client {
 		log:           shared.MakeLogger("CLIENT", ""),
 		connectors:    make(map[string]connectors.SocketConnector),
 		localFeatures: make(map[features.Feature]bool),
+	}
+}
+
+func (c *Client) Reload() {
+	if c.FirewallMark > 0 {
+		c.dialer = &net.Dialer{
+			Control: c.DialerControlFunc,
+		}
+		net.DefaultResolver.Dial = c.dialer.DialContext
+		net.DefaultResolver.PreferGo = true
+	} else {
+		c.dialer = nil
+		net.DefaultResolver.Dial = nil
+		net.DefaultResolver.PreferGo = false
 	}
 }
 

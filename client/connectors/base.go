@@ -19,5 +19,7 @@ type SocketConnectorConfig interface {
 	GetTLSConfig() *tls.Config
 	GetHeaders() http.Header
 	GetServerURL() *url.URL
+
 	EnhanceConn(conn net.Conn) error
+	GetDialer() *net.Dialer
 }

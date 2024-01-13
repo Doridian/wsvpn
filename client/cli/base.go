@@ -133,7 +133,7 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 
 	err := iface.InitializeWater()
 	if err != nil {
-		log.Printf("Could not initialize network interface library (this may cause crashes): %v", err)
+		log.Printf("Could not Reload network interface library (this may cause crashes): %v", err)
 	}
 
 	client := clients.NewClient()
@@ -160,8 +160,10 @@ func Main(configPtr *string, printDefaultConfigPtr *bool) {
 			if err != nil {
 				log.Printf("Error reloading config: %v", err)
 			}
+			client.Reload()
 		}
 	}()
 
+	client.Reload()
 	client.ServeLoop()
 }

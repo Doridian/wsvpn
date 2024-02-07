@@ -37,7 +37,7 @@ require (
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	golang.org/x/crypto v0.18.0 // indirect
-	golang.org/x/mod v0.14.0 // indirect
+	golang.org/x/mod v0.15.0 // indirect
 	golang.org/x/net v0.20.0
 	golang.org/x/sys v0.16.0
 	golang.org/x/text v0.14.0 // indirect

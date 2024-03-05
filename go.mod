@@ -8,7 +8,7 @@ require (
 	github.com/Doridian/water v1.6.1
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/gobwas/ws v1.3.2
-	github.com/golang-jwt/jwt/v5 v5.2.0
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
 	github.com/magisterquis/connectproxy v0.0.0-20200725203833-3582e84f0c9b
 	github.com/quic-go/quic-go v0.41.0

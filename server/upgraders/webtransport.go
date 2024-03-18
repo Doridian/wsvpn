@@ -33,9 +33,8 @@ func NewWebTransportUpgrader(quicServer *QuicServerConfig) *WebTransportUpgrader
 				Handler:         quicServer.Handler,
 				EnableDatagrams: true,
 				QuicConfig: &quic.Config{
-					EnableDatagrams:    true,
-					KeepAlivePeriod:    10 * time.Second,
-					MaxIncomingStreams: -1,
+					EnableDatagrams: true,
+					KeepAlivePeriod: 10 * time.Second,
 				},
 			},
 			CheckOrigin: func(r *http.Request) bool { return true },

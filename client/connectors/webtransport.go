@@ -58,7 +58,11 @@ func (c *WebTransportConnector) Dial(config SocketConnectorConfig) (adapters.Soc
 	var dialer webtransport.Dialer
 	if dialer.RoundTripper == nil {
 		dialer.RoundTripper = &http3.RoundTripper{
-			Dial: quicDialer.Dial,
+			Dial:            quicDialer.Dial,
+			EnableDatagrams: true,
+			QuicConfig: &quic.Config{
+				EnableDatagrams: true,
+			},
 		}
 	}
 	dialer.TLSClientConfig = config.GetTLSConfig()

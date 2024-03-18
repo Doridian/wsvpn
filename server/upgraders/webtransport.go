@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 	"github.com/quic-go/quic-go"
@@ -27,9 +28,14 @@ func NewWebTransportUpgrader(quicServer *QuicServerConfig) *WebTransportUpgrader
 	return &WebTransportUpgrader{
 		server: &webtransport.Server{
 			H3: http3.Server{
-				Addr:      quicServer.Addr,
-				TLSConfig: quicServer.TLSConfig,
-				Handler:   quicServer.Handler,
+				Addr:            quicServer.Addr,
+				TLSConfig:       quicServer.TLSConfig,
+				Handler:         quicServer.Handler,
+				EnableDatagrams: true,
+				QuicConfig: &quic.Config{
+					EnableDatagrams: true,
+					KeepAlivePeriod: 10 * time.Second,
+				},
 			},
 			CheckOrigin: func(r *http.Request) bool { return true },
 		},

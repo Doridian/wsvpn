@@ -31,7 +31,7 @@ jobs:
       - name: Download wintun
         run: python ./build.py --download-wintun --projects ","
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v5
         with:
           version: latest
           args: --timeout=30m

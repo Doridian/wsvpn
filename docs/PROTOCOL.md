@@ -58,4 +58,4 @@ WebTransport establishes a single bi-directional stream and enables datagram sup
 
 1. Control/command packets also uses the stream. It sends a byte of `0` first, followed by two bytes forming an unsigned 16-bit integer (MSB-first) indicating the length of the following message, and then the message itself
 
-1. Data packets use WebTransport datagrams (the stream ID used for these depends on the enablement of the `datagram_id_0` feature outline in the `version` command in [COMMANDS.md](COMMANDS.md))
+1. Data packets use WebTransport datagrams

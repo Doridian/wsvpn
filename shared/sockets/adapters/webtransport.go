@@ -12,9 +12,6 @@ import (
 
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
-	"github.com/Doridian/wsvpn/shared/features"
-	"github.com/quic-go/quic-go"
-	"github.com/quic-go/quic-go/quicvarint"
 	"github.com/quic-go/webtransport-go"
 )
 
@@ -30,7 +27,6 @@ const (
 
 type WebTransportAdapter struct {
 	adapterBase
-	qconn              quic.Connection
 	conn               *webtransport.Session
 	netConn            net.Conn
 	stream             webtransport.Stream
@@ -44,18 +40,14 @@ type WebTransportAdapter struct {
 	lastServeError           error
 	lastServeErrorUnexpected bool
 
-	streamID              uint64
-	quarterStreamID       uint64
-	quarterStreamIDVarint []byte
-	maxPayloadLen         uint16
+	maxPayloadLen uint16
 }
 
 var _ SocketAdapter = &WebTransportAdapter{}
 
-func NewWebTransportAdapter(qconn quic.Connection, conn *webtransport.Session, netConn net.Conn, serializationType commands.SerializationType, isServer bool) *WebTransportAdapter {
+func NewWebTransportAdapter(conn *webtransport.Session, netConn net.Conn, serializationType commands.SerializationType, isServer bool) *WebTransportAdapter {
 	adapter := &WebTransportAdapter{
 		conn:               conn,
-		qconn:              qconn,
 		netConn:            netConn,
 		isServer:           isServer,
 		readyWait:          shared.MakeSimpleCond(),
@@ -89,9 +81,6 @@ func (s *WebTransportAdapter) Close() error {
 		s.stream.CancelWrite(ErrorCodeClosed)
 		_ = s.stream.Close()
 	}
-	if s.qconn != nil {
-		_ = s.qconn.CloseWithError(ErrorCodeClosed, "Close called")
-	}
 	err := s.conn.CloseWithError(ErrorCodeClosed, "Close called")
 	if s.netConn != nil {
 		_ = s.netConn.Close()
@@ -109,14 +98,7 @@ func (s *WebTransportAdapter) setReady() {
 }
 
 func (s *WebTransportAdapter) RefreshFeatures() {
-	if s.featuresContainer.IsFeatureEnabled(features.DatagramID0) {
-		s.quarterStreamID = 0
-	} else {
-		s.quarterStreamID = s.streamID / 4
-	}
-	s.quarterStreamIDVarint = quicvarint.Append([]byte{}, s.quarterStreamID)
-
-	s.maxPayloadLen = uint16(1200 - (len(s.quarterStreamIDVarint) + 3))
+	s.maxPayloadLen = uint16(1200 - 16)
 }
 
 func (s *WebTransportAdapter) Serve() (bool, error) {
@@ -133,7 +115,6 @@ func (s *WebTransportAdapter) Serve() (bool, error) {
 		return true, err
 	}
 
-	s.streamID = uint64(s.stream.StreamID())
 	s.RefreshFeatures()
 
 	s.wg.Add(1)
@@ -221,21 +202,12 @@ func (s *WebTransportAdapter) serveData() {
 	defer s.Close()
 
 	for {
-		data, err := s.qconn.ReceiveDatagram(context.Background())
+		data, err := s.conn.ReceiveDatagram(context.Background())
 		if err != nil {
 			s.handleServeError(err, true)
 			break
 		}
-		buf := bytes.NewBuffer(data)
-		quarterStreamID, err := quicvarint.Read(buf)
-		if err != nil {
-			s.handleServeError(err, true)
-			break
-		}
-		if quarterStreamID != s.quarterStreamID {
-			continue
-		}
-		s.dataMessageHandler(buf.Bytes())
+		s.dataMessageHandler(data)
 	}
 }
 
@@ -282,10 +254,7 @@ func (s *WebTransportAdapter) WriteDataMessage(message []byte) error {
 		return errors.New("not able to send")
 	}
 
-	buf := &bytes.Buffer{}
-	buf.Write(s.quarterStreamIDVarint)
-	buf.Write(message)
-	err := s.qconn.SendDatagram(buf.Bytes())
+	err := s.conn.SendDatagram(message)
 	if err != nil && err.Error() == "message too large" {
 		return ErrDataPayloadTooLarge
 	}

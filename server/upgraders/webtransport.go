@@ -45,8 +45,8 @@ func (u *WebTransportUpgrader) SetHeaders(headers http.Header) {
 	// Nothing to do here
 }
 
-func (u *WebTransportUpgrader) SetQuicHeaders(header http.Header) error {
-	return u.server.H3.SetQuicHeaders(header)
+func (u *WebTransportUpgrader) SetQUICHeaders(header http.Header) error {
+	return u.server.H3.SetQUICHeaders(header)
 }
 
 func (u *WebTransportUpgrader) Upgrade(w http.ResponseWriter, r *http.Request) (adapters.SocketAdapter, error) {

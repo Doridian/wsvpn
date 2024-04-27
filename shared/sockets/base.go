@@ -115,10 +115,16 @@ func (s *Socket) SetLocalFeature(feature features.Feature, enabled bool) {
 }
 
 func (s *Socket) IsLocalFeature(feature features.Feature) bool {
+	if feature == features.DatagramID0 {
+		return true
+	}
 	return s.localFeatures[feature]
 }
 
 func (s *Socket) IsFeatureEnabled(feature features.Feature) bool {
+	if feature == features.DatagramID0 {
+		return true
+	}
 	return s.usedFeatures[feature]
 }
 

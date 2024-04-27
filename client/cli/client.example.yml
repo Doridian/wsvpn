@@ -5,7 +5,6 @@ tunnel:
     timeout: 5s
   features:
     fragmentation: true # Enable packet fragmentation (default enabled), required for MTU > 1216 in WebTransport
-    datagram_id_0: true
 
 interface:
   name: ""

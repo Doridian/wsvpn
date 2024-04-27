@@ -64,7 +64,6 @@ Features are to be considered used / enabled for any feature that both sides inc
         "version": "wsvpn 1.2.3", // Free-form text of the client/server version
         "enabled_features": [ // Features that are requested
             "fragmentation", // Fragmentation as outlined in PROTOCOL.md
-            "datagram_id_0" // Use QuarterStreamID 0 for WebTransport datagrams
         ]
     }
 }

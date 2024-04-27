@@ -8,7 +8,6 @@ import (
 
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 	"github.com/quic-go/quic-go"
-	"github.com/quic-go/quic-go/http3"
 	"github.com/quic-go/webtransport-go"
 )
 
@@ -56,13 +55,10 @@ func (c *WebTransportConnector) Dial(config SocketConnectorConfig) (adapters.Soc
 	}
 
 	var dialer webtransport.Dialer
-	if dialer.RoundTripper == nil {
-		dialer.RoundTripper = &http3.RoundTripper{
-			Dial:            quicDialer.Dial,
+	if dialer.QUICConfig == nil {
+		dialer.DialAddr = quicDialer.Dial
+		dialer.QUICConfig = &quic.Config{
 			EnableDatagrams: true,
-			QuicConfig: &quic.Config{
-				EnableDatagrams: true,
-			},
 		}
 	}
 	dialer.TLSClientConfig = config.GetTLSConfig()
@@ -75,19 +71,8 @@ func (c *WebTransportConnector) Dial(config SocketConnectorConfig) (adapters.Soc
 		return nil, err
 	}
 
-	hijacker, ok := resp.Body.(http3.Hijacker)
-	if !ok {
-		_ = udpConn.Close()
-		return nil, errors.New("unexpected: Body is not http3.Hijacker")
-	}
-	qconn, ok := hijacker.StreamCreator().(quic.Connection)
-	if !ok {
-		_ = udpConn.Close()
-		return nil, errors.New("unexpected: StreamCreator is not quic.Connection")
-	}
-
 	serializationType := readSerializationType(resp.Header)
-	return adapters.NewWebTransportAdapter(qconn, conn, udpConn, serializationType, false), nil
+	return adapters.NewWebTransportAdapter(conn, udpConn, serializationType, false), nil
 }
 
 func (c *WebTransportConnector) GetSchemes() []string {

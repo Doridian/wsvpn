@@ -15,7 +15,6 @@ import (
 	"github.com/Doridian/wsvpn/shared/sockets"
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 	"github.com/google/uuid"
-	"github.com/quic-go/quic-go"
 	"github.com/quic-go/quic-go/http3"
 )
 
@@ -39,11 +38,9 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 
 	http3Hijacker, ok := w.(http3.Hijacker)
 	if ok {
-		qconn, ok := http3Hijacker.Connection().(quic.Connection)
-		if ok {
-			qtlsState := qconn.ConnectionState().TLS
-			tlsConnectionState = &qtlsState
-		}
+		qconn := http3Hijacker.Connection()
+		qtlsState := qconn.ConnectionState().TLS
+		tlsConnectionState = &qtlsState
 	}
 
 	if r.URL.Path == rootRoutePreauthorize {

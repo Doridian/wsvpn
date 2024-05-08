@@ -321,8 +321,6 @@ def main():
                         help="Will enable CGO in all builds")
     parser.add_argument("--gocmd", default="go", type=str,
                         help="Use this command instead of go to build")
-    parser.add_argument("--download-wintun", default=False, action="store_true", help="Download wintun DLLs")
-    parser.add_argument("--no-download-wintun", default=False, action="store_true", help="Never download wintun DLLs")
     flags = parser.parse_args()
 
     platforms = None
@@ -415,24 +413,6 @@ def main():
         call(["docker", "buildx", "create", "--name", "multiarch"],
              stdout=DEVNULL, stderr=DEVNULL)
         check_call(["docker", "buildx", "use", "multiarch"])
-
-    if ("windows" in task_platforms and not flags.no_download_wintun) or flags.download_wintun:
-        url = "https://www.wintun.net/builds/wintun-0.14.1.zip"
-        print(f"Downloading WinTun from \"{url}\"...", flush=True)
-
-        with BytesIO() as stream:
-            res = get(url)
-            res.raise_for_status()
-            stream.write(res.content)
-            stream.flush()
-
-            outdir = "shared/iface/wintun"
-            try:
-                mkdir(outdir)
-            except FileExistsError:
-                pass
-            zip = ZipFile(stream)
-            zip.extractall(outdir)
 
     print("Executing build tasks...", flush=True)
 

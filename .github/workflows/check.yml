@@ -28,12 +28,10 @@ jobs:
           cache: 'pip'
       - name: Install required Python packages
         run: pip install -r requirements.txt
-      - name: Download wintun
-        run: python ./build.py --download-wintun --projects ","
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
           args: --timeout=30m
       - name: Build local binaries
-        run: python ./build.py --no-download-wintun --architectures local --platforms local
+        run: python ./build.py --architectures local --platforms local

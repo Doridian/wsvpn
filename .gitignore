@@ -9,6 +9,5 @@ __pycache__
 /dist
 /client.yml
 /server.yml
-/shared/iface/wintun
 /htpasswd
 /site

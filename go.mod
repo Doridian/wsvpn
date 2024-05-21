@@ -25,7 +25,7 @@ require (
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/google/pprof v0.0.0-20240521024322-9665fa269a30 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/onsi/ginkgo/v2 v2.17.3 // indirect
+	github.com/onsi/ginkgo/v2 v2.18.0 // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
 	go.uber.org/mock v0.4.0 // indirect
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect

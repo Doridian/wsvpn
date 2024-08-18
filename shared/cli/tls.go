@@ -2,20 +2,17 @@ package cli
 
 import (
 	"crypto/tls"
-	"errors"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/Doridian/wsvpn/shared"
 )
 
 type TLSConfig struct {
-	MinVersion       string `yaml:"min-version"`
-	MaxVersion       string `yaml:"max-version"`
-	KeyLogFile       string `yaml:"key-log-file"`
-	Insecure         bool   `yaml:"insecure"`
-	CipherPreference string `yaml:"cipher-preference"`
+	MinVersion string `yaml:"min-version"`
+	MaxVersion string `yaml:"max-version"`
+	KeyLogFile string `yaml:"key-log-file"`
+	Insecure   bool   `yaml:"insecure"`
 }
 
 func TLSUseConfig(tlsConfig *tls.Config, fileConfig *TLSConfig) error {
@@ -29,17 +26,6 @@ func TLSUseConfig(tlsConfig *tls.Config, fileConfig *TLSConfig) error {
 		}
 		log.Print("WARNING!!! TLS secret key logging is enabled. This can cause severe security issues! Make sure this is what you want!")
 		tlsConfig.KeyLogWriter = fh
-	}
-
-	switch strings.ToUpper(fileConfig.CipherPreference) {
-	case "AES":
-		shared.TLSSetCipherAESPreference(true)
-	case "CHACHA":
-		shared.TLSSetCipherAESPreference(false)
-	case "":
-		break
-	default:
-		return errors.New("invalid TLS preference. Must be blank, AES or CHACHA")
 	}
 
 	return nil

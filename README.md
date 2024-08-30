@@ -47,11 +47,40 @@ In each of these examples, you run the tunnel as follows:
 
 **Keep in mind that WebTransport should perform better than WebSocket in most scenarios but is considered to be less stable**
 
-[VPN with TLS + htpasswd](https://github.com/Doridian/wsvpn/wiki/Example:-VPN-with-TLS-and-htpasswd-authentication)
+- [VPN with TLS + htpasswd](https://github.com/Doridian/wsvpn/wiki/Example:-VPN-with-TLS-and-htpasswd-authentication)
+- [VPN with TLS + mTLS](https://github.com/Doridian/wsvpn/wiki/Example:-VPN-with-TLS-and-mTLS) (*A bit of work might be required to setup an mTLS CA for this one*)
+- [Default server config](https://github.com/Doridian/wsvpn/blob/main/server/cli/server.example.yml)
+- [Default client config](https://github.com/Doridian/wsvpn/blob/main/client/cli/client.example.yml)
 
+## Docker Usage
 
-*A bit of work might be required to setup an mTLS CA for this one:* [VPN with TLS + mTLS](https://github.com/Doridian/wsvpn/wiki/Example:-VPN-with-TLS-and-mTLS)
+CLI:
 
+```sh
+docker run --rm --cap-add=NET_ADMIN \
+  -v ./config:/config \
+  --device /dev/net/tun:/dev/net/tun \
+  -p 9000:9000 \
+  ghcr.io/doridian/wsvpn/wsvpn:latest
+  --mode <MODE> --config /config<MODE>.yml
+```
+
+Docker Compose:
+
+```yml
+services:
+  wsvpn:
+    image: ghcr.io/doridian/wsvpn/wsvpn:latest
+    ports:
+      - '9000:9000'
+    volumes:
+      - ./config:/config
+    devices:
+      - /dev/net/tun
+    cap_add:
+      - NET_ADMIN
+    command: "--mode <MODE> --config /config/<MODE>.yml"
+```
 
 ## Building
 

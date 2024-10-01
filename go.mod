@@ -2,7 +2,7 @@ module github.com/Doridian/wsvpn
 
 go 1.22.0
 
-toolchain go1.23.1
+toolchain go1.23.2
 
 require (
 	github.com/Doridian/water v1.6.1

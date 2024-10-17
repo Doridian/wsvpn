@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Doridian/webtransport-go"
 	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 	"github.com/quic-go/quic-go"
 	"github.com/quic-go/quic-go/http3"
-	"github.com/quic-go/webtransport-go"
 )
 
 type WebTransportUpgrader struct {

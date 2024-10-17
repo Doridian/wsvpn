@@ -10,9 +10,9 @@ import (
 	"net"
 	"sync"
 
+	"github.com/Doridian/webtransport-go"
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
-	"github.com/quic-go/webtransport-go"
 )
 
 type StreamMessageType = byte

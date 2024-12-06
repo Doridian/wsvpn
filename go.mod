@@ -6,13 +6,13 @@ toolchain go1.23.4
 
 require (
 	github.com/Doridian/water v1.6.1
-	github.com/Doridian/webtransport-go v0.9.0
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/gobwas/ws v1.4.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
 	github.com/magisterquis/connectproxy v0.0.0-20200725203833-3582e84f0c9b
 	github.com/quic-go/quic-go v0.48.2
+	github.com/quic-go/webtransport-go v0.8.1-0.20241018022711-4ac2c9250e66
 	github.com/tg123/go-htpasswd v1.2.3
 	gopkg.in/yaml.v3 v3.0.1
 	layeh.com/radius v0.0.0-20231213012653-1006025d24f8

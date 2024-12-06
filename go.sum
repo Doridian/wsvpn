@@ -2,8 +2,6 @@ github.com/Doridian/gopacket v1.3.4 h1:pX8h8pkUTHSpYEKAwLtUK8+N9wdEdMJvYrSwaHZgz
 github.com/Doridian/gopacket v1.3.4/go.mod h1:16EwY3JsEHp3TFeSRcmSC9yOdG8GkFAWImZaL13kOGc=
 github.com/Doridian/water v1.6.1 h1:cszUUfRlk9duYwv1bE5mFluhaHJK0TAIdPLJk2DV0cI=
 github.com/Doridian/water v1.6.1/go.mod h1:bjQW67+p0YKqdrjoDWpJ+bcRvrrHphxwZOC6OTfBuf8=
-github.com/Doridian/webtransport-go v0.9.0 h1:psoiRhu0qIcXwNjBiljz0SXXY853OPz1MuD1Me2ckDw=
-github.com/Doridian/webtransport-go v0.9.0/go.mod h1:Q7ymTeaeNuO+2ifGWz6fw/7h0i1yCLnLsTHNgaPkUMA=
 github.com/GehirnInc/crypt v0.0.0-20230320061759-8cc1b52080c5 h1:IEjq88XO4PuBDcvmjQJcQGg+w+UaafSy8G5Kcb5tBhI=
 github.com/GehirnInc/crypt v0.0.0-20230320061759-8cc1b52080c5/go.mod h1:exZ0C/1emQJAw5tHOaUDyY1ycttqBAPcxuzf7QbY6ec=
 github.com/apparentlymart/go-cidr v1.1.0 h1:2mAhrMoF+nhXqxTzSZMUzDHkLjmIHC+Zzn4tdgBZjnU=
@@ -51,6 +49,8 @@ github.com/quic-go/qpack v0.5.1 h1:giqksBPnT/HDtZ6VhtFKgoLOWmlyo9Ei6u9PqzIMbhI=
 github.com/quic-go/qpack v0.5.1/go.mod h1:+PC4XFrEskIVkcLzpEkbLqq1uCoxPhQuvK5rH1ZgaEg=
 github.com/quic-go/quic-go v0.48.2 h1:wsKXZPeGWpMpCGSWqOcqpW2wZYic/8T3aqiOID0/KWE=
 github.com/quic-go/quic-go v0.48.2/go.mod h1:yBgs3rWBOADpga7F+jJsb6Ybg1LSYiQvwWlLX+/6HMs=
+github.com/quic-go/webtransport-go v0.8.1-0.20241018022711-4ac2c9250e66 h1:4WFk6u3sOT6pLa1kQ50ZVdm8BQFgJNA117cepZxtLIg=
+github.com/quic-go/webtransport-go v0.8.1-0.20241018022711-4ac2c9250e66/go.mod h1:Vp72IJajgeOL6ddqrAhmp7IM9zbTcgkQxD/YdxrVwMw=
 github.com/rogpeppe/go-internal v1.10.0 h1:TMyTOH3F/DB16zRVcYyreMH6GnZZrwQVAoYjRBZyWFQ=
 github.com/rogpeppe/go-internal v1.10.0/go.mod h1:UQnix2H7Ngw/k4C5ijL5+65zddjncjaFoBhdsK/akog=
 github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=

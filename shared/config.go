@@ -12,7 +12,9 @@ func LoadConfigFile(file string, out interface{}) error {
 	if err != nil {
 		return err
 	}
-	defer fh.Close() // #nosec G307 -- Closing a file with defer is not unsafe
+	defer func() {
+		_ = fh.Close() // #nosec G307 -- Closing a file with defer is not unsafe
+	}()
 
 	return LoadConfigReader(fh, out)
 }

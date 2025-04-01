@@ -91,7 +91,9 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	defer adapter.Close()
+	defer func() {
+		_ = adapter.Close()
+	}()
 	s.addCloser(adapter)
 
 	clientLogger.Printf("Upgraded connection to %s", adapter.Name())
@@ -151,7 +153,9 @@ func (s *Server) serveSocket(w http.ResponseWriter, r *http.Request) {
 
 		localIface = iface.NewInterfaceWrapper(localIfaceW)
 
-		defer localIface.Close()
+		defer func() {
+			_ = localIface.Close()
+		}()
 
 		clientLogger.Printf("Assigned interface %s", localIfaceW.Name())
 

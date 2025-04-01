@@ -24,7 +24,9 @@ func (a *RadiusAuthenticator) Load(configFile string) error {
 	if err != nil {
 		return err
 	}
-	defer fh.Close()
+	defer func() {
+		_ = fh.Close()
+	}()
 	return yaml.NewDecoder(fh).Decode(a)
 }
 

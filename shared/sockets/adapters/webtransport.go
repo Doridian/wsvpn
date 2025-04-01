@@ -140,7 +140,9 @@ func (s *WebTransportAdapter) handleServeError(err error, unexpected bool) {
 
 func (s *WebTransportAdapter) serveStream() {
 	defer s.wg.Done()
-	defer s.Close()
+	defer func() {
+		_ = s.Close()
+	}()
 
 	var msgLen uint16
 	var msgLenLower uint8
@@ -199,7 +201,9 @@ serveLoop:
 
 func (s *WebTransportAdapter) serveData() {
 	defer s.wg.Done()
-	defer s.Close()
+	defer func() {
+		_ = s.Close()
+	}()
 
 	for {
 		data, err := s.conn.ReceiveDatagram(context.Background())

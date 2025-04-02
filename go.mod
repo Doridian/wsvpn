@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.24.2
 
 require (
-	github.com/Doridian/water v1.6.1
+	github.com/Doridian/water v1.6.2
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/gobwas/ws v1.4.0
 	github.com/golang-jwt/jwt/v5 v5.2.2

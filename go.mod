@@ -27,7 +27,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.23.4 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
-	go.uber.org/mock v0.5.0 // indirect
+	go.uber.org/mock v0.5.1 // indirect
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
 	golang.org/x/sync v0.13.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect

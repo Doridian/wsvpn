@@ -22,6 +22,8 @@ Create a batch file, here called `connect.bat`, with the following:
 cd C:\wsvpn
 wsvpn-windows-amd64.exe -mode "client" -config "client.yml"
 ```
+Replace C:\wsvpn with your folder location. This is needed as running anything as admin in windows will change path to C:\Windows\System32
+
 Then, execute it as administrator to stablish a fresh connection. 
 This should create a new `wintun.dll` file and a windows adapter that will dissapear on disconection, called `WaterWinTunInterface`.
 

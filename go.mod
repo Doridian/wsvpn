@@ -13,7 +13,7 @@ require (
 	github.com/magisterquis/connectproxy v0.0.0-20200725203833-3582e84f0c9b
 	github.com/quic-go/quic-go v0.50.1
 	github.com/quic-go/webtransport-go v0.8.1-0.20250328130601-2671ef85124d
-	github.com/tg123/go-htpasswd v1.2.3
+	github.com/tg123/go-htpasswd v1.2.4
 	gopkg.in/yaml.v3 v3.0.1
 	layeh.com/radius v0.0.0-20231213012653-1006025d24f8
 )

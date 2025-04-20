@@ -262,14 +262,18 @@ func (s *WebTransportAdapter) WriteDataMessage(message []byte) error {
 		return errors.New("not able to send")
 	}
 
+	if len(message) > int(s.maxPayloadLen) {
+		return errors.New("data payload too large")
+	}
+
 	err := s.conn.SendDatagram(message)
 	if err != nil {
 		tooLargeErr := &quic.DatagramTooLargeError{}
 		if errors.As(err, &tooLargeErr) {
 			if tooLargeErr.MaxDatagramPayloadSize < int64(s.maxPayloadLen) {
 				s.maxPayloadLen = uint16(tooLargeErr.MaxDatagramPayloadSize)
+				return ErrDataPayloadLimitReduced
 			}
-			return ErrDataPayloadTooLarge
 		}
 	}
 	return err

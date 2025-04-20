@@ -146,7 +146,7 @@ func (s *WebSocketAdapter) Serve() (bool, error) {
 		}
 
 		if hdr.Length > int64(len(messageBuf)) {
-			return true, ErrDataPayloadTooLarge
+			return true, errors.New("data payload too large")
 		}
 
 		msg := messageBuf[:hdr.Length]

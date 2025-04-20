@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"sync/atomic"
 	"time"
+
+	"github.com/Doridian/wsvpn/shared/sockets/adapters"
 )
 
 // Packet wire format:
@@ -142,14 +144,6 @@ func (s *Socket) cleanupFragments() {
 	}
 }
 
-func (s *Socket) sendDataWithError(data []byte) error {
-	err := s.adapter.WriteDataMessage(data)
-	if err != nil {
-		s.CloseError(fmt.Errorf("error sending data message: %v", err))
-	}
-	return err
-}
-
 func (s *Socket) WritePacket(data []byte) error {
 	// Ignore all packets before version negotiation
 	if s.remoteProtocolVersion == UndeterminedProtocolVersion || !s.isReady || s.isClosing {
@@ -157,24 +151,44 @@ func (s *Socket) WritePacket(data []byte) error {
 	}
 
 	if !s.fragmentationEnabled {
-		return s.sendDataWithError(data)
+		err := s.adapter.WriteDataMessage(data)
+		if err != nil {
+			s.CloseError(fmt.Errorf("error unfragmented data message: %v", err))
+		}
+		return err
 	}
 
-	realDataLen := len(data)
-	if realDataLen <= 0 || realDataLen > 0xFFFF {
-		err := errors.New("packet size out of bounds")
+	dataLen := len(data)
+	if dataLen <= 0 || dataLen > 0xFFFF {
+		err := errors.New("packet size out of bounds (0 < size <= 65535)")
 		s.CloseError(err)
 		return err
 	}
 
-	maxLen := s.adapter.MaxDataPayloadLen()
-	dataLen := uint16(realDataLen)
+	var err error
+	for {
+		maxLen := s.adapter.MaxDataPayloadLen()
+		err = s.writePacketFragmented(data, maxLen)
+		if err == nil || !errors.Is(err, adapters.ErrDataPayloadTooLarge) {
+			break
+		}
+		newMaxLen := s.adapter.MaxDataPayloadLen()
+		if newMaxLen == maxLen {
+			break
+		}
+		s.log.Printf("Resending packet with max data payload size decreased from %d to %d", maxLen, newMaxLen)
+	}
+	return err
+}
+
+func (s *Socket) writePacketFragmented(data []byte, maxLen uint16) error {
+	dataLen := uint16(len(data))
 
 	buf := &bytes.Buffer{}
 	if dataLen+1 <= maxLen {
 		buf.WriteByte(0b10000000)
 		buf.Write(data)
-		return s.sendDataWithError(buf.Bytes())
+		return s.adapter.WriteDataMessage(buf.Bytes())
 	}
 
 	packetID := atomic.AddUint32(&s.lastFragmentID, 1)
@@ -208,7 +222,7 @@ func (s *Socket) WritePacket(data []byte) error {
 			fragEnd = dataLen
 		}
 		buf.Write(data[fragStart:fragEnd])
-		err := s.sendDataWithError(buf.Bytes())
+		err := s.adapter.WriteDataMessage(buf.Bytes())
 		if err != nil {
 			return err
 		}

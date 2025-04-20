@@ -12,12 +12,14 @@ import (
 
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
+	"github.com/quic-go/quic-go"
 	"github.com/quic-go/webtransport-go"
 )
 
 type StreamMessageType = byte
 
 const ErrorCodeClosed = 1
+const HeaderSizeEstimate = 1
 
 const (
 	messageTypeControl StreamMessageType = iota
@@ -98,6 +100,9 @@ func (s *WebTransportAdapter) setReady() {
 }
 
 func (s *WebTransportAdapter) RefreshFeatures() {
+	// The estimate from the errors below is sadly quite bad
+	// By bad I mean there is often no error when the payload
+	// is clearly too large and doesn't get sent
 	s.maxPayloadLen = uint16(1200 - 16)
 }
 
@@ -259,8 +264,15 @@ func (s *WebTransportAdapter) WriteDataMessage(message []byte) error {
 	}
 
 	err := s.conn.SendDatagram(message)
-	if err != nil && err.Error() == "message too large" {
-		return ErrDataPayloadTooLarge
+	if err != nil {
+		tooLargeErr := &quic.DatagramTooLargeError{}
+		if errors.As(err, &tooLargeErr) {
+			newMaxPayloadSize := tooLargeErr.MaxDatagramPayloadSize - HeaderSizeEstimate
+			if newMaxPayloadSize < int64(s.maxPayloadLen) {
+				s.maxPayloadLen = uint16(newMaxPayloadSize)
+			}
+			return ErrDataPayloadTooLarge
+		}
 	}
 	return err
 }

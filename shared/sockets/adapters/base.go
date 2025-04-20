@@ -11,7 +11,7 @@ import (
 
 type MessageHandler = func(message []byte) bool
 
-var ErrDataPayloadTooLarge = errors.New("data payload too large")
+var ErrDataPayloadLimitReduced = errors.New("data payload limit reduced")
 
 type SocketAdapter interface {
 	Close() error

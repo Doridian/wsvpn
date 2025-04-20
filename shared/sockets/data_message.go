@@ -169,13 +169,10 @@ func (s *Socket) WritePacket(data []byte) error {
 	for {
 		maxLen := s.adapter.MaxDataPayloadLen()
 		err = s.writePacketFragmented(data, maxLen)
-		if err == nil || !errors.Is(err, adapters.ErrDataPayloadTooLarge) {
+		if err == nil || !errors.Is(err, adapters.ErrDataPayloadLimitReduced) {
 			break
 		}
 		newMaxLen := s.adapter.MaxDataPayloadLen()
-		if newMaxLen == maxLen {
-			break
-		}
 		s.log.Printf("Resending packet with max data payload size decreased from %d to %d", maxLen, newMaxLen)
 	}
 	return err

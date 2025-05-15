@@ -31,7 +31,7 @@ require (
 	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 // indirect
 	golang.org/x/sync v0.14.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
-	golang.zx2c4.com/wireguard v0.0.0-20250505131008-436f7fdc1670 // indirect
+	golang.zx2c4.com/wireguard v0.0.0-20250515145403-1571e0fbae8e // indirect
 )
 
 require (

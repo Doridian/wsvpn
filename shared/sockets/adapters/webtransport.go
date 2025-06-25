@@ -30,7 +30,7 @@ type WebTransportAdapter struct {
 	adapterBase
 	conn               *webtransport.Session
 	netConn            net.Conn
-	stream             webtransport.Stream
+	stream             *webtransport.Stream
 	isServer           bool
 	wg                 *sync.WaitGroup
 	readyWait          *sync.Cond

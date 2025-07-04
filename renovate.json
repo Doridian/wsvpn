@@ -5,6 +5,15 @@
   ],
   "packageRules": [
     {
+      "matchDepNames": [
+        "github.com/quic-go/quic-go",
+        "github.com/quic-go/webtransport-go"
+      ],
+      "groupName": "quic-go / webtransport-go",
+      "groupSlug": "quic-webtransport-go",
+      "enabled": true
+    },
+    {
       "matchDepTypes": [
         "golang"
       ],

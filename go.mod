@@ -33,7 +33,7 @@ require (
 	github.com/GehirnInc/crypt v0.0.0-20230320061759-8cc1b52080c5 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	golang.org/x/crypto v0.46.0 // indirect
-	golang.org/x/net v0.47.0
+	golang.org/x/net v0.48.0
 	golang.org/x/sys v0.39.0
 	golang.org/x/text v0.32.0 // indirect
 )

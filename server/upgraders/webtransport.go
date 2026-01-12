@@ -33,6 +33,7 @@ func NewWebTransportUpgrader(quicServer *QuicServerConfig) *WebTransportUpgrader
 			if err != nil {
 				return nil, err
 			}
+			cfg = cfg.Clone()
 			cfg.NextProtos = []string{http3.NextProtoH3}
 			return cfg, nil
 		}

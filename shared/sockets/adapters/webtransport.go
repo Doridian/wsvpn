@@ -29,7 +29,6 @@ const (
 type WebTransportAdapter struct {
 	adapterBase
 	conn               *webtransport.Session
-	netConn            net.Conn
 	stream             *webtransport.Stream
 	isServer           bool
 	wg                 *sync.WaitGroup

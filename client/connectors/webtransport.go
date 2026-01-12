@@ -55,13 +55,14 @@ func (c *WebTransportConnector) Dial(config SocketConnectorConfig) (adapters.Soc
 	quicDialerInst := &quicDialerHelper{
 		config: config,
 	}
-	var dialer webtransport.Dialer
-	dialer.DialAddr = quicDialerInst.DialEarly
-	dialer.TLSClientConfig = config.GetTLSConfig()
-	dialer.ApplicationProtocols = []string{"wsvpn"}
-	dialer.QUICConfig = &quic.Config{
-		EnableStreamResetPartialDelivery: true,
-		EnableDatagrams:                  true,
+	dialer := webtransport.Dialer{
+		DialAddr:             quicDialerInst.DialEarly,
+		TLSClientConfig:      config.GetTLSConfig(),
+		ApplicationProtocols: []string{"wsvpn"},
+		QUICConfig: &quic.Config{
+			EnableStreamResetPartialDelivery: true,
+			EnableDatagrams:                  true,
+		},
 	}
 
 	headers := config.GetHeaders()

@@ -24,21 +24,40 @@ type QuicServerConfig struct {
 var _ SocketUpgrader = &WebTransportUpgrader{}
 
 func NewWebTransportUpgrader(quicServer *QuicServerConfig) *WebTransportUpgrader {
-	return &WebTransportUpgrader{
+	tlsConfig := quicServer.TLSConfig.Clone()
+	tlsConfig.NextProtos = []string{http3.NextProtoH3}
+	if tlsConfig.GetConfigForClient != nil {
+		oldConfig := tlsConfig.GetConfigForClient
+		tlsConfig.GetConfigForClient = func(chi *tls.ClientHelloInfo) (*tls.Config, error) {
+			cfg, err := oldConfig(chi)
+			if err != nil {
+				return nil, err
+			}
+			cfg = cfg.Clone()
+			cfg.NextProtos = []string{http3.NextProtoH3}
+			return cfg, nil
+		}
+	}
+
+	upgrader := &WebTransportUpgrader{
 		server: &webtransport.Server{
-			H3: http3.Server{
+			ApplicationProtocols: []string{"wsvpn"},
+			H3: &http3.Server{
 				Addr:            quicServer.Addr,
-				TLSConfig:       quicServer.TLSConfig,
+				TLSConfig:       tlsConfig,
 				Handler:         quicServer.Handler,
 				EnableDatagrams: true,
 				QUICConfig: &quic.Config{
-					EnableDatagrams: true,
-					KeepAlivePeriod: 10 * time.Second,
+					EnableStreamResetPartialDelivery: true,
+					EnableDatagrams:                  true,
+					KeepAlivePeriod:                  10 * time.Second,
 				},
 			},
 			CheckOrigin: func(r *http.Request) bool { return true },
 		},
 	}
+	webtransport.ConfigureHTTP3Server(upgrader.server.H3)
+	return upgrader
 }
 
 func (u *WebTransportUpgrader) SetHeaders(headers http.Header) {
@@ -57,7 +76,7 @@ func (u *WebTransportUpgrader) Upgrade(w http.ResponseWriter, r *http.Request) (
 		return nil, err
 	}
 
-	return adapters.NewWebTransportAdapter(conn, nil, serializationType, true), nil
+	return adapters.NewWebTransportAdapter(conn, serializationType, true), nil
 }
 
 func (u *WebTransportUpgrader) ListenAndServe() error {

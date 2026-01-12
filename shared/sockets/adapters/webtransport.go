@@ -29,7 +29,6 @@ const (
 type WebTransportAdapter struct {
 	adapterBase
 	conn               *webtransport.Session
-	netConn            net.Conn
 	stream             *webtransport.Stream
 	isServer           bool
 	wg                 *sync.WaitGroup
@@ -46,10 +45,9 @@ type WebTransportAdapter struct {
 
 var _ SocketAdapter = &WebTransportAdapter{}
 
-func NewWebTransportAdapter(conn *webtransport.Session, netConn net.Conn, serializationType commands.SerializationType, isServer bool) *WebTransportAdapter {
+func NewWebTransportAdapter(conn *webtransport.Session, serializationType commands.SerializationType, isServer bool) *WebTransportAdapter {
 	adapter := &WebTransportAdapter{
 		conn:               conn,
-		netConn:            netConn,
 		isServer:           isServer,
 		readyWait:          shared.MakeSimpleCond(),
 		wg:                 &sync.WaitGroup{},
@@ -82,15 +80,11 @@ func (s *WebTransportAdapter) Close() error {
 		s.stream.CancelWrite(ErrorCodeClosed)
 		_ = s.stream.Close()
 	}
-	err := s.conn.CloseWithError(ErrorCodeClosed, "Close called")
-	if s.netConn != nil {
-		_ = s.netConn.Close()
-	}
-	return err
+	return s.conn.CloseWithError(ErrorCodeClosed, "Close called")
 }
 
 func (s *WebTransportAdapter) GetTLSConnectionState() (tls.ConnectionState, bool) {
-	return s.conn.ConnectionState().TLS, true
+	return s.conn.SessionState().ConnectionState.TLS, true
 }
 
 func (s *WebTransportAdapter) setReady() {

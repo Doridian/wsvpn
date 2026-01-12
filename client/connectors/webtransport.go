@@ -20,16 +20,28 @@ func NewWebTransportConnector() *WebTransportConnector {
 	return &WebTransportConnector{}
 }
 
-type quicDialer struct {
-	transport *quic.Transport
+type quicDialerHelper struct {
+	config SocketConnectorConfig
 }
 
-func (d *quicDialer) Dial(ctx context.Context, addr string, tlsCfg *tls.Config, cfg *quic.Config) (*quic.Conn, error) {
+func (d *quicDialerHelper) DialEarly(ctx context.Context, addr string, tlsCfg *tls.Config, cfg *quic.Config) (*quic.Conn, error) {
 	udpAddr, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
 		return nil, err
 	}
-	return d.transport.DialEarly(ctx, udpAddr, tlsCfg, cfg)
+
+	udpConn, err := net.ListenUDP("udp", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	err = d.config.EnhanceConn(udpConn)
+	if err != nil {
+		_ = udpConn.Close()
+		return nil, err
+	}
+
+	return quic.DialEarly(ctx, udpConn, udpAddr, tlsCfg, cfg)
 }
 
 func (c *WebTransportConnector) Dial(config SocketConnectorConfig) (adapters.SocketAdapter, error) {
@@ -40,39 +52,27 @@ func (c *WebTransportConnector) Dial(config SocketConnectorConfig) (adapters.Soc
 		return nil, errors.New("proxy is not supported for WebTransport at the moment")
 	}
 
-	udpConn, err := net.ListenUDP("udp", nil)
-	if err != nil {
-		return nil, err
+	quicDialerInst := &quicDialerHelper{
+		config: config,
 	}
-
-	err = config.EnhanceConn(udpConn)
-	if err != nil {
-		_ = udpConn.Close()
-		return nil, err
-	}
-	quicDialer := &quicDialer{
-		transport: &quic.Transport{Conn: udpConn},
-	}
-
 	var dialer webtransport.Dialer
-	if dialer.QUICConfig == nil {
-		dialer.DialAddr = quicDialer.Dial
-		dialer.QUICConfig = &quic.Config{
-			EnableDatagrams: true,
-		}
-	}
+	dialer.DialAddr = quicDialerInst.DialEarly
 	dialer.TLSClientConfig = config.GetTLSConfig()
+	dialer.ApplicationProtocols = []string{"wsvpn"}
+	dialer.QUICConfig = &quic.Config{
+		EnableStreamResetPartialDelivery: true,
+		EnableDatagrams:                  true,
+	}
 
 	headers := config.GetHeaders()
 	addSupportedSerializationHeader(headers)
 	resp, conn, err := dialer.Dial(context.Background(), serverURL.String(), headers)
 	if err != nil {
-		_ = udpConn.Close()
 		return nil, err
 	}
 
 	serializationType := readSerializationType(resp.Header)
-	return adapters.NewWebTransportAdapter(conn, udpConn, serializationType, false), nil
+	return adapters.NewWebTransportAdapter(conn, serializationType, false), nil
 }
 
 func (c *WebTransportConnector) GetSchemes() []string {

@@ -10,7 +10,7 @@ USER root
 
 RUN apt update && \
     apt -y --no-install-recommends install python3 python3-pip iproute2 openssl tcpdump && \
-    pip3 install pytest-rerunfailures getmac scapy requests pytest pyyaml
+    pip3 install --break-system-packages pytest-rerunfailures getmac scapy requests pytest pyyaml
 
 VOLUME "/mnt"
 WORKDIR /mnt

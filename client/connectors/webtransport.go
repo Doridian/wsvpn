@@ -55,7 +55,7 @@ func (c *WebTransportConnector) Dial(config SocketConnectorConfig) (adapters.Soc
 	quicDialerInst := &quicDialerHelper{
 		config: config,
 	}
-	dialer := webtransport.Dialer{
+	dialer := &webtransport.Dialer{
 		DialAddr:             quicDialerInst.DialEarly,
 		TLSClientConfig:      config.GetTLSConfig(),
 		ApplicationProtocols: []string{"wsvpn"},

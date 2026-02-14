@@ -62,7 +62,7 @@ docker run --rm --cap-add=NET_ADMIN \
   --device /dev/net/tun:/dev/net/tun \
   -p 9000:9000 \
   ghcr.io/doridian/wsvpn/wsvpn:latest \
-  --mode <MODE> --config /config<MODE>.yml
+  --mode <MODE> --config /config/<MODE>.yml
 ```
 
 Docker Compose:

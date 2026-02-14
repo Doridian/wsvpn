@@ -61,7 +61,7 @@ docker run --rm --cap-add=NET_ADMIN \
   -v ./config:/config \
   --device /dev/net/tun:/dev/net/tun \
   -p 9000:9000 \
-  ghcr.io/doridian/wsvpn/wsvpn:latest
+  ghcr.io/doridian/wsvpn/wsvpn:latest \
   --mode <MODE> --config /config<MODE>.yml
 ```
 

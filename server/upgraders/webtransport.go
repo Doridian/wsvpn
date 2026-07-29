@@ -84,7 +84,7 @@ func (u *WebTransportUpgrader) ListenAndServe() error {
 }
 
 func (u *WebTransportUpgrader) Matches(r *http.Request) bool {
-	return r.Proto == "webtransport"
+	return r.Proto == "webtransport" || r.Proto == "webtransport-h3"
 }
 
 func (u *WebTransportUpgrader) Close() error {

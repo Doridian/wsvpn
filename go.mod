@@ -20,7 +20,7 @@ require (
 
 require (
 	github.com/Doridian/gopacket v1.3.4 // indirect
-	github.com/dunglas/httpsfv v1.1.0 // indirect
+	github.com/dunglas/httpsfv v1.1.1 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect

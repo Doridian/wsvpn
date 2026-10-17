@@ -4,6 +4,7 @@ import (
 	"log"
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Doridian/wsvpn/shared"
@@ -28,11 +29,11 @@ type Socket struct {
 	defragBuffer          map[uint32]*fragmentsInfo
 	defragLock            *sync.Mutex
 	fragmentCleanupTicker *time.Ticker
-	fragmentationEnabled  bool
+	fragmentationEnabled  atomic.Bool
 
 	compressionEnabled bool
 
-	remoteProtocolVersion int
+	remoteProtocolVersion atomic.Int64
 
 	adapter          adapters.SocketAdapter
 	iface            *iface.WaterInterfaceWrapper
@@ -48,8 +49,8 @@ type Socket struct {
 	log              *log.Logger
 	pingInterval     time.Duration
 	pingTimeout      time.Duration
-	isReady          bool
-	isClosing        bool
+	isReady          atomic.Bool
+	isClosing        atomic.Bool
 	closeLock        *sync.Mutex
 
 	localFeatures  map[features.Feature]bool
@@ -67,27 +68,23 @@ func MakeSocket(logger *log.Logger, adapter adapters.SocketAdapter, iface *iface
 		AssignedIP: net.IPv6unspecified,
 		mac:        shared.DefaultMAC,
 
-		adapter:               adapter,
-		iface:                 iface,
-		ifaceManaged:          ifaceManaged,
-		wg:                    &sync.WaitGroup{},
-		readyWait:             shared.MakeSimpleCond(),
-		handlers:              make(map[commands.CommandName]CommandHandler),
-		closeChan:             make(chan bool),
-		closeChanOpen:         true,
-		remoteProtocolVersion: UndeterminedProtocolVersion,
-		packetBufferSize:      2000,
-		log:                   logger,
-		isReady:               false,
-		isClosing:             false,
-		closeLock:             &sync.Mutex{},
+		adapter:          adapter,
+		iface:            iface,
+		ifaceManaged:     ifaceManaged,
+		wg:               &sync.WaitGroup{},
+		readyWait:        shared.MakeSimpleCond(),
+		handlers:         make(map[commands.CommandName]CommandHandler),
+		closeChan:        make(chan bool),
+		closeChanOpen:    true,
+		packetBufferSize: 2000,
+		log:              logger,
+		closeLock:        &sync.Mutex{},
 
 		lastFragmentID:        0,
 		defragBuffer:          make(map[uint32]*fragmentsInfo),
 		defragLock:            &sync.Mutex{},
 		lastFragmentCleanup:   time.Now(),
 		fragmentCleanupTicker: time.NewTicker(fragmentExpiryTime),
-		fragmentationEnabled:  false,
 
 		compressionEnabled: false,
 
@@ -126,8 +123,12 @@ func (s *Socket) SetPacketHandler(packetHandler PacketHandler) {
 	s.packetHandler = packetHandler
 }
 
+func (s *Socket) remoteVersion() int {
+	return int(s.remoteProtocolVersion.Load())
+}
+
 func (s *Socket) HandleInitPacketFragmentation(enabled bool) {
-	if s.remoteProtocolVersion >= featureFieldMinProtocol {
+	if s.remoteVersion() >= featureFieldMinProtocol {
 		return
 	}
 
@@ -142,7 +143,8 @@ func (s *Socket) HandleInitPacketFragmentation(enabled bool) {
 }
 
 func (s *Socket) featureCheck() {
-	if s.remoteProtocolVersion == UndeterminedProtocolVersion {
+	remoteProtocolVersion := s.remoteVersion()
+	if remoteProtocolVersion == UndeterminedProtocolVersion {
 		return
 	}
 
@@ -156,17 +158,19 @@ func (s *Socket) featureCheck() {
 		}
 	}
 
-	if s.remoteProtocolVersion >= fragmentationMinProtocol && s.remoteProtocolVersion < fragmentationNegotiatedMinProtocol {
-		s.fragmentationEnabled = true
-	} else if s.remoteProtocolVersion >= fragmentationNegotiatedMinProtocol && s.remoteProtocolVersion < featureFieldMinProtocol {
-		s.fragmentationEnabled = s.localFeatures[features.Fragmentation]
+	var fragmentationEnabled bool
+	if remoteProtocolVersion >= fragmentationMinProtocol && remoteProtocolVersion < fragmentationNegotiatedMinProtocol {
+		fragmentationEnabled = true
+	} else if remoteProtocolVersion >= fragmentationNegotiatedMinProtocol && remoteProtocolVersion < featureFieldMinProtocol {
+		fragmentationEnabled = s.localFeatures[features.Fragmentation]
 	} else {
-		s.fragmentationEnabled = s.IsFeatureEnabled(features.Fragmentation)
+		fragmentationEnabled = s.IsFeatureEnabled(features.Fragmentation)
 	}
+	s.fragmentationEnabled.Store(fragmentationEnabled)
 
 	s.compressionEnabled = s.IsFeatureEnabled(features.Compression)
 
-	s.log.Printf("Setting fragmentation: %s", shared.BoolToEnabled(s.fragmentationEnabled))
+	s.log.Printf("Setting fragmentation: %s", shared.BoolToEnabled(fragmentationEnabled))
 	// s.log.Printf("Setting compression: %s", shared.BoolToEnabled(s.compressionEnabled))
 
 	if s.adapter != nil {
@@ -179,10 +183,10 @@ func (s *Socket) Wait() {
 }
 
 func (s *Socket) WaitReady() {
-	for !s.isReady {
-		s.readyWait.L.Lock()
+	s.readyWait.L.Lock()
+	defer s.readyWait.L.Unlock()
+	for !s.isReady.Load() {
 		s.readyWait.Wait()
-		s.readyWait.L.Unlock()
 	}
 }
 
@@ -195,7 +199,7 @@ func (s *Socket) CloseError(err error) {
 	s.closeLock.Lock()
 	defer s.closeLock.Unlock()
 
-	wasClosing := s.isClosing
+	wasClosing := s.isClosing.Load()
 	s.close(false)
 
 	if !wasClosing {
@@ -210,14 +214,16 @@ func (s *Socket) CloseError(err error) {
 }
 
 func (s *Socket) setReady() {
-	s.isReady = true
+	s.readyWait.L.Lock()
+	s.isReady.Store(true)
 	s.readyWait.Broadcast()
+	s.readyWait.L.Unlock()
 }
 
 func (s *Socket) Close() {
 	s.closeLock.Lock()
 	defer s.closeLock.Unlock()
-	if s.isClosing {
+	if s.isClosing.Load() {
 		return
 	}
 	s.close(true)
@@ -236,7 +242,7 @@ func (s *Socket) RemoteAddr() net.Addr {
 }
 
 func (s *Socket) close(closeAdapter bool) {
-	s.isClosing = true
+	s.isClosing.Store(true)
 
 	if closeAdapter {
 		_ = s.adapter.Close()

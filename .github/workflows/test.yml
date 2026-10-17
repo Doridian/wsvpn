@@ -8,6 +8,21 @@ on:
 name: Test
 
 jobs:
+  go-test:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          check-latest: true
+          cache: true
+      - name: Run Go tests
+        run: go test -race -count=1 ./...
+
   test:
     strategy:
       matrix:

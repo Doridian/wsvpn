@@ -1,4 +1,4 @@
-from email.generator import Generator
+from typing import Generator
 from build import get_local_platform
 from tests.bins import GoBin, new_clbin
 from tests.packet_utils import basic_traffic_test
@@ -74,7 +74,7 @@ def test_run_e2e_oneiface_ipv6_tap(svbin: GoBin, clbin: GoBin, clbin2: GoBin) ->
 
 
 def test_run_e2e_oneiface_ipv6_tun(svbin: GoBin, clbin: GoBin, clbin2: GoBin) -> None:
-    runtest(svbin, [clbin, clbin2], False, "TUN", 4)
+    runtest(svbin, [clbin, clbin2], False, "TUN", 6)
 
 
 def test_run_e2e_manyiface_ipv6_tap(svbin: GoBin, clbin: GoBin, clbin2: GoBin) -> None:

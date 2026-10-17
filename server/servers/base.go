@@ -68,6 +68,7 @@ type Server struct {
 	serveErrorChannel chan interface{}
 	serveError        error
 	serveWaitGroup    *sync.WaitGroup
+	serveErrorLock    sync.Mutex
 
 	localFeatures map[features.Feature]bool
 }
@@ -110,6 +111,8 @@ func (s *Server) setServeError(err error) {
 		return
 	}
 
+	s.serveErrorLock.Lock()
+	defer s.serveErrorLock.Unlock()
 	if s.serveError != nil {
 		return
 	}
@@ -134,7 +137,11 @@ func (s *Server) Serve() error {
 		go s.serveMainIface()
 	}
 
-	s.listen()
+	err = s.listen()
+	if err != nil {
+		s.closeAll()
+		return err
+	}
 
 	go func() {
 		s.serveWaitGroup.Wait()

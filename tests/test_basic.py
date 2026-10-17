@@ -1,4 +1,5 @@
 import pytest
+from socket import socket, AF_INET, SOCK_STREAM
 from build import get_local_platform
 
 from tests.bins import GoBin
@@ -38,6 +39,16 @@ def test_run_e2e_webtransport(svbin: GoBin, clbin: GoBin, tls_cert_server: TLSCe
 def test_run_server(svbin: GoBin) -> None:
     svbin.start()
     svbin.assert_ready_ok()
+
+
+# The server must only report itself online once it is actually listening
+def test_run_server_port_in_use(svbin: GoBin) -> None:
+    with socket(AF_INET, SOCK_STREAM) as blocker:
+        blocker.bind(("127.0.0.1", svbin.port))
+        blocker.listen()
+
+        svbin.start()
+        svbin.assert_ready_ok(should=False)
 
 
 def test_run_e2e_tun(svbin: GoBin, clbin: GoBin) -> None:

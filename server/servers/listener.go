@@ -3,6 +3,7 @@ package servers
 import (
 	"crypto/tls"
 	"errors"
+	"net"
 	"net/http"
 	"time"
 
@@ -12,13 +13,23 @@ import (
 
 const ReadHeaderTimeout = time.Duration(10) * time.Second
 
-func (s *Server) listenUpgraders() {
+func (s *Server) listenUpgraders() error {
+	for _, upgrader := range s.upgraders {
+		upgrader.SetHeaders(s.headers)
+		err := upgrader.Listen()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Server) serveUpgraders() {
 	for _, upgrader := range s.upgraders {
 		s.serveWaitGroup.Add(1)
-		upgrader.SetHeaders(s.headers)
 		go func(upgrader upgraders.SocketUpgrader) {
 			defer s.serveWaitGroup.Done()
-			err := upgrader.ListenAndServe()
+			err := upgrader.Serve()
 			s.setServeError(err)
 		}(upgrader)
 	}
@@ -35,15 +46,12 @@ func (s *Server) setUpgraderHeaders() {
 	}
 }
 
-func (s *Server) listenPlaintext(httpHandlerFunc http.HandlerFunc) {
+func (s *Server) listenPlaintext(httpHandlerFunc http.HandlerFunc) (func(), error) {
 	if s.HTTP3Enabled {
-		s.setServeError(errors.New("HTTP/3 requires TLS"))
-		return
+		return nil, errors.New("HTTP/3 requires TLS")
 	}
 
 	s.addUpgrader(upgraders.NewWebSocketUpgrader())
-
-	s.listenUpgraders()
 
 	server := &http.Server{
 		Addr:              s.ListenAddr,
@@ -52,14 +60,21 @@ func (s *Server) listenPlaintext(httpHandlerFunc http.HandlerFunc) {
 	}
 	s.addCloser(server)
 
-	s.serveWaitGroup.Add(1)
-	go func() {
-		err := server.ListenAndServe()
-		s.setServeError(err)
-	}()
+	ln, err := net.Listen("tcp", s.ListenAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	return func() {
+		s.serveWaitGroup.Add(1)
+		go func() {
+			err := server.Serve(ln)
+			s.setServeError(err)
+		}()
+	}, nil
 }
 
-func (s *Server) listenEncrypted(httpHandlerFunc http.HandlerFunc) {
+func (s *Server) listenEncrypted(httpHandlerFunc http.HandlerFunc) (func(), error) {
 	if s.HTTP3Enabled {
 		webtransportUpgrader := upgraders.NewWebTransportUpgrader(&upgraders.QuicServerConfig{
 			Addr:      s.ListenAddr,
@@ -83,16 +98,22 @@ func (s *Server) listenEncrypted(httpHandlerFunc http.HandlerFunc) {
 	s.addCloser(server)
 
 	s.addUpgrader(upgraders.NewWebSocketUpgrader())
-	s.listenUpgraders()
 
-	s.serveWaitGroup.Add(1)
-	go func() {
-		err := server.ListenAndServeTLS("", "")
-		s.setServeError(err)
-	}()
+	ln, err := net.Listen("tcp", s.ListenAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	return func() {
+		s.serveWaitGroup.Add(1)
+		go func() {
+			err := server.ServeTLS(ln, "", "")
+			s.setServeError(err)
+		}()
+	}, nil
 }
 
-func (s *Server) listen() {
+func (s *Server) listen() error {
 	s.upgraders = make([]upgraders.SocketUpgrader, 0)
 
 	tlsConfigTemp := s.TLSConfig
@@ -100,15 +121,30 @@ func (s *Server) listen() {
 		tlsConfigTemp, _ = tlsConfigTemp.GetConfigForClient(nil)
 	}
 
+	httpHandlerFunc := http.HandlerFunc(s.serveSocket)
+
+	var serveHTTP func()
+	var err error
+	if tlsConfigTemp == nil {
+		serveHTTP, err = s.listenPlaintext(httpHandlerFunc)
+	} else {
+		serveHTTP, err = s.listenEncrypted(httpHandlerFunc)
+	}
+	if err != nil {
+		return err
+	}
+
+	err = s.listenUpgraders()
+	if err != nil {
+		return err
+	}
+
+	// Only now that every listener is bound are we actually reachable
 	s.log.Printf("VPN server online at %s (HTTP/3 %s, TLS %s, mTLS %s), Mode %s, Subnet %s (%d max clients), MTU %d",
 		s.ListenAddr, shared.BoolToEnabled(s.HTTP3Enabled), shared.BoolToEnabled(tlsConfigTemp != nil),
 		shared.BoolToEnabled(tlsConfigTemp != nil && tlsConfigTemp.ClientAuth == tls.RequireAndVerifyClientCert), s.Mode.ToString(), s.VPNNet.GetRaw(), s.VPNNet.GetClientSlots(), s.mtu)
 
-	httpHandlerFunc := http.HandlerFunc(s.serveSocket)
-
-	if tlsConfigTemp == nil {
-		s.listenPlaintext(httpHandlerFunc)
-	} else {
-		s.listenEncrypted(httpHandlerFunc)
-	}
+	serveHTTP()
+	s.serveUpgraders()
+	return nil
 }

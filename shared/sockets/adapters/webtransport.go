@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"sync"
+	"sync/atomic"
 
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
@@ -33,27 +34,32 @@ type WebTransportAdapter struct {
 	isServer           bool
 	wg                 *sync.WaitGroup
 	readyWait          *sync.Cond
-	isReady            bool
-	isFullyInitialized bool
+	isReady            atomic.Bool
+	isFullyInitialized atomic.Bool
 	serializationType  commands.SerializationType
 
+	// The control stream is written from several goroutines (commands,
+	// replies, pings and pongs), quic-go streams are not safe for that
+	writeLock *sync.Mutex
+
+	serveErrorLock           *sync.Mutex
 	lastServeError           error
 	lastServeErrorUnexpected bool
 
-	maxPayloadLen uint16
+	maxPayloadLen atomic.Uint32
 }
 
 var _ SocketAdapter = &WebTransportAdapter{}
 
 func NewWebTransportAdapter(conn *webtransport.Session, serializationType commands.SerializationType, isServer bool) *WebTransportAdapter {
 	adapter := &WebTransportAdapter{
-		conn:               conn,
-		isServer:           isServer,
-		readyWait:          shared.MakeSimpleCond(),
-		wg:                 &sync.WaitGroup{},
-		isReady:            false,
-		isFullyInitialized: false,
-		serializationType:  serializationType,
+		conn:              conn,
+		isServer:          isServer,
+		readyWait:         shared.MakeSimpleCond(),
+		wg:                &sync.WaitGroup{},
+		serializationType: serializationType,
+		writeLock:         &sync.Mutex{},
+		serveErrorLock:    &sync.Mutex{},
 	}
 	return adapter
 }
@@ -88,15 +94,17 @@ func (s *WebTransportAdapter) GetTLSConnectionState() (tls.ConnectionState, bool
 }
 
 func (s *WebTransportAdapter) setReady() {
-	s.isReady = true
+	s.readyWait.L.Lock()
+	s.isReady.Store(true)
 	s.readyWait.Broadcast()
+	s.readyWait.L.Unlock()
 }
 
 func (s *WebTransportAdapter) RefreshFeatures() {
 	// The estimate from the errors below is sadly quite bad
 	// By bad I mean there is often no error when the payload
 	// is clearly too large and doesn't get sent
-	s.maxPayloadLen = uint16(1200 - 16)
+	s.maxPayloadLen.Store(1200 - 16)
 }
 
 func (s *WebTransportAdapter) Serve() (bool, error) {
@@ -121,15 +129,19 @@ func (s *WebTransportAdapter) Serve() (bool, error) {
 	s.wg.Add(1)
 	go s.serveData()
 
-	s.isFullyInitialized = true
+	s.isFullyInitialized.Store(true)
 	s.setReady()
 
 	s.wg.Wait()
 
+	s.serveErrorLock.Lock()
+	defer s.serveErrorLock.Unlock()
 	return s.lastServeErrorUnexpected, s.lastServeError
 }
 
 func (s *WebTransportAdapter) handleServeError(err error, unexpected bool) {
+	s.serveErrorLock.Lock()
+	defer s.serveErrorLock.Unlock()
 	if s.lastServeError == nil {
 		s.lastServeError = err
 		s.lastServeErrorUnexpected = unexpected
@@ -180,7 +192,7 @@ serveLoop:
 			s.controlMessageHandler(data)
 
 		case messageTypePing:
-			_, err = s.stream.Write([]byte{messageTypePong})
+			err = s.writeStream([]byte{messageTypePong})
 			if err != nil {
 				break serveLoop
 			}
@@ -214,15 +226,26 @@ func (s *WebTransportAdapter) serveData() {
 }
 
 func (s *WebTransportAdapter) WaitReady() {
-	for !s.isReady {
-		s.readyWait.L.Lock()
+	s.readyWait.L.Lock()
+	defer s.readyWait.L.Unlock()
+	for !s.isReady.Load() {
 		s.readyWait.Wait()
-		s.readyWait.L.Unlock()
 	}
 }
 
+func (s *WebTransportAdapter) writeStream(msg []byte) error {
+	s.writeLock.Lock()
+	defer s.writeLock.Unlock()
+
+	n, err := s.stream.Write(msg)
+	if err == nil && n != len(msg) {
+		return errors.New("could not write full message")
+	}
+	return err
+}
+
 func (s *WebTransportAdapter) WriteControlMessage(message []byte) error {
-	if !s.isFullyInitialized {
+	if !s.isFullyInitialized.Load() {
 		return errors.New("not able to send")
 	}
 
@@ -237,26 +260,20 @@ func (s *WebTransportAdapter) WriteControlMessage(message []byte) error {
 	buf.WriteByte(uint8(msgLen & 0xFF))
 	buf.Write(message)
 
-	msg := buf.Bytes()
-
-	n, err := s.stream.Write(msg)
-	if err == nil && n != len(msg) {
-		return errors.New("could not write full message")
-	}
-
-	return err
+	return s.writeStream(buf.Bytes())
 }
 
 func (s *WebTransportAdapter) MaxDataPayloadLen() uint16 {
-	return s.maxPayloadLen
+	return uint16(s.maxPayloadLen.Load())
 }
 
 func (s *WebTransportAdapter) WriteDataMessage(message []byte) error {
-	if !s.isFullyInitialized {
+	if !s.isFullyInitialized.Load() {
 		return errors.New("not able to send")
 	}
 
-	if len(message) > int(s.maxPayloadLen) {
+	maxPayloadLen := s.maxPayloadLen.Load()
+	if len(message) > int(maxPayloadLen) {
 		return errors.New("data payload too large")
 	}
 
@@ -264,8 +281,8 @@ func (s *WebTransportAdapter) WriteDataMessage(message []byte) error {
 	if err != nil {
 		tooLargeErr := &quic.DatagramTooLargeError{}
 		if errors.As(err, &tooLargeErr) {
-			if tooLargeErr.MaxDatagramPayloadSize < int64(s.maxPayloadLen) {
-				s.maxPayloadLen = uint16(tooLargeErr.MaxDatagramPayloadSize)
+			if tooLargeErr.MaxDatagramPayloadSize < int64(maxPayloadLen) &&
+				s.maxPayloadLen.CompareAndSwap(maxPayloadLen, uint32(tooLargeErr.MaxDatagramPayloadSize)) {
 				return ErrDataPayloadLimitReduced
 			}
 		}
@@ -274,12 +291,11 @@ func (s *WebTransportAdapter) WriteDataMessage(message []byte) error {
 }
 
 func (s *WebTransportAdapter) WritePingMessage() error {
-	if !s.isReady {
+	if !s.isFullyInitialized.Load() {
 		return errors.New("not ready")
 	}
 
-	_, err := s.stream.Write([]byte{messageTypePing})
-	return err
+	return s.writeStream([]byte{messageTypePing})
 }
 
 func (s *WebTransportAdapter) Name() string {

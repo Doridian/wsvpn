@@ -54,13 +54,17 @@ func (s *Socket) processPacket(packet []byte) bool {
 	return true
 }
 
+// Ignore all packets before version negotiation and after close
+func (s *Socket) canPassData() bool {
+	return s.remoteVersion() != UndeterminedProtocolVersion && s.isReady.Load() && !s.isClosing.Load()
+}
+
 func (s *Socket) dataMessageHandler(message []byte) bool {
-	// Ignore all packets before version negotiation
-	if s.remoteProtocolVersion == UndeterminedProtocolVersion || !s.isReady || s.isClosing {
+	if !s.canPassData() {
 		return true
 	}
 
-	if !s.fragmentationEnabled {
+	if !s.fragmentationEnabled.Load() {
 		return s.processPacket(message)
 	}
 
@@ -145,12 +149,11 @@ func (s *Socket) cleanupFragments() {
 }
 
 func (s *Socket) WritePacket(data []byte) error {
-	// Ignore all packets before version negotiation
-	if s.remoteProtocolVersion == UndeterminedProtocolVersion || !s.isReady || s.isClosing {
+	if !s.canPassData() {
 		return nil
 	}
 
-	if !s.fragmentationEnabled {
+	if !s.fragmentationEnabled.Load() {
 		err := s.adapter.WriteDataMessage(data)
 		if err != nil {
 			s.CloseError(fmt.Errorf("error unfragmented data message: %v", err))

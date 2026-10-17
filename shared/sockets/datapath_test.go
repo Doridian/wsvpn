@@ -128,19 +128,31 @@ func BenchmarkDataPath(b *testing.B) {
 				b.ReportAllocs()
 				b.ResetTimer()
 
+				sent := make(chan struct{})
 				go func() {
 					for i := 0; i < b.N; i++ {
 						client.Tun.Inject(pkt)
 					}
+					close(sent)
 				}()
 
+				// Datagrams may be dropped under load: once everything was
+				// sent, only wait briefly for stragglers so that loss does
+				// not turn into idle time that dominates the measurement
 				received := 0
+				timeout := receiveTimeout
 				for received < b.N {
-					// Datagrams may be dropped under load, count instead of hanging
-					if _, err := server.Receive(time.Second); err != nil {
-						break
+					select {
+					case <-server.Tun.Out:
+						received++
+						continue
+					case <-sent:
+						sent = nil
+						timeout = 10 * time.Millisecond
+						continue
+					case <-time.After(timeout):
 					}
-					received++
+					break
 				}
 				b.StopTimer()
 				b.ReportMetric(float64(b.N-received)*100/float64(b.N), "%lost")

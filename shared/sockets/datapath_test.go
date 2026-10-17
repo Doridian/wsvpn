@@ -115,7 +115,7 @@ func TestDataPathBurst(t *testing.T) {
 //	go test ./shared/sockets -run '^$' -bench DataPath -cpuprofile cpu.out -memprofile mem.out
 func BenchmarkDataPath(b *testing.B) {
 	for _, transport := range sockettest.Transports {
-		for _, size := range []int{64, 1400, 9000} {
+		for _, size := range []int{64, 1200, 1400, 9000} {
 			b.Run(fmt.Sprintf("%s/size=%d", transport, size), func(b *testing.B) {
 				server, client := sockettest.NewSocketPair(b, sockettest.PairOptions{
 					Transport:     transport,
@@ -159,4 +159,24 @@ func BenchmarkDataPath(b *testing.B) {
 			})
 		}
 	}
+}
+
+// The usable datagram size is learned from quic-go instead of being
+// hard-coded, so full-size packets need not be fragmented into two
+func TestWebTransportLearnsDatagramLimit(t *testing.T) {
+	server, client := sockettest.NewSocketPair(t, sockettest.PairOptions{
+		Transport:     sockettest.TransportWebTransport,
+		Fragmentation: true,
+	})
+
+	for i := 0; i < 10; i++ {
+		sendAndExpect(t, client, server, testPacket(1400, byte(i)))
+	}
+
+	limit := client.Socket.GetAdapter().MaxDataPayloadLen()
+	// The previous hard-coded limit was 1184
+	if limit <= 1184 || limit > 1452 {
+		t.Fatalf("unexpected learned datagram limit %d", limit)
+	}
+	t.Logf("learned datagram limit: %d", limit)
 }

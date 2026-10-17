@@ -4,7 +4,7 @@ tunnel:
     interval: 25s
     timeout: 5s
   features:
-    fragmentation: true # Enable packet fragmentation (default enabled), required for MTU > 1240 in WebTransport. With WebTransport, MTU <= 1408 lets full-size packets fit in a single datagram once Path MTU Discovery completed (otherwise they get split in two)
+    fragmentation: true # Enable packet fragmentation (default enabled), required for MTU > 1240 in WebTransport. With WebTransport, MTU <= 1400 (TUN) or 1386 (TAP) lets full-size packets fit in a single datagram once Path MTU Discovery completed (otherwise they get split in two)
 
 interface:
   name: ""

@@ -34,7 +34,11 @@ func (u *WebSocketUpgrader) Upgrade(w http.ResponseWriter, r *http.Request) (ada
 	return adapters.NewWebSocketAdapter(conn, serializationType, true, nil), nil
 }
 
-func (u *WebSocketUpgrader) ListenAndServe() error {
+func (u *WebSocketUpgrader) Listen() error {
+	return nil
+}
+
+func (u *WebSocketUpgrader) Serve() error {
 	return nil
 }
 

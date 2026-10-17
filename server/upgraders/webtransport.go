@@ -2,6 +2,7 @@ package upgraders
 
 import (
 	"crypto/tls"
+	"net"
 	"net/http"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 
 type WebTransportUpgrader struct {
 	server *webtransport.Server
+	conn   net.PacketConn
 }
 
 type QuicServerConfig struct {
@@ -79,8 +81,17 @@ func (u *WebTransportUpgrader) Upgrade(w http.ResponseWriter, r *http.Request) (
 	return adapters.NewWebTransportAdapter(conn, serializationType, true), nil
 }
 
-func (u *WebTransportUpgrader) ListenAndServe() error {
-	return u.server.ListenAndServe()
+func (u *WebTransportUpgrader) Listen() error {
+	conn, err := net.ListenPacket("udp", u.server.H3.Addr)
+	if err != nil {
+		return err
+	}
+	u.conn = conn
+	return nil
+}
+
+func (u *WebTransportUpgrader) Serve() error {
+	return u.server.Serve(u.conn)
 }
 
 func (u *WebTransportUpgrader) Matches(r *http.Request) bool {
@@ -88,5 +99,9 @@ func (u *WebTransportUpgrader) Matches(r *http.Request) bool {
 }
 
 func (u *WebTransportUpgrader) Close() error {
-	return u.server.Close()
+	err := u.server.Close()
+	if u.conn != nil {
+		_ = u.conn.Close()
+	}
+	return err
 }

@@ -58,7 +58,7 @@ func (s *Socket) registerDefaultCommandHandlers() {
 			return err
 		}
 
-		s.remoteProtocolVersion = parameters.ProtocolVersion
+		s.remoteProtocolVersion.Store(int64(parameters.ProtocolVersion))
 		s.log.Printf("Remote version is: %s (protocol %d)", parameters.Version, parameters.ProtocolVersion)
 
 		s.remoteFeatures = make(map[features.Feature]bool)
@@ -130,7 +130,7 @@ func (s *Socket) rawMakeAndSendCommand(parameters commands.CommandParameters, id
 		}
 	}
 
-	if s.remoteProtocolVersion < parameters.MinProtocolVersion() {
+	if s.remoteVersion() < parameters.MinProtocolVersion() {
 		return ErrCommandNotSupported
 	}
 

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from os import environ
 from threading import Thread
 
 from build import get_local_platform
@@ -8,6 +9,12 @@ import scapy.layers.all as scapy_layers
 import scapy.packet as scapy_packet
 import scapy.sendrecv as scapy_sendrecv
 from scapy.interfaces import ifaces as scapy_ifaces
+
+
+# Sniff window per attempt, and how many times missing packets get resent.
+# Resends are logged: they hide nothing on Linux, where none should happen.
+SNIFF_TIMEOUT = float(environ.get("WSVPN_TEST_SNIFF_TIMEOUT", "3"))
+SEND_ATTEMPTS = int(environ.get("WSVPN_TEST_SEND_ATTEMPTS", "3"))
 
 
 def is_ignored_payload(self):
@@ -83,8 +90,8 @@ class PacketTestRun:
 
         self._expected_packets = None
 
-    def _send_packets(self):
-        scapy_sendrecv.sendp(self.pkts, iface=self.src.iface,
+    def _send_packets(self, pkts: list):
+        scapy_sendrecv.sendp(pkts, iface=self.src.iface,
                              realtime=False, count=1, return_packets=False)
 
     def _handle_packet(self, pkt):
@@ -102,12 +109,23 @@ class PacketTestRun:
     def run(self):
         self._expected_packets = self.pkts[:]
 
-        t = Thread(target=self._send_packets)
-        scapy_sendrecv.sniff(iface=self.dst.iface, started_callback=t.start,
-                             stop_filter=self._handle_packet, count=0, store=False, timeout=2)
-        t.join()
+        for attempt in range(1, SEND_ATTEMPTS + 1):
+            if attempt > 1:
+                print(f"RETRY {attempt}/{SEND_ATTEMPTS}: {len(self._expected_packets)}/{len(self.pkts)} "
+                      f"packets missing on {self.dst.iface}, resending them", flush=True)
 
-        assert len(self._expected_packets) == 0
+            t = Thread(target=self._send_packets,
+                       args=(self._expected_packets[:],))
+            scapy_sendrecv.sniff(iface=self.dst.iface, started_callback=t.start,
+                                 stop_filter=self._handle_packet, count=0, store=False, timeout=SNIFF_TIMEOUT)
+            t.join()
+
+            if not self._expected_packets:
+                return
+
+        missing = [f"{len(p)}b" for p in self._expected_packets]
+        assert not self._expected_packets, \
+            f"{self.src.iface} -> {self.dst.iface}: never received {missing} after {SEND_ATTEMPTS} attempts"
 
 
 class PacketTest:

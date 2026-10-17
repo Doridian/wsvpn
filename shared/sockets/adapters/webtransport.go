@@ -10,6 +10,7 @@ import (
 	"net"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/Doridian/wsvpn/shared"
 	"github.com/Doridian/wsvpn/shared/commands"
@@ -20,6 +21,26 @@ import (
 type StreamMessageType = byte
 
 const ErrorCodeClosed = 1
+
+const (
+	// quic-go never sends UDP payloads larger than this, so no datagram can
+	// be larger either. We start here and learn the actual (smaller) limit
+	// from DatagramTooLargeError, which tracks Path MTU Discovery.
+	optimisticMaxPayloadLen = 1452
+	// WebTransport prefixes every datagram with the session's quarter stream
+	// ID as a varint after quic-go's size check, so its limit includes it.
+	// Our single session uses stream 0 (1 byte), 2 bytes covers up to 16383.
+	datagramPrefixReserve = 2
+	// PMTUD only ever raises quic-go's limit after the handshake, so retry
+	// the optimistic size every so often to pick that up
+	maxPayloadLenProbeInterval = time.Second
+	// Never go below this, fragmentation needs room for its own header
+	minMaxPayloadLen = 64
+	// http3 queues only 32 datagrams per session and silently drops the
+	// rest, after QUIC already acknowledged them (so congestion control never
+	// backs off). We move them into our own, much deeper queue right away.
+	datagramReceiveQueueLen = 1024
+)
 
 const (
 	messageTypeControl StreamMessageType = iota
@@ -46,7 +67,8 @@ type WebTransportAdapter struct {
 	lastServeError           error
 	lastServeErrorUnexpected bool
 
-	maxPayloadLen atomic.Uint32
+	maxPayloadLen       atomic.Uint32
+	maxPayloadLenProbed atomic.Int64
 }
 
 var _ SocketAdapter = &WebTransportAdapter{}
@@ -101,10 +123,7 @@ func (s *WebTransportAdapter) setReady() {
 }
 
 func (s *WebTransportAdapter) RefreshFeatures() {
-	// The estimate from the errors below is sadly quite bad
-	// By bad I mean there is often no error when the payload
-	// is clearly too large and doesn't get sent
-	s.maxPayloadLen.Store(1200 - 16)
+	s.maxPayloadLen.Store(optimisticMaxPayloadLen)
 }
 
 func (s *WebTransportAdapter) Serve() (bool, error) {
@@ -215,13 +234,24 @@ func (s *WebTransportAdapter) serveData() {
 		_ = s.Close()
 	}()
 
+	queue := make(chan []byte, datagramReceiveQueueLen)
+	defer close(queue)
+
+	s.wg.Add(1)
+	go func() {
+		defer s.wg.Done()
+		for data := range queue {
+			s.dataMessageHandler(data)
+		}
+	}()
+
 	for {
 		data, err := s.conn.ReceiveDatagram(context.Background())
 		if err != nil {
 			s.handleServeError(err, true)
 			break
 		}
-		s.dataMessageHandler(data)
+		queue <- data
 	}
 }
 
@@ -264,7 +294,16 @@ func (s *WebTransportAdapter) WriteControlMessage(message []byte) error {
 }
 
 func (s *WebTransportAdapter) MaxDataPayloadLen() uint16 {
-	return uint16(s.maxPayloadLen.Load())
+	maxPayloadLen := s.maxPayloadLen.Load()
+	if maxPayloadLen < optimisticMaxPayloadLen {
+		probed := s.maxPayloadLenProbed.Load()
+		if time.Since(time.Unix(0, probed)) > maxPayloadLenProbeInterval &&
+			s.maxPayloadLenProbed.CompareAndSwap(probed, time.Now().UnixNano()) {
+			s.maxPayloadLen.CompareAndSwap(maxPayloadLen, optimisticMaxPayloadLen)
+			return optimisticMaxPayloadLen
+		}
+	}
+	return uint16(maxPayloadLen)
 }
 
 func (s *WebTransportAdapter) WriteDataMessage(message []byte) error {
@@ -274,17 +313,25 @@ func (s *WebTransportAdapter) WriteDataMessage(message []byte) error {
 
 	maxPayloadLen := s.maxPayloadLen.Load()
 	if len(message) > int(maxPayloadLen) {
-		return errors.New("data payload too large")
+		return ErrDataPayloadLimitReduced
 	}
 
 	err := s.conn.SendDatagram(message)
 	if err != nil {
 		tooLargeErr := &quic.DatagramTooLargeError{}
 		if errors.As(err, &tooLargeErr) {
-			if tooLargeErr.MaxDatagramPayloadSize < int64(maxPayloadLen) &&
-				s.maxPayloadLen.CompareAndSwap(maxPayloadLen, uint32(tooLargeErr.MaxDatagramPayloadSize)) {
-				return ErrDataPayloadLimitReduced
+			// Always make progress: this message did not fit, so the new
+			// limit must be below its length even if the reserve is off
+			newMaxPayloadLen := min(
+				tooLargeErr.MaxDatagramPayloadSize-datagramPrefixReserve,
+				int64(len(message)-1),
+			)
+			if newMaxPayloadLen < minMaxPayloadLen {
+				return err
 			}
+			s.maxPayloadLen.CompareAndSwap(maxPayloadLen, uint32(newMaxPayloadLen))
+			s.maxPayloadLenProbed.Store(time.Now().UnixNano())
+			return ErrDataPayloadLimitReduced
 		}
 	}
 	return err

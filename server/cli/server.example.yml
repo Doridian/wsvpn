@@ -1,5 +1,5 @@
 tunnel:
-  mtu: 1420
+  mtu: 1400 # Fits one WebTransport datagram (TUN mode, after Path MTU Discovery); for TAP use 1386
   subnet: 192.168.3.0/24 # Server will pick the first host from this, and assign others to clients in order
   mode: TUN # TUN or TAP
 

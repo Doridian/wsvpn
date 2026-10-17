@@ -1,9 +1,9 @@
 package sockets
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -20,11 +20,24 @@ import (
 
 type fragmentsInfo struct {
 	lastIndex int
-	data      map[uint8][]byte
+	received  int
+	totalLen  int
+	data      [][]byte
 	time      time.Time
 }
 
 const fragmentExpiryTime = time.Second * time.Duration(30)
+
+const fragmentHeaderLen = 5
+
+// Adapters copy outgoing messages before WriteDataMessage returns, so frame
+// buffers can be reused instead of allocating one per packet
+var frameBufferPool = sync.Pool{
+	New: func() any {
+		buf := make([]byte, 0xFFFF+fragmentHeaderLen)
+		return &buf
+	},
+}
 
 func (s *Socket) processPacket(packet []byte) bool {
 	if len(packet) < 1 {
@@ -92,28 +105,35 @@ func (s *Socket) dataMessageHandler(message []byte) bool {
 	if fragInfo == nil {
 		fragInfo = &fragmentsInfo{
 			lastIndex: -1000, // Very small value as an indicator for "not set, yet"
-			data:      make(map[uint8][]byte),
+			data:      make([][]byte, 0, 2),
 		}
 		s.defragBuffer[packetID] = fragInfo
 	}
 
 	fragInfo.time = time.Now()
-	buf := make([]byte, len(message)-5)
-	copy(buf, message[5:])
-	fragInfo.data[fragIndex] = buf
+	if int(fragIndex) >= len(fragInfo.data) {
+		fragInfo.data = append(fragInfo.data, make([][]byte, int(fragIndex)+1-len(fragInfo.data))...)
+	}
+	if fragInfo.data[fragIndex] == nil { // Ignore duplicates
+		buf := make([]byte, len(message)-fragmentHeaderLen)
+		copy(buf, message[fragmentHeaderLen:])
+		fragInfo.data[fragIndex] = buf
+		fragInfo.received++
+		fragInfo.totalLen += len(buf)
+	}
 	if isLastFragment {
 		fragInfo.lastIndex = int(fragIndex)
 	}
 
-	if len(fragInfo.data) == fragInfo.lastIndex+1 {
+	if fragInfo.received == fragInfo.lastIndex+1 {
 		delete(s.defragBuffer, packetID)
 		s.defragLock.Unlock()
 
-		buf := &bytes.Buffer{}
-		for i := uint8(0); i <= uint8(fragInfo.lastIndex); i++ {
-			buf.Write(fragInfo.data[i])
+		packet := make([]byte, 0, fragInfo.totalLen)
+		for _, frag := range fragInfo.data[:fragInfo.lastIndex+1] {
+			packet = append(packet, frag...)
 		}
-		return s.processPacket(buf.Bytes())
+		return s.processPacket(packet)
 	}
 
 	s.defragLock.Unlock()
@@ -184,16 +204,19 @@ func (s *Socket) WritePacket(data []byte) error {
 func (s *Socket) writePacketFragmented(data []byte, maxLen uint16) error {
 	dataLen := uint16(len(data))
 
-	buf := &bytes.Buffer{}
-	if dataLen+1 <= maxLen {
-		buf.WriteByte(0b10000000)
-		buf.Write(data)
-		return s.adapter.WriteDataMessage(buf.Bytes())
+	bufPtr := frameBufferPool.Get().(*[]byte)
+	defer frameBufferPool.Put(bufPtr)
+	buf := *bufPtr
+
+	if int(dataLen)+1 <= int(maxLen) {
+		buf[0] = 0b10000000
+		n := copy(buf[1:], data)
+		return s.adapter.WriteDataMessage(buf[:n+1])
 	}
 
 	packetID := atomic.AddUint32(&s.lastFragmentID, 1)
 
-	maxLen -= 5 // 5 byte header (frag|LF ID ID ID ID)!
+	maxLen -= fragmentHeaderLen // 5 byte header (frag|LF ID ID ID ID)!
 	fragmentCount := uint16(dataLen / maxLen)
 	if dataLen%maxLen != 0 {
 		fragmentCount++
@@ -204,25 +227,23 @@ func (s *Socket) writePacketFragmented(data []byte, maxLen uint16) error {
 	packetID3 := uint8((packetID >> 16) % 0xFF)
 	packetID4 := uint8((packetID >> 24) % 0xFF)
 	for frag := uint16(0); frag < fragmentCount; frag++ {
-		buf.Reset()
-
 		fragFlag := uint8(frag)
 		if frag == fragmentCount-1 {
 			fragFlag |= 0b10000000
 		}
-		buf.WriteByte(fragFlag)
-		buf.WriteByte(packetID4)
-		buf.WriteByte(packetID3)
-		buf.WriteByte(packetID2)
-		buf.WriteByte(packetID1)
+		buf[0] = fragFlag
+		buf[1] = packetID4
+		buf[2] = packetID3
+		buf[3] = packetID2
+		buf[4] = packetID1
 
 		fragStart := frag * maxLen
 		fragEnd := fragStart + maxLen
 		if fragEnd > dataLen {
 			fragEnd = dataLen
 		}
-		buf.Write(data[fragStart:fragEnd])
-		err := s.adapter.WriteDataMessage(buf.Bytes())
+		n := copy(buf[fragmentHeaderLen:], data[fragStart:fragEnd])
+		err := s.adapter.WriteDataMessage(buf[:fragmentHeaderLen+n])
 		if err != nil {
 			return err
 		}

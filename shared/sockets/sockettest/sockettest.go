@@ -308,7 +308,7 @@ func NewSocketPair(tb testing.TB, opts PairOptions) (server *Peer, client *Peer)
 	tb.Helper()
 
 	if opts.MTU == 0 {
-		opts.MTU = 1420
+		opts.MTU = 1400
 	}
 	logger := opts.Logger
 	if logger == nil {

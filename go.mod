@@ -7,7 +7,7 @@ toolchain go1.27.3
 require (
 	github.com/Doridian/water v1.6.2
 	github.com/apparentlymart/go-cidr v1.1.1
-	github.com/gobwas/ws v1.4.0
+	github.com/gobwas/ws v1.5.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/magisterquis/connectproxy v0.0.0-20200725203833-3582e84f0c9b
@@ -22,7 +22,6 @@ require (
 	github.com/Doridian/gopacket v1.3.5 // indirect
 	github.com/dunglas/httpsfv v1.1.2 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
-	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	go.uber.org/mock v0.6.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect

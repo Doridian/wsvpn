@@ -115,15 +115,25 @@ func (s *WebSocketAdapter) handleInitial() error {
 		s.initial = nil
 	}()
 
-	f, err := ws.ReadFrame(s.initial)
-	if err == nil {
-		return s.handleFrame(f.Header, f.Payload)
+	hdr, err := ws.ReadHeader(s.initial)
+	if err != nil {
+		if errors.Is(err, io.EOF) {
+			return nil
+		}
+		return err
 	}
 
-	if errors.Is(err, io.EOF) {
-		return nil
+	if hdr.Length > int64(s.MaxDataPayloadLen()) {
+		return errors.New("data payload too large")
 	}
-	return err
+
+	payload := make([]byte, hdr.Length)
+	_, err = io.ReadFull(s.initial, payload)
+	if err != nil {
+		return err
+	}
+
+	return s.handleFrame(hdr, payload)
 }
 
 func (s *WebSocketAdapter) Serve() (bool, error) {

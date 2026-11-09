@@ -33,6 +33,6 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/net v0.62.0
-	golang.org/x/sys v0.49.0
+	golang.org/x/sys v0.50.0
 	golang.org/x/text v0.44.0 // indirect
 )
